@@ -65,8 +65,8 @@ function checkWin(foundations) {
 // ─── Card component ───────────────────────────────────────────────
 function PlayingCard({ card, small = false, selected = false, style = {}, onClick, draggable }) {
   if (!card) return null
-  const w = small ? 44 : 70
-  const h = small ? 62 : 98
+  const w = small ? 56 : 85
+  const h = small ? 78 : 119
 
   if (!card.faceUp) {
     return (
@@ -99,14 +99,14 @@ function PlayingCard({ card, small = false, selected = false, style = {}, onClic
       }}
     >
       <div style={{ position: 'absolute', top: 3, left: 5, lineHeight: 1 }}>
-        <div style={{ fontSize: small ? 9 : 12, fontWeight: 700, color: cardColor(card.suit), lineHeight: 1 }}>{card.value}</div>
-        <div style={{ fontSize: small ? 9 : 12, color: cardColor(card.suit), lineHeight: 1 }}>{card.suit}</div>
+        <div style={{ fontSize: small ? 11 : 14, fontWeight: 700, color: cardColor(card.suit), lineHeight: 1 }}>{card.value}</div>
+        <div style={{ fontSize: small ? 11 : 14, color: cardColor(card.suit), lineHeight: 1 }}>{card.suit}</div>
       </div>
       <div style={{ position: 'absolute', bottom: 3, right: 5, lineHeight: 1, transform: 'rotate(180deg)' }}>
-        <div style={{ fontSize: small ? 9 : 12, fontWeight: 700, color: cardColor(card.suit), lineHeight: 1 }}>{card.value}</div>
-        <div style={{ fontSize: small ? 9 : 12, color: cardColor(card.suit), lineHeight: 1 }}>{card.suit}</div>
+        <div style={{ fontSize: small ? 11 : 14, fontWeight: 700, color: cardColor(card.suit), lineHeight: 1 }}>{card.value}</div>
+        <div style={{ fontSize: small ? 11 : 14, color: cardColor(card.suit), lineHeight: 1 }}>{card.suit}</div>
       </div>
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: small ? 18 : 28, color: cardColor(card.suit), lineHeight: 1 }}>
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: small ? 22 : 34, color: cardColor(card.suit), lineHeight: 1 }}>
         {card.suit}
       </div>
     </div>
