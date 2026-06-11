@@ -5,9 +5,13 @@ import Home from './pages/Home'
 import { Login, Signup } from './pages/Auth'
 import Lobby from './pages/Lobby'
 import Leaderboard from './pages/Leaderboard'
+<<<<<<< HEAD
 import Upgrade from './pages/Upgrade'
 import Solitaire from './games/Solitaire'
 import Rummy from './games/Rummy'
+=======
+import Solitaire from './games/Solitaire'
+>>>>>>> 8c82dba69dcbdd005b3b9591f3709211ca120287
 import ComingSoon from './pages/ComingSoon'
 import './index.css'
 
@@ -34,11 +38,23 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+<<<<<<< HEAD
         <Route path="/lobby" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
         <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
         <Route path="/game/solitaire" element={<ProtectedRoute><Solitaire /></ProtectedRoute>} />
         <Route path="/game/rummy" element={<ProtectedRoute><Rummy /></ProtectedRoute>} />
         <Route path="/game/:gameId" element={<ProtectedRoute><ComingSoon /></ProtectedRoute>} />
+=======
+        <Route path="/lobby" element={
+          <ProtectedRoute><Lobby /></ProtectedRoute>
+        } />
+        <Route path="/game/solitaire" element={
+          <ProtectedRoute><Solitaire /></ProtectedRoute>
+        } />
+        <Route path="/game/:gameId" element={
+          <ProtectedRoute><ComingSoon /></ProtectedRoute>
+        } />
+>>>>>>> 8c82dba69dcbdd005b3b9591f3709211ca120287
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
