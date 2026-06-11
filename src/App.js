@@ -1,0 +1,58 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './hooks/useAuth'
+import Navbar from './components/Navbar'
+import Home from './pages/Home'
+import { Login, Signup } from './pages/Auth'
+import Lobby from './pages/Lobby'
+import Leaderboard from './pages/Leaderboard'
+import Solitaire from './games/Solitaire'
+import ComingSoon from './pages/ComingSoon'
+import './index.css'
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', color: 'var(--gold)', marginBottom: '0.5rem' }}>CardGamers.io</div>
+        <div style={{ fontSize: '0.875rem' }}>Loading...</div>
+      </div>
+    </div>
+  )
+  if (!user) return <Navigate to="/login" />
+  return children
+}
+
+function AppRoutes() {
+  return (
+    <>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/lobby" element={
+          <ProtectedRoute><Lobby /></ProtectedRoute>
+        } />
+        <Route path="/game/solitaire" element={
+          <ProtectedRoute><Solitaire /></ProtectedRoute>
+        } />
+        <Route path="/game/:gameId" element={
+          <ProtectedRoute><ComingSoon /></ProtectedRoute>
+        } />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  )
+}

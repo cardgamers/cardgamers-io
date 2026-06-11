@@ -1,0 +1,146 @@
+# CardGamers.io — Deployment Guide
+# Follow these steps EXACTLY. Takes about 20 minutes.
+
+=======================================================
+STEP 1: SET UP YOUR SUPABASE DATABASE
+=======================================================
+
+1. Go to https://supabase.com and sign in
+2. Click your "cardgamers" project
+3. In the left sidebar, click "SQL Editor"
+4. Click "New query"
+5. Open the file "supabase_schema.sql" from this folder
+6. Copy ALL the text in that file
+7. Paste it into the SQL Editor
+8. Click the green "Run" button
+9. You should see "Success. No rows returned"
+10. Done! Your database is set up.
+
+Also enable Google login (optional but recommended):
+1. In Supabase, go to Authentication → Providers
+2. Find "Google" and toggle it ON
+3. For now, leave the keys blank — Google login needs extra setup later
+4. Email login works immediately with no extra setup
+
+=======================================================
+STEP 2: PUSH CODE TO GITHUB
+=======================================================
+
+You need to install Git on your computer first:
+- Windows: Download from https://git-scm.com/download/win — install with all defaults
+- Mac: Open Terminal, type: git --version (it will prompt you to install)
+
+Then:
+1. Go to https://github.com and sign in as "cardgamers"
+2. Click the "+" button (top right) → "New repository"
+3. Name it: cardgamers-io
+4. Set to Public
+5. Do NOT add README or .gitignore (we have our own)
+6. Click "Create repository"
+7. GitHub will show you a page with commands. Keep this page open.
+
+Now open Terminal (Mac) or Git Bash (Windows):
+Type these commands one by one, pressing Enter after each:
+
+  cd Desktop
+  (drag the cardgamers folder to the terminal window — it will paste the path)
+  git init
+  git add .
+  git commit -m "Initial commit - CardGamers.io launch"
+  git branch -M main
+  git remote add origin https://github.com/cardgamers/cardgamers-io.git
+  git push -u origin main
+
+GitHub will ask for your username and password.
+For password: use a Personal Access Token, not your real password.
+Get one at: GitHub → Settings → Developer Settings → Personal Access Tokens → Generate new token (classic)
+Give it "repo" permissions. Copy the token. Use it as your password.
+
+=======================================================
+STEP 3: DEPLOY TO VERCEL
+=======================================================
+
+1. Go to https://vercel.com and sign in
+2. Click "Add New Project"
+3. Click "Import" next to cardgamers-io
+4. On the "Configure Project" screen:
+   - Framework Preset: Create React App (should auto-detect)
+   - Root Directory: leave blank
+5. Click "Environment Variables" and add these TWO variables:
+
+   Name: REACT_APP_SUPABASE_URL
+   Value: https://nlxuncxmmacccekghkxr.supabase.co
+
+   Name: REACT_APP_SUPABASE_ANON_KEY
+   Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5seHVuY3htbWFjY2Nla2doa3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTc5MjYsImV4cCI6MjA5NjczMzkyNn0.iCbZzxXYD_VXkbvapqsjmsIjoQHxCHXp8R-2AWyvsNQ
+
+6. Click "Deploy"
+7. Wait 2-3 minutes. Vercel will build and deploy your site.
+8. You'll get a URL like: cardgamers-io.vercel.app — your site is LIVE!
+
+=======================================================
+STEP 4: CONNECT YOUR DOMAIN (cardgamers.io)
+=======================================================
+
+In Vercel:
+1. Go to your project → Settings → Domains
+2. Type: cardgamers.io and click Add
+3. Also add: www.cardgamers.io
+4. Vercel will show you DNS records to add
+
+In Cloudflare (where your domain is):
+1. Sign in to dash.cloudflare.com
+2. Click cardgamers.io
+3. Click DNS
+4. Add the records Vercel told you to add (they'll look like CNAME records)
+5. Wait up to 30 minutes for it to propagate
+
+Your site will then be live at cardgamers.io 🎉
+
+Also update Supabase to allow your domain:
+1. Supabase → Authentication → URL Configuration
+2. Set Site URL to: https://cardgamers.io
+3. Add to Redirect URLs: https://cardgamers.io/**
+
+=======================================================
+STEP 5: TEST EVERYTHING
+=======================================================
+
+1. Go to cardgamers.io (or the vercel.app URL)
+2. You should see the homepage
+3. Click "Play Free" → sign up with a real email
+4. Check your email for the confirmation link
+5. Click it, then sign in
+6. Go to lobby → click Solitaire
+7. Play a game!
+
+If anything doesn't work, take a screenshot and tell me.
+I will fix it immediately.
+
+=======================================================
+WHAT'S ALREADY WORKING
+=======================================================
+✅ Full homepage with pricing
+✅ User signup and login
+✅ Player profiles and ratings
+✅ Game lobby
+✅ Full Solitaire (Klondike) — completely playable
+✅ Leaderboard
+✅ "Coming Soon" pages for other games
+
+=======================================================
+WHAT'S COMING NEXT (I'll build these)
+=======================================================
+🔨 Bridge — multiplayer (the flagship)
+🔨 Rummy — multiplayer  
+🔨 Hearts & Spades
+🔨 Stripe payments + Plus subscription
+🔨 Google AdSense integration
+🔨 Tournaments system
+🔨 Chat in game rooms
+
+=======================================================
+QUESTIONS? PROBLEMS?
+=======================================================
+Come back to Claude and describe what's happening.
+I'll fix any issue instantly.
