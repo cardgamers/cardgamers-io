@@ -8,6 +8,7 @@ import Leaderboard from './pages/Leaderboard'
 import Upgrade from './pages/Upgrade'
 import Solitaire from './games/Solitaire'
 import Rummy from './games/Rummy'
+import Bridge from './games/bridge/Bridge'
 import ComingSoon from './pages/ComingSoon'
 import './index.css'
 
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
         <Route path="/game/solitaire" element={<ProtectedRoute><Solitaire /></ProtectedRoute>} />
         <Route path="/game/rummy" element={<ProtectedRoute><Rummy /></ProtectedRoute>} />
+        <Route path="/game/bridge" element={<ProtectedRoute><Bridge /></ProtectedRoute>} />
         <Route path="/game/:gameId" element={<ProtectedRoute><ComingSoon /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
