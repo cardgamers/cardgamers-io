@@ -42,8 +42,12 @@ function dealGame() {
   return { tableau, stock, waste: [], foundations: [[], [], [], []] }
 }
 
-function canPlaceOnFoundation(card, foundation) {
-  if (foundation.length === 0) return card.value === 'A'
+// Each foundation index maps to a suit: 0=♠ 1=♥ 2=♦ 3=♣
+const FOUNDATION_SUITS = ['♠', '♥', '♦', '♣']
+
+function canPlaceOnFoundation(card, foundation, foundationIndex) {
+  const requiredSuit = FOUNDATION_SUITS[foundationIndex]
+  if (foundation.length === 0) return card.value === 'A' && card.suit === requiredSuit
   const top = foundation[foundation.length - 1]
   return top.suit === card.suit && cardValue(card.value) === cardValue(top.value) + 1
 }
@@ -193,7 +197,7 @@ export default function Solitaire() {
     if (!selected) return
     const card = selected.cards[0]
     if (selected.cards.length > 1) return
-    if (canPlaceOnFoundation(card, game.foundations[fi])) {
+    if (canPlaceOnFoundation(card, game.foundations[fi], fi)) {
       saveHistory()
       setGame(g => {
         const ng = JSON.parse(JSON.stringify(g))
@@ -328,10 +332,20 @@ export default function Solitaire() {
           {/* Top row */}
           <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.25rem', alignItems: 'flex-start', width: '100%' }}>
             {/* Stock */}
-            <div onClick={drawFromStock} style={{ cursor: 'pointer' }}>
+            <div onClick={drawFromStock} style={{ cursor: 'pointer', position: 'relative' }}>
               {game.stock.length > 0
-                ? <PlayingCard card={{ faceUp: false }} />
-                : <EmptySlot label="↺" onClick={drawFromStock} />
+                ? <>
+                    <PlayingCard card={{ faceUp: false }} />
+                    <div style={{ position: 'absolute', bottom: -18, left: '50%', transform: 'translateX(-50%)', fontSize: '0.62rem', color: 'rgba(245,240,232,0.4)', whiteSpace: 'nowrap' }}>
+                      Click to draw
+                    </div>
+                  </>
+                : <>
+                    <EmptySlot label="↺" onClick={drawFromStock} />
+                    <div style={{ position: 'absolute', bottom: -18, left: '50%', transform: 'translateX(-50%)', fontSize: '0.62rem', color: 'rgba(201,168,76,0.6)', whiteSpace: 'nowrap' }}>
+                      Click to reset
+                    </div>
+                  </>
               }
             </div>
             {/* Waste */}
