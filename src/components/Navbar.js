@@ -28,6 +28,7 @@ export default function Navbar() {
   const navLinks = [
     { to: '/lobby', label: 'Games' },
     { to: '/leaderboard', label: 'Leaderboard' },
+    { to: '/how-to-play', label: 'How to Play' },
     { to: '/tournaments', label: 'Tournaments' },
   ]
 
