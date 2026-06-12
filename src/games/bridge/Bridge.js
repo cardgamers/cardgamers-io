@@ -505,7 +505,13 @@ export default function Bridge() {
             </div>
             {game.dummy==='N'&&game.dummyRevealed
               ? <DummyCards hand={game.hands['N']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='N'} />
-              : <div style={{ display:'flex', gap:2 }}>{Array.from({length:Math.min(game.hands['N']?.length||13,11)}).map((_,i)=><BCard key={i} faceDown w={42} h={59} />)}</div>
+              : <div style={{ position:'relative', height:59, width: Math.min((game.hands['N']?.length||13)*18+24, 280) }}>
+                  {Array.from({length:Math.min(game.hands['N']?.length||13,13)}).map((_,i)=>(
+                    <div key={i} style={{ position:'absolute', left: i*18 }}>
+                      <BCard faceDown w={42} h={59} />
+                    </div>
+                  ))}
+                </div>
             }
           </div>
 
@@ -520,7 +526,13 @@ export default function Bridge() {
               </div>
               {game.dummy==='W'&&game.dummyRevealed
                 ? <DummyCards hand={game.hands['W']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='W'} />
-                : <div style={{ display:'flex', flexDirection:'column', gap:2 }}>{Array.from({length:Math.min(game.hands['W']?.length||13,8)}).map((_,i)=><BCard key={i} faceDown w={42} h={59} />)}</div>
+                : <div style={{ position:'relative', width:52, height: Math.min((game.hands['W']?.length||13)*14+45, 180) }}>
+                    {Array.from({length:Math.min(game.hands['W']?.length||13,13)}).map((_,i)=>(
+                      <div key={i} style={{ position:'absolute', top: i*14 }}>
+                        <BCard faceDown w={42} h={59} />
+                      </div>
+                    ))}
+                  </div>
               }
             </div>
 
@@ -582,7 +594,13 @@ export default function Bridge() {
               </div>
               {game.dummy==='E'&&game.dummyRevealed
                 ? <DummyCards hand={game.hands['E']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='E'} />
-                : <div style={{ display:'flex', flexDirection:'column', gap:2 }}>{Array.from({length:Math.min(game.hands['E']?.length||13,8)}).map((_,i)=><BCard key={i} faceDown w={42} h={59} />)}</div>
+                : <div style={{ position:'relative', width:52, height: Math.min((game.hands['E']?.length||13)*14+45, 180) }}>
+                    {Array.from({length:Math.min(game.hands['E']?.length||13,13)}).map((_,i)=>(
+                      <div key={i} style={{ position:'absolute', top: i*14 }}>
+                        <BCard faceDown w={42} h={59} />
+                      </div>
+                    ))}
+                  </div>
               }
             </div>
           </div>
