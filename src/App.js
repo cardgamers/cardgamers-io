@@ -6,6 +6,8 @@ import { Login, Signup } from './pages/Auth'
 import Lobby from './pages/Lobby'
 import Leaderboard from './pages/Leaderboard'
 import Upgrade from './pages/Upgrade'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import Solitaire from './games/Solitaire'
 import Rummy from './games/Rummy'
 import Bridge from './games/bridge/Bridge'
@@ -41,6 +43,8 @@ function AppRoutes() {
         <Route path="/game/rummy" element={<ProtectedRoute><Rummy /></ProtectedRoute>} />
         <Route path="/game/bridge" element={<ProtectedRoute><Bridge /></ProtectedRoute>} />
         <Route path="/game/:gameId" element={<ProtectedRoute><ComingSoon /></ProtectedRoute>} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
