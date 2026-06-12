@@ -13,6 +13,7 @@ import Profile from './pages/Profile'
 import Solitaire from './games/Solitaire'
 import Rummy from './games/Rummy'
 import Bridge from './games/bridge/Bridge'
+import TeenPatti from './games/TeenPatti'
 import ComingSoon from './pages/ComingSoon'
 import './index.css'
 
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="/game/solitaire" element={<ProtectedRoute><Solitaire /></ProtectedRoute>} />
         <Route path="/game/rummy" element={<ProtectedRoute><Rummy /></ProtectedRoute>} />
         <Route path="/game/bridge" element={<ProtectedRoute><Bridge /></ProtectedRoute>} />
+        <Route path="/game/teen-patti" element={<ProtectedRoute><TeenPatti /></ProtectedRoute>} />
         <Route path="/game/:gameId" element={<ProtectedRoute><ComingSoon /></ProtectedRoute>} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />

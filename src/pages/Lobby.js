@@ -2,11 +2,11 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 const GAMES = [
-  { id: 'solitaire', suit: '♣', name: 'Solitaire', desc: 'Klondike, Spider, FreeCell. Perfect solo play.', players: '1 player', status: 'live', color: '#5DCAA5', path: '/game/solitaire' },
+  { id: 'solitaire', suit: '♣', name: 'Solitaire', desc: 'Klondike Solitaire. Perfect solo play.', players: '1 player', status: 'live', color: '#5DCAA5', path: '/game/solitaire' },
   { id: 'bridge', suit: '♠', name: 'Bridge', desc: 'The flagship. 4-player contract bridge with full bidding.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/bridge' },
-  { id: 'rummy', suit: '♥', name: 'Rummy', desc: 'Gin Rummy and Indian Rummy against real opponents.', players: '2–4 players', status: 'live', color: '#c0392b', path: '/game/rummy' },
-  { id: 'spades', suit: '♠', name: 'Spades', desc: 'Partnership bidding and trick-taking.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/spades' },
-  { id: 'hearts', suit: '♥', name: 'Hearts', desc: 'Avoid hearts and the queen of spades.', players: '4 players', status: 'live', color: '#c0392b', path: '/game/hearts' },
+  { id: 'rummy', suit: '♥', name: 'Rummy', desc: 'Gin Rummy against real opponents.', players: '2–4 players', status: 'live', color: '#c0392b', path: '/game/rummy' },
+  { id: 'teen-patti', suit: '🪔', name: 'Teen Patti', desc: 'The royal Indian card game. Classic, Muflis and AK47 variants.', players: '2–4 players', status: 'live', color: '#FFD700', path: '/game/teen-patti' },
+  { id: 'spades', suit: '♠', name: 'Spades', desc: 'Partnership bidding and trick-taking.', players: '4 players', status: 'soon', color: 'var(--gold)', path: '#' },
   { id: 'poker', suit: '♦', name: 'Poker', desc: "Texas Hold'em — coming soon!", players: '2–9 players', status: 'soon', color: '#85B7EB', path: '#' },
 ]
 
