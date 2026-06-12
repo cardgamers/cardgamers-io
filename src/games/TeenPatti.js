@@ -122,56 +122,29 @@ function Chips({ amount }) {
 
 // ─── Player seat ──────────────────────────────────────────────────
 function PlayerSeat({ player, isUser, isCurrent, isWinner, gamePhase }) {
-  const { name, avatar, chips, bet, cards, folded, seen, isBlind } = player
-
+  const { name, chips, bet, folded, seen, isBlind } = player
   return (
-    <div style={{
-      display:'flex', flexDirection:'column', alignItems:'center', gap:6,
-      opacity: folded ? 0.45 : 1,
-      transition:'opacity 0.3s',
-    }}>
-      {/* Avatar + status */}
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, opacity:folded?0.4:1 }}>
       <div style={{ position:'relative' }}>
-        <div style={{
-          width:52, height:52, borderRadius:'50%',
-          background: isCurrent ? 'linear-gradient(135deg,#FFD700,#FFA500)' : 'linear-gradient(135deg,#8B0000,#4a0000)',
-          border: `3px solid ${isCurrent ? '#FFD700' : isWinner ? '#FFD700' : 'rgba(255,215,0,0.3)'}`,
-          boxShadow: isCurrent ? '0 0 16px rgba(255,215,0,0.6)' : 'none',
-          display:'flex', alignItems:'center', justifyContent:'center',
-          fontSize:'1.6rem', transition:'all 0.3s',
-        }}>
-          {avatar}
-        </div>
-        {folded && <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.65rem', fontWeight:700, color:'#ff6b6b' }}>PACK</div>}
-        {isWinner && <div style={{ position:'absolute', top:-8, left:'50%', transform:'translateX(-50%)', fontSize:'1.2rem' }}>👑</div>}
+        <div style={{ width:40, height:40, borderRadius:'50%',
+          background:isCurrent?'linear-gradient(135deg,#FFD700,#FFA500)':'linear-gradient(135deg,#8B0000,#4a0000)',
+          border:`2px solid ${isCurrent?'#FFD700':isWinner?'#FFD700':'rgba(255,215,0,0.3)'}`,
+          boxShadow:isCurrent?'0 0 12px rgba(255,215,0,0.6)':'none',
+          display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.1rem',
+        }}>{player.avatar}</div>
+        {folded && <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.55rem', fontWeight:700, color:'#ff6b6b' }}>PACK</div>}
+        {isWinner && <div style={{ position:'absolute', top:-8, left:'50%', transform:'translateX(-50%)' }}>👑</div>}
       </div>
-
-      <div style={{ textAlign:'center' }}>
-        <div style={{ fontSize:'0.8rem', fontWeight:600, color: isUser ? '#FFD700' : '#f5f0e8' }}>{name}</div>
-        {isBlind && !seen && !folded && <div style={{ fontSize:'0.6rem', color:'rgba(255,215,0,0.6)', fontWeight:500 }}>Blind</div>}
-        {seen && !folded && <div style={{ fontSize:'0.6rem', color:'rgba(100,200,100,0.8)', fontWeight:500 }}>Seen</div>}
-      </div>
-
+      <div style={{ fontSize:'0.72rem', fontWeight:600, color:isUser?'#FFD700':'#f5f0e8' }}>{name}</div>
+      {!folded && <div style={{ fontSize:'0.58rem', color: seen?'rgba(100,220,100,0.8)':'rgba(255,215,0,0.5)' }}>{seen?'Seen':'Blind'}</div>}
       <Chips amount={chips} />
-
-      {bet > 0 && (
-        <div style={{ fontSize:'0.7rem', color:'rgba(255,215,0,0.7)' }}>Bet: {bet}</div>
+      {bet>0 && <div style={{ fontSize:'0.62rem', color:'rgba(255,215,0,0.6)' }}>Bet:{bet}</div>}
+      {/* Cards - always small for opponents */}
+      {!isUser && (
+        <div style={{ display:'flex', gap:2 }}>
+          {[0,1,2].map(i=><TPCard key={i} faceDown small />)}
+        </div>
       )}
-
-      {/* Cards */}
-      <div style={{ display:'flex', gap:3 }}>
-        {cards && cards.map((card, i) => (
-          <TPCard
-            key={i}
-            card={isUser && gamePhase !== 'showdown' ? card : null}
-            faceDown={!isUser || gamePhase === 'showdown' ? true : false}
-            small
-          />
-        ))}
-        {(!cards || cards.length === 0) && [0,1,2].map(i => (
-          <div key={i} style={{ width:54, height:76, borderRadius:8, background:'rgba(255,255,255,0.05)', border:'1px dashed rgba(255,215,0,0.15)' }} />
-        ))}
-      </div>
     </div>
   )
 }
