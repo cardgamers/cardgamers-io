@@ -323,10 +323,10 @@ export default function Solitaire() {
 
       {/* Game board — takes remaining height */}
       <div style={{ flex: 1, overflow: 'auto', padding: '1rem 1.5rem' }}>
-        <div style={{ minWidth: 700 }}>
+        <div style={{ minWidth: 0 }}>
 
           {/* Top row */}
-          <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.25rem', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.25rem', alignItems: 'flex-start', width: '100%' }}>
             {/* Stock */}
             <div onClick={drawFromStock} style={{ cursor: 'pointer' }}>
               {game.stock.length > 0
@@ -354,9 +354,9 @@ export default function Solitaire() {
           </div>
 
           {/* Tableau */}
-          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             {game.tableau.map((col, colIdx) => (
-              <div key={colIdx} style={{ position: 'relative', width: CARD_W, flexShrink: 0 }}>
+              <div key={colIdx} style={{ position: 'relative', width: CARD_W, flexShrink: 0, flex: 1, maxWidth: 110 }}>
                 {col.length === 0
                   ? <EmptySlot label="K" onClick={() => handleEmptyTableauClick(colIdx)} />
                   : col.map((card, cardIdx) => (
