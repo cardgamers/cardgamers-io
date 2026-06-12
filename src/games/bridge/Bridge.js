@@ -83,7 +83,7 @@ function BidPanel({ auction, onBid, onPass }) {
           const tc = d === 'NT' ? (valid ? 'rgba(100,160,255,0.9)' : 'rgba(100,160,255,0.2)') : (DENOM_COLORS[d] === '#1a1a2e' ? (valid ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.15)') : (valid ? DENOM_COLORS[d] : 'rgba(192,57,43,0.25)'))
           return (
             <button key={`${lv}${d}`} onClick={() => valid && onBid(lv, d)} style={{
-              width:34, height:28, borderRadius:4,
+              width:'100%', height:30, borderRadius:4,
               border:`1px solid ${valid ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)'}`,
               background: valid ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
               cursor: valid ? 'pointer' : 'not-allowed',
@@ -326,7 +326,7 @@ export default function Bridge() {
       <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
 
         {/* Left: game table */}
-        <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'8px 10px', gap:6, overflow:'hidden', minWidth:0 }}>
+        <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'8px 12px 8px 12px', gap:6, overflow:'hidden', minWidth:0 }}>
 
           {/* NORTH */}
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
@@ -392,7 +392,7 @@ export default function Bridge() {
           </div>
 
           {/* SOUTH — your hand */}
-          <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+          <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:4, paddingBottom:8 }}>
             <span style={{ fontSize:'0.65rem', color: isMyPlayTurn ? '#5DCAA5' : 'var(--text-muted)' }}>
               You (S) · {countHCP(myHand)} HCP {isDeclarer ? '— Declarer' : ''} {isMyPlayTurn ? '— Your turn' : ''}
             </span>
