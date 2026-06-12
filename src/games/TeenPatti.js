@@ -198,12 +198,13 @@ export default function TeenPatti() {
       const handRank = getHandRank(bot.cards)
       const rand = Math.random()
 
-      // Bot decision based on hand strength
+      // Much more aggressive bots — they rarely pack
       let action
-      if (handRank.rank >= 5) action = 'chaal' // Strong hand — always chaal
-      else if (handRank.rank >= 3) action = rand < 0.85 ? 'chaal' : 'pack'
-      else if (handRank.rank >= 2) action = rand < 0.6 ? 'chaal' : 'pack'
-      else action = rand < 0.35 ? 'chaal' : 'pack'
+      if (handRank.rank >= 5) action = 'chaal' // Trail/Pure Seq — always chaal
+      else if (handRank.rank >= 4) action = rand < 0.95 ? 'chaal' : 'pack'
+      else if (handRank.rank >= 3) action = rand < 0.82 ? 'chaal' : 'pack'
+      else if (handRank.rank >= 2) action = rand < 0.70 ? 'chaal' : 'pack'
+      else action = rand < 0.55 ? 'chaal' : 'pack' // Even high card — 55% chance to bluff!
 
       // Occasionally request show
       if (handRank.rank >= 4 && rand < 0.2 && !bot.isBlind) action = 'show'
@@ -476,28 +477,26 @@ export default function TeenPatti() {
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.5rem 1rem', background:'rgba(0,0,0,0.6)', borderBottom:'1px solid rgba(255,215,0,0.2)', flexShrink:0 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
-          <button onClick={() => setScreen('menu')} style={{ background:'none', border:'none', color:'rgba(255,215,0,0.6)', cursor:'pointer', fontSize:'0.8rem' }}>← Menu</button>
-          <span style={{ fontFamily:"'Playfair Display',serif", color:'#FFD700', fontWeight:700 }}>🪔 Teen Patti</span>
-          <span style={{ fontSize:'0.7rem', color:'rgba(255,215,0,0.5)', background:'rgba(255,215,0,0.1)', padding:'2px 8px', borderRadius:20, textTransform:'capitalize' }}>{variant}</span>
+      {/* Header + message — single compact row */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.25rem 1rem', background:'rgba(0,0,0,0.7)', borderBottom:'1px solid rgba(255,215,0,0.2)', flexShrink:0, gap:'0.5rem' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', flexShrink:0 }}>
+          <button onClick={() => setScreen('menu')} style={{ background:'none', border:'none', color:'rgba(255,215,0,0.6)', cursor:'pointer', fontSize:'0.75rem' }}>← Menu</button>
+          <span style={{ fontFamily:"'Playfair Display',serif", color:'#FFD700', fontWeight:700, fontSize:'0.9rem' }}>🪔 Teen Patti</span>
+          <span style={{ fontSize:'0.62rem', color:'rgba(255,215,0,0.5)', background:'rgba(255,215,0,0.1)', padding:'1px 6px', borderRadius:20, textTransform:'capitalize' }}>{variant}</span>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+        <div style={{ fontSize:'0.78rem', color: isMyTurn ? '#FFD700' : 'rgba(255,215,0,0.5)', fontWeight: isMyTurn ? 600 : 400, flex:1, textAlign:'center' }}>
+          {isMyTurn ? '🟢 Your turn — Chaal, Pack or See cards' : phase==='betting' ? `⏳ ${players[currentPlayer]?.name}'s turn...` : ''}
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', flexShrink:0 }}>
           <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:'0.58rem', color:'rgba(255,215,0,0.5)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Pot</div>
-            <div style={{ fontSize:'0.9rem', fontWeight:700, color:'#FFD700' }}>🪙 {pot}</div>
+            <div style={{ fontSize:'0.52rem', color:'rgba(255,215,0,0.5)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Pot</div>
+            <div style={{ fontSize:'0.85rem', fontWeight:700, color:'#FFD700' }}>🪙 {pot}</div>
           </div>
           <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:'0.58rem', color:'rgba(255,215,0,0.5)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Boot</div>
-            <div style={{ fontSize:'0.9rem', fontWeight:700, color:'rgba(255,215,0,0.7)' }}>{currentBet}</div>
+            <div style={{ fontSize:'0.52rem', color:'rgba(255,215,0,0.5)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Boot</div>
+            <div style={{ fontSize:'0.85rem', fontWeight:700, color:'rgba(255,215,0,0.7)' }}>{currentBet}</div>
           </div>
         </div>
-      </div>
-
-      {/* Message bar */}
-      <div style={{ background: isMyTurn ? 'rgba(255,215,0,0.1)' : 'rgba(0,0,0,0.3)', padding:'0.4rem 1rem', textAlign:'center', fontSize:'0.85rem', color: isMyTurn ? '#FFD700' : 'rgba(255,215,0,0.5)', borderBottom:'1px solid rgba(255,215,0,0.1)', flexShrink:0 }}>
-        {message}
       </div>
 
       {/* Game table */}
