@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
 const SUITS = ['♠', '♥', '♦', '♣']
 const VALUES = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
@@ -140,7 +141,49 @@ export default function Solitaire() {
   const [time, setTime] = useState(0)
   const [won, setWon] = useState(false)
   const [history, setHistory] = useState([])
+  const [resultSaved, setResultSaved] = useState(false)
   const { W, H, fs, ss, overlap } = useCardSize()
+
+  // Save result to Supabase when won
+  useEffect(() => {
+    if (!won || resultSaved) return
+    async function saveResult() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        // Save game history
+        await supabase.from('game_history').insert({
+          user_id: user.id,
+          game_type: 'solitaire',
+          result: 'win',
+          score,
+          moves,
+          duration_seconds: time,
+          played_at: new Date().toISOString(),
+        })
+        // Update profile stats
+        const { data: profile } = await supabase
+          .from('profiles').select('games_played, games_won').eq('id', user.id).single()
+        if (profile) {
+          await supabase.from('profiles').update({
+            games_played: (profile.games_played || 0) + 1,
+            games_won: (profile.games_won || 0) + 1,
+          }).eq('id', user.id)
+        }
+        // Update leaderboard
+        await supabase.from('leaderboard').upsert({
+          user_id: user.id,
+          games_played: (profile?.games_played || 0) + 1,
+          games_won: (profile?.games_won || 0) + 1,
+          win_pct: Math.round(((profile?.games_won || 0) + 1) / ((profile?.games_played || 0) + 1) * 100),
+        }, { onConflict: 'user_id' })
+        setResultSaved(true)
+      } catch (e) {
+        console.error('Failed to save game result:', e)
+      }
+    }
+    saveResult()
+  }, [won, resultSaved, score, moves, time])
 
   useEffect(() => {
     if (won) return
@@ -162,7 +205,7 @@ export default function Solitaire() {
   function newGame() {
     setGame(dealGame()); setSelected(null)
     setMoves(0); setScore(0); setTime(0)
-    setWon(false); setHistory([])
+    setWon(false); setHistory([]); setResultSaved(false)
   }
 
   function drawFromStock() {
