@@ -263,7 +263,14 @@ export default function Bridge() {
     ng.auction.push({ ...bid, position:ng.currentBidder })
     if (isAuctionOver(ng.auction)) {
       const contract = getContract(ng.auction)
-      if (!contract) { ng.phase='complete'; return }
+      if (!contract) {
+        // All passed — redeal automatically
+        const fresh = createBridgeGame(ng.mode, 'S', ng.difficulty, ng.botNames)
+        Object.assign(ng, fresh)
+        ng.phase = 'bidding'
+        ng.allPassedRedeal = true
+        return
+      }
       ng.contract = contract
       ng.dummy = PARTNERS[contract.declarer]
       ng.phase = 'playing'
@@ -334,6 +341,10 @@ export default function Bridge() {
 
   useEffect(() => {
     if (!game||game.phase==='complete') return
+    if (game.allPassedRedeal) {
+      // Show brief message then continue
+      setGame(prev => { const ng=JSON.parse(JSON.stringify(prev)); ng.allPassedRedeal=false; return ng })
+    }
     const isBotBid = game.phase==='bidding'&&game.currentBidder!=='S'
     const isBotPlay = game.phase==='playing'&&((game.currentLeader!=='S'&&game.currentLeader!==game.dummy)||(game.currentLeader===game.dummy&&game.contract?.declarer!=='S'))
     if (isBotBid||isBotPlay) doBotAction(game)
