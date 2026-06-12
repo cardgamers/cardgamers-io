@@ -10,40 +10,42 @@ function cardColor(suit) { return RED_SUITS.includes(suit) ? '#c0392b' : '#1a1a2
 
 function Card({ card, selected, onClick, small }) {
   if (!card) return null
-  const w = small ? 48 : 65
-  const h = small ? 68 : 92
+  const w = small ? 70 : 95
+  const h = small ? 98 : 133
+  const fontSize = small ? 13 : 16
+  const suitSize = small ? 28 : 40
   return (
     <div onClick={onClick} style={{
-      width: w, height: h, borderRadius: 6,
+      width: w, height: h, borderRadius: 8,
       background: selected ? '#fffbe6' : 'white',
       border: selected ? '2px solid var(--gold)' : '1px solid #ddd',
-      boxShadow: selected ? '0 0 0 3px var(--gold)' : '0 2px 4px rgba(0,0,0,0.3)',
+      boxShadow: selected ? '0 0 0 3px var(--gold)' : '0 2px 6px rgba(0,0,0,0.3)',
       cursor: onClick ? 'pointer' : 'default',
       userSelect: 'none', flexShrink: 0, position: 'relative',
-      transform: selected ? 'translateY(-8px)' : 'none',
+      transform: selected ? 'translateY(-10px)' : 'none',
       transition: 'transform 0.15s, box-shadow 0.15s',
     }}>
-      <div style={{ position: 'absolute', top: 3, left: 4, lineHeight: 1 }}>
-        <div style={{ fontSize: small ? 9 : 11, fontWeight: 700, color: cardColor(card.suit), lineHeight: 1 }}>{card.value}</div>
-        <div style={{ fontSize: small ? 9 : 11, color: cardColor(card.suit), lineHeight: 1 }}>{SUIT_SYMBOLS[card.suit]}</div>
+      <div style={{ position: 'absolute', top: 5, left: 6, lineHeight: 1 }}>
+        <div style={{ fontSize, fontWeight: 700, color: cardColor(card.suit), lineHeight: 1 }}>{card.value}</div>
+        <div style={{ fontSize, color: cardColor(card.suit), lineHeight: 1 }}>{SUIT_SYMBOLS[card.suit]}</div>
       </div>
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: small ? 20 : 28, color: cardColor(card.suit), lineHeight: 1 }}>
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: suitSize, color: cardColor(card.suit), lineHeight: 1 }}>
         {SUIT_SYMBOLS[card.suit]}
       </div>
-      <div style={{ position: 'absolute', bottom: 3, right: 4, lineHeight: 1, transform: 'rotate(180deg)' }}>
-        <div style={{ fontSize: small ? 9 : 11, fontWeight: 700, color: cardColor(card.suit), lineHeight: 1 }}>{card.value}</div>
-        <div style={{ fontSize: small ? 9 : 11, color: cardColor(card.suit), lineHeight: 1 }}>{SUIT_SYMBOLS[card.suit]}</div>
+      <div style={{ position: 'absolute', bottom: 5, right: 6, lineHeight: 1, transform: 'rotate(180deg)' }}>
+        <div style={{ fontSize, fontWeight: 700, color: cardColor(card.suit), lineHeight: 1 }}>{card.value}</div>
+        <div style={{ fontSize, color: cardColor(card.suit), lineHeight: 1 }}>{SUIT_SYMBOLS[card.suit]}</div>
       </div>
     </div>
   )
 }
 
 function CardBack({ small }) {
-  const w = small ? 48 : 65
-  const h = small ? 68 : 92
+  const w = small ? 70 : 95
+  const h = small ? 98 : 133
   return (
     <div style={{
-      width: w, height: h, borderRadius: 6,
+      width: w, height: h, borderRadius: 8,
       background: '#1a3a6a',
       backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px)',
       border: '2px solid rgba(255,255,255,0.15)',
