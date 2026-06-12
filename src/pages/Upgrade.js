@@ -3,7 +3,11 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
 
-const PAYPAL_CLIENT_ID = 'AYqx-OP7KNYzR1O0aSAM2sz5w-U8b6IHAc-J2uC69NBdHyIupRzB6ej-NvWXD2HpmVry6gDOcYpQmJ1u'
+const PAYPAL_CLIENT_ID = 'BAAkMA4KUZC3DlzIxceYsdlIu1sV7_-tQZ241b0fgiBIyW9wfxZKJ2slqKB_6R7daIaRjT4mPFC7zQtyXo'
+const PLAN_IDS = {
+  plus: 'P-46E37703W5629881TNIV5EGY',
+  club: 'P-1V455033JE604344NNIV5GVY'
+}
 
 const PLANS = [
   {
@@ -65,9 +69,7 @@ export default function Upgrade() {
       },
       createSubscription: function(data, actions) {
         return actions.subscription.create({
-          plan_id: selectedPlan === 'plus' ? 'PLUS_PLAN_ID' : 'CLUB_PLAN_ID',
-          // Note: Replace PLUS_PLAN_ID and CLUB_PLAN_ID with real PayPal plan IDs
-          // created in your PayPal dashboard under Products & Plans
+          plan_id: selectedPlan === 'plus' ? PLAN_IDS.plus : PLAN_IDS.club,
         })
       },
       onApprove: async function(data) {
