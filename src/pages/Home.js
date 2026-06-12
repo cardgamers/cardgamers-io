@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom'
 const GAMES = [
   { id: 'bridge', suit: '♠', name: 'Bridge', desc: 'The ultimate card game. Bidding, strategy, and partnership across 4 players.', players: '4 players · Contract & Rubber', status: 'live', path: '/game/bridge' },
   { id: 'rummy', suit: '♥', name: 'Rummy', desc: 'Build melds and go out first. Fast, satisfying, endlessly replayable.', players: '2–4 players · Gin & Indian', status: 'live', path: '/game/rummy' },
-  { id: 'solitaire', suit: '♣', name: 'Solitaire', desc: 'Klondike, Spider, FreeCell. Play at your own pace, any time.', players: '1 player · 3 variants', status: 'live', path: '/game/solitaire' },
-  { id: 'spades', suit: '♠', name: 'Spades', desc: 'Team up, bid your tricks, and outplay the opposition.', players: '4 players · Partnership', status: 'live', path: '/game/spades' },
-  { id: 'hearts', suit: '♥', name: 'Hearts', desc: 'Avoid hearts and the queen of spades — unless you shoot the moon.', players: '4 players · Classic', status: 'live', path: '/game/hearts' },
-  { id: 'poker', suit: '♦', name: 'Poker', desc: 'Texas Hold\'em with fun chips. No real money, all the strategy.', players: '2–9 players · Hold\'em', status: 'soon', path: '/game/poker' },
+  { id: 'teen-patti', suit: '🪔', name: 'Teen Patti', desc: 'The royal Indian card game. Classic, Muflis and AK47 variants. तीन पत्ती', players: '2–4 players · 3 variants', status: 'live', path: '/game/teen-patti' },
+  { id: 'solitaire', suit: '♣', name: 'Solitaire', desc: 'Klondike Solitaire. Play at your own pace, any time.', players: '1 player · Klondike', status: 'live', path: '/game/solitaire' },
+  { id: 'spades', suit: '♠', name: 'Spades', desc: 'Team up, bid your tricks, and outplay the opposition.', players: '4 players · Partnership', status: 'soon', path: '#' },
+  { id: 'poker', suit: '♦', name: 'Poker', desc: 'Texas Hold\'em with fun chips. No real money, all the strategy.', players: '2–9 players · Hold\'em', status: 'soon', path: '#' },
 ]
 
 export default function Home() {
