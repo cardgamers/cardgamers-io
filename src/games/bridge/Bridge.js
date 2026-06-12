@@ -53,35 +53,35 @@ function ThinkingDots() {
   return <span>{'●'.repeat(d)}{'○'.repeat(3-d)}</span>
 }
 
-// ─── Bid bubble — shown next to each player ───────────────────────
+// ─── Bid bubble ───────────────────────────────────────────────────
 function BidBubble({ bid, thinking }) {
   if (!bid && !thinking) return null
   const text = thinking ? '...' : bid.type==='pass' ? 'Pass' : bid.type==='double' ? 'Dbl' : `${bid.level}${DENOM_SYMBOLS[bid.denomination]}`
-  const col = thinking ? 'var(--gold)' : bid.type==='bid' ? (DENOM_COLORS[bid.denomination]==='#1a1a2e' ? 'white' : DENOM_COLORS[bid.denomination]) : 'rgba(245,240,232,0.5)'
+  const col = thinking ? 'var(--gold)' : bid.type==='bid' ? (DENOM_COLORS[bid.denomination]==='#1a1a2e'?'white':DENOM_COLORS[bid.denomination]) : 'rgba(245,240,232,0.5)'
   return (
-    <div style={{ background:'rgba(0,0,0,0.75)', border:`1.5px solid ${thinking?'var(--gold)':'rgba(255,255,255,0.15)'}`, borderRadius:8, padding:'4px 10px', fontSize:'0.85rem', fontWeight:700, color:col, whiteSpace:'nowrap' }}>
+    <div style={{ background:'rgba(0,0,0,0.8)', border:`1.5px solid ${thinking?'var(--gold)':'rgba(255,255,255,0.2)'}`, borderRadius:8, padding:'4px 10px', fontSize:'0.85rem', fontWeight:700, color:col, whiteSpace:'nowrap' }}>
       {thinking ? <ThinkingDots /> : text}
     </div>
   )
 }
 
-// ─── Full auction history table ───────────────────────────────────
+// ─── Auction history ──────────────────────────────────────────────
 function AuctionHistory({ auction, dealer }) {
   const pos = ['W','N','E','S']
   const pad = [...Array(pos.indexOf(dealer)).fill(null), ...auction]
-  if (auction.length === 0) return <p style={{ fontSize:'0.75rem', color:'var(--text-muted)', textAlign:'center', padding:'8px 0' }}>Bidding in progress...</p>
+  if (auction.length === 0) return <p style={{ fontSize:'0.75rem', color:'var(--text-muted)', textAlign:'center', padding:'8px 0' }}>Bidding starting...</p>
   return (
     <div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:3, marginBottom:4 }}>
         {['W','N','E','You'].map(p => (
-          <div key={p} style={{ textAlign:'center', fontSize:'0.65rem', color:'rgba(245,240,232,0.45)', fontWeight:600, padding:'2px 0' }}>{p}</div>
+          <div key={p} style={{ textAlign:'center', fontSize:'0.65rem', color:'rgba(245,240,232,0.45)', fontWeight:600 }}>{p}</div>
         ))}
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:3 }}>
         {pad.map((b, i) => {
           const col = b?.type==='bid' ? (DENOM_COLORS[b.denomination]==='#1a1a2e'?'white':DENOM_COLORS[b.denomination]) : 'rgba(245,240,232,0.35)'
           return (
-            <div key={i} style={{ textAlign:'center', padding:'3px 2px', borderRadius:4, fontSize:'0.78rem', fontWeight:600, background: b?'rgba(255,255,255,0.07)':'transparent', color:col, minHeight:24, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div key={i} style={{ textAlign:'center', padding:'3px 2px', borderRadius:4, fontSize:'0.78rem', fontWeight:600, background:b?'rgba(255,255,255,0.07)':'transparent', color:col, minHeight:24, display:'flex', alignItems:'center', justifyContent:'center' }}>
               {b ? (b.type==='pass'?'P':b.type==='double'?'X':`${b.level}${DENOM_SYMBOLS[b.denomination]}`) : ''}
             </div>
           )
@@ -91,35 +91,125 @@ function AuctionHistory({ auction, dealer }) {
   )
 }
 
-// ─── Bid panel ────────────────────────────────────────────────────
+// ─── NEW: Step-by-step bid panel ──────────────────────────────────
+// Player clicks: Level → Denomination → Confirm
 function BidPanel({ auction, onBid, onPass }) {
+  const [selLevel, setSelLevel] = useState(null)
+  const [selDenom, setSelDenom] = useState(null)
+
   const dn = ['C','D','H','S','NT']
   const last = auction.reduce((l,b) => b.type==='bid'?b:l, null)
-  const ok = (lv,d) => { if(!last)return true; if(lv>last.level)return true; if(lv===last.level)return dn.indexOf(d)>dn.indexOf(last.denomination); return false }
+
+  function isLevelValid(lv) {
+    if (!last) return true
+    return lv > last.level || (lv === last.level)
+  }
+  function isDenomValid(lv, d) {
+    if (!last) return true
+    if (lv > last.level) return true
+    if (lv === last.level) return dn.indexOf(d) > dn.indexOf(last.denomination)
+    return false
+  }
+
+  function handleLevel(lv) {
+    setSelLevel(lv)
+    setSelDenom(null) // reset denom when level changes
+  }
+
+  function handleDenom(d) {
+    if (!selLevel) return
+    if (!isDenomValid(selLevel, d)) return
+    setSelDenom(d)
+  }
+
+  function handleConfirm() {
+    if (!selLevel || !selDenom) return
+    onBid(selLevel, selDenom)
+    setSelLevel(null)
+    setSelDenom(null)
+  }
+
+  function handlePass() {
+    setSelLevel(null)
+    setSelDenom(null)
+    onPass()
+  }
+
+  const denomColors = { C:'#1a1a2e', D:'#c0392b', H:'#c0392b', S:'#1a1a2e', NT:'#2563a8' }
+  const denomDisplay = { C:'♣ Clubs', D:'♦ Diamonds', H:'♥ Hearts', S:'♠ Spades', NT:'NT' }
+
   return (
-    <div style={{ background:'rgba(0,0,0,0.7)', borderRadius:12, padding:'12px 14px', border:'1px solid rgba(201,168,76,0.2)' }}>
-      <p style={{ fontSize:'0.7rem', color:'var(--gold)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10, textAlign:'center' }}>Your Bid</p>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:4 }}>
-        {[1,2,3,4,5,6,7].flatMap(lv => dn.map(d => {
-          const valid = ok(lv,d)
-          const tc = d==='NT' ? (valid?'#7eb5f5':'rgba(100,160,255,0.2)') : DENOM_COLORS[d]==='#1a1a2e' ? (valid?'white':'rgba(255,255,255,0.15)') : (valid?DENOM_COLORS[d]:'rgba(192,57,43,0.2)')
-          return (
-            <button key={`${lv}${d}`} onClick={() => valid&&onBid(lv,d)} style={{
-              width:'100%', height:36, borderRadius:5,
-              border:`1px solid ${valid?'rgba(255,255,255,0.22)':'rgba(255,255,255,0.04)'}`,
-              background: valid?'rgba(255,255,255,0.09)':'rgba(0,0,0,0.3)',
-              cursor: valid?'pointer':'not-allowed',
-              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-            }}>
-              <span style={{ fontSize:'0.62rem', color:valid?'rgba(245,240,232,0.65)':'rgba(255,255,255,0.1)', lineHeight:1.2 }}>{lv}</span>
-              <span style={{ fontSize:'0.8rem', color:tc, lineHeight:1.2, fontWeight:700 }}>{DENOM_SYMBOLS[d]}</span>
-            </button>
-          )
-        }))}
+    <div style={{ background:'rgba(0,0,0,0.75)', borderRadius:14, padding:'16px 18px', border:'1px solid rgba(201,168,76,0.25)', maxWidth:340, width:'100%' }}>
+      <p style={{ fontSize:'0.75rem', color:'var(--gold)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:14, textAlign:'center' }}>Make Your Bid</p>
+
+      {/* Step 1: Choose level */}
+      <div style={{ marginBottom:14 }}>
+        <p style={{ fontSize:'0.68rem', color:'rgba(245,240,232,0.5)', marginBottom:8, fontWeight:500 }}>
+          Step 1 — Choose level {selLevel && <span style={{ color:'var(--gold)' }}>({selLevel} selected)</span>}
+        </p>
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+          {[1,2,3,4,5,6,7].map(lv => {
+            const valid = isLevelValid(lv)
+            const isSelected = selLevel === lv
+            return (
+              <button key={lv} onClick={() => valid && handleLevel(lv)} style={{
+                width:44, height:44, borderRadius:8,
+                background: isSelected ? 'var(--gold)' : valid ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)',
+                border: isSelected ? '2px solid var(--gold)' : `1.5px solid ${valid?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.06)'}`,
+                color: isSelected ? 'var(--felt-dark)' : valid ? 'white' : 'rgba(255,255,255,0.2)',
+                fontSize:'1.1rem', fontWeight:700, cursor:valid?'pointer':'not-allowed',
+              }}>{lv}</button>
+            )
+          })}
+        </div>
       </div>
-      <button onClick={onPass} style={{ width:'100%', marginTop:8, padding:'9px', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.18)', color:'var(--cream)', borderRadius:7, cursor:'pointer', fontWeight:600, fontSize:'0.9rem' }}>
-        Pass
-      </button>
+
+      {/* Step 2: Choose denomination */}
+      <div style={{ marginBottom:14, opacity: selLevel ? 1 : 0.4 }}>
+        <p style={{ fontSize:'0.68rem', color:'rgba(245,240,232,0.5)', marginBottom:8, fontWeight:500 }}>
+          Step 2 — Choose suit {selDenom && <span style={{ color:'var(--gold)' }}>({DENOM_SYMBOLS[selDenom]} selected)</span>}
+        </p>
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+          {dn.map(d => {
+            const valid = selLevel ? isDenomValid(selLevel, d) : false
+            const isSelected = selDenom === d
+            const tc = d==='NT' ? '#7eb5f5' : SUIT_COLORS[d]==='#1a1a2e' ? 'white' : SUIT_COLORS[d]
+            return (
+              <button key={d} onClick={() => handleDenom(d)} style={{
+                padding:'8px 14px', borderRadius:8, height:44,
+                background: isSelected ? 'rgba(201,168,76,0.25)' : valid ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
+                border: isSelected ? '2px solid var(--gold)' : `1.5px solid ${valid?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.04)'}`,
+                color: isSelected ? 'var(--gold)' : valid ? tc : 'rgba(255,255,255,0.15)',
+                fontSize:'1rem', fontWeight:700, cursor:valid?'pointer':'not-allowed',
+                minWidth:52,
+              }}>
+                {d === 'NT' ? 'NT' : SUIT_SYMBOLS[d]}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Step 3: Confirm or Pass */}
+      <div style={{ display:'flex', gap:8 }}>
+        <button
+          onClick={handleConfirm}
+          disabled={!selLevel || !selDenom}
+          style={{
+            flex:1, padding:'11px', borderRadius:8,
+            background: selLevel && selDenom ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
+            border: `1.5px solid ${selLevel && selDenom ? 'var(--gold)' : 'rgba(255,255,255,0.1)'}`,
+            color: selLevel && selDenom ? 'var(--felt-dark)' : 'rgba(255,255,255,0.2)',
+            fontWeight:700, fontSize:'0.95rem', cursor: selLevel && selDenom ? 'pointer' : 'not-allowed',
+          }}>
+          {selLevel && selDenom ? `Bid ${selLevel}${DENOM_SYMBOLS[selDenom]} ✓` : 'Select level & suit'}
+        </button>
+        <button onClick={handlePass} style={{
+          padding:'11px 16px', borderRadius:8,
+          background:'rgba(255,255,255,0.07)', border:'1.5px solid rgba(255,255,255,0.2)',
+          color:'rgba(245,240,232,0.8)', fontWeight:600, fontSize:'0.95rem', cursor:'pointer',
+        }}>Pass</button>
+      </div>
     </div>
   )
 }
@@ -157,16 +247,15 @@ export default function Bridge() {
   const [difficulty, setDifficulty] = useState('medium')
   const [game, setGame] = useState(null)
   const [selectedCard, setSelectedCard] = useState(null)
-  const [botThinking, setBotThinking] = useState(null) // position thinking
+  const [botThinking, setBotThinking] = useState(null)
   const [lastTrick, setLastTrick] = useState(null)
   const [showLastTrick, setShowLastTrick] = useState(false)
   const botTimer = useRef(null)
   const lastTrickTimer = useRef(null)
   const isPlusUser = profile?.plan==='plus'||profile?.plan==='club'
 
-  // Get last bid per player
-  function getPlayerLastBid(position, auction) {
-    const bids = auction.filter(b => b.position === position)
+  function getPlayerLastBid(pos, auction) {
+    const bids = auction.filter(b=>b.position===pos)
     return bids.length ? bids[bids.length-1] : null
   }
 
@@ -196,11 +285,10 @@ export default function Bridge() {
       const side = (winner.position==='N'||winner.position==='S')?'NS':'EW'
       ng.tricks[side]++
       ng.trickHistory.push({ trick:[...ng.currentTrick], winner:winner.position })
-      // Show last trick briefly
       setLastTrick({ trick:[...ng.currentTrick], winner:winner.position })
       setShowLastTrick(true)
       clearTimeout(lastTrickTimer.current)
-      lastTrickTimer.current = setTimeout(() => setShowLastTrick(false), 2500)
+      lastTrickTimer.current = setTimeout(() => setShowLastTrick(false), 3000)
       ng.currentTrick = []
       ng.currentLeader = winner.position
       if (ng.tricks.NS+ng.tricks.EW===13) {
@@ -344,7 +432,7 @@ export default function Bridge() {
           <div style={{ background:'#234d38', border:'2px solid var(--gold)', borderRadius:18, padding:'2rem', textAlign:'center', maxWidth:400, width:'90%' }}>
             <div style={{ fontSize:'2.5rem', marginBottom:'0.5rem' }}>{game.scoring.made?'🎉':'😔'}</div>
             <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.8rem', color:'var(--gold)', marginBottom:'0.4rem' }}>{game.scoring.made?'Contract Made!':'Contract Defeated!'}</h2>
-            <p style={{ color:'var(--cream)', marginBottom:'0.2rem', fontSize:'1rem' }}>{game.contract.level}{DENOM_SYMBOLS[game.contract.denomination]} by {game.contract.declarer==='S'?'You':game.contract.declarer}</p>
+            <p style={{ color:'var(--cream)', marginBottom:'0.2rem', fontSize:'1rem' }}>{game.contract.level}{DENOM_SYMBOLS[game.contract.denomination]} by {game.contract.declarer==='S'?'You':botName(game.contract.declarer)}</p>
             <p style={{ color:'var(--text-muted)', fontSize:'0.9rem', marginBottom:'0.5rem' }}>NS: {game.tricks.NS} tricks · EW: {game.tricks.EW} tricks</p>
             <div style={{ fontSize:'1.6rem', fontWeight:700, color:'var(--gold)', margin:'0.75rem 0' }}>
               {game.scoring.made?`NS +${game.scoring.declarerScore}`:`EW +${game.scoring.defenderScore}`} pts
@@ -357,13 +445,23 @@ export default function Bridge() {
         </div>
       )}
 
-      {/* Last trick toast */}
+      {/* Last trick overlay — BIG cards, centre screen */}
       {showLastTrick&&lastTrick&&(
-        <div style={{ position:'fixed', top:80, left:'50%', transform:'translateX(-50%)', zIndex:150, background:'rgba(0,0,0,0.85)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:12, padding:'10px 20px', display:'flex', alignItems:'center', gap:12 }}>
-          <span style={{ fontSize:'0.8rem', color:'var(--gold)', fontWeight:600 }}>Last trick — {lastTrick.winner==='S'?'You':botName(lastTrick.winner)} won</span>
-          <div style={{ display:'flex', gap:4 }}>
-            {lastTrick.trick.map((t,i) => <BCard key={i} card={t.card} w={36} h={50} />)}
+        <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', zIndex:150, background:'rgba(0,0,0,0.92)', border:'2px solid rgba(201,168,76,0.4)', borderRadius:16, padding:'20px 28px', textAlign:'center', boxShadow:'0 8px 40px rgba(0,0,0,0.6)' }}>
+          <p style={{ fontSize:'0.85rem', color:'var(--gold)', fontWeight:700, marginBottom:12 }}>
+            {lastTrick.winner==='S'?'You won':''+botName(lastTrick.winner)+' won'} the trick
+          </p>
+          <div style={{ display:'flex', gap:10, justifyContent:'center', alignItems:'flex-end' }}>
+            {lastTrick.trick.map((t,i) => (
+              <div key={i} style={{ textAlign:'center' }}>
+                <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.5)', marginBottom:4 }}>
+                  {t.position==='S'?'You':botName(t.position)} {t.position===lastTrick.winner?'👑':''}
+                </div>
+                <BCard card={t.card} w={80} h={112} />
+              </div>
+            ))}
           </div>
+          <p style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.3)', marginTop:12 }}>Next trick starting...</p>
         </div>
       )}
 
@@ -372,7 +470,9 @@ export default function Bridge() {
         <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
           <button onClick={()=>setScreen('menu')} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:'0.8rem' }}>← Menu</button>
           <span style={{ fontFamily:"'Playfair Display',serif", color:'var(--gold)', fontWeight:700 }}>♠ Bridge</span>
-          {game.contract&&<span style={{ fontSize:'0.72rem', background:'rgba(255,255,255,0.08)', color:'var(--cream)', padding:'2px 10px', borderRadius:20 }}>{game.contract.level}{DENOM_SYMBOLS[game.contract.denomination]} · {game.contract.declarer==='S'?'You':botName(game.contract.declarer)} declares{isDeclarer?' · Play both hands':''}</span>}
+          {game.contract&&<span style={{ fontSize:'0.72rem', background:'rgba(255,255,255,0.08)', color:'var(--cream)', padding:'2px 10px', borderRadius:20 }}>
+            {game.contract.level}{DENOM_SYMBOLS[game.contract.denomination]} · {game.contract.declarer==='S'?'You':botName(game.contract.declarer)} declares{isDeclarer?' · Play both hands':''}
+          </span>}
         </div>
         <div style={{ fontSize:'0.82rem', fontWeight:600 }}>
           {isMyTurn
@@ -401,12 +501,11 @@ export default function Bridge() {
               <span style={{ fontSize:'0.7rem', color:game.contract?.declarer==='N'?'var(--gold)':'var(--text-muted)' }}>
                 {botName('N')} (N) {game.contract?.declarer==='N'?'★':game.dummy==='N'&&game.dummyRevealed?'(Dummy)':''}
               </span>
-              {/* Bid bubble for North */}
               {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
             </div>
             {game.dummy==='N'&&game.dummyRevealed
               ? <DummyCards hand={game.hands['N']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='N'} />
-              : <div style={{ display:'flex', gap:2 }}>{Array.from({length:Math.min(game.hands['N']?.length||13,11)}).map((_,i)=><BCard key={i} faceDown w={40} h={56} />)}</div>
+              : <div style={{ display:'flex', gap:2 }}>{Array.from({length:Math.min(game.hands['N']?.length||13,11)}).map((_,i)=><BCard key={i} faceDown w={42} h={59} />)}</div>
             }
           </div>
 
@@ -421,50 +520,56 @@ export default function Bridge() {
               </div>
               {game.dummy==='W'&&game.dummyRevealed
                 ? <DummyCards hand={game.hands['W']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='W'} />
-                : <div style={{ display:'flex', flexDirection:'column', gap:2 }}>{Array.from({length:Math.min(game.hands['W']?.length||13,8)}).map((_,i)=><BCard key={i} faceDown w={40} h={56} />)}</div>
+                : <div style={{ display:'flex', flexDirection:'column', gap:2 }}>{Array.from({length:Math.min(game.hands['W']?.length||13,8)}).map((_,i)=><BCard key={i} faceDown w={42} h={59} />)}</div>
               }
             </div>
 
             {/* CENTER */}
             <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, minWidth:0 }}>
 
-              {/* Bidding phase */}
+              {/* BIDDING PHASE */}
               {game.phase==='bidding'&&(
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10, width:'100%' }}>
-                  {isMyBidTurn
-                    ? <BidPanel auction={game.auction} onBid={handleBid} onPass={handlePass} />
-                    : <div style={{ textAlign:'center', padding:'12px 20px', background:'rgba(0,0,0,0.4)', borderRadius:10, border:'1px solid rgba(201,168,76,0.1)' }}>
-                        <p style={{ fontSize:'0.85rem', color:'var(--text-muted)' }}>Waiting for {botName(game.currentBidder)}...</p>
+                isMyBidTurn
+                  ? <BidPanel auction={game.auction} onBid={handleBid} onPass={handlePass} />
+                  : <div style={{ textAlign:'center', padding:'16px 24px', background:'rgba(0,0,0,0.4)', borderRadius:12, border:'1px solid rgba(201,168,76,0.1)' }}>
+                      <p style={{ fontSize:'0.9rem', color:'var(--text-muted)', marginBottom:6 }}>Waiting for {botName(game.currentBidder)}...</p>
+                      {botThinking&&<ThinkingDots />}
+                    </div>
+              )}
+
+              {/* TRICK AREA — bigger cards */}
+              {game.phase==='playing'&&(
+                <div style={{ position:'relative', width:260, height:200, flexShrink:0 }}>
+                  {['N','S','E','W'].map(p => {
+                    const play = game.currentTrick.find(t=>t.position===p)
+                    const offsets = {
+                      N:{top:0,left:'50%',transform:'translateX(-50%)'},
+                      S:{bottom:0,left:'50%',transform:'translateX(-50%)'},
+                      E:{right:0,top:'50%',transform:'translateY(-50%)'},
+                      W:{left:0,top:'50%',transform:'translateY(-50%)'}
+                    }
+                    return (
+                      <div key={p} style={{ position:'absolute', ...offsets[p] }}>
+                        {play
+                          ? <div style={{ textAlign:'center' }}>
+                              <BCard card={play.card} w={68} h={95} />
+                              <div style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.4)', marginTop:2 }}>{p==='S'?'You':botName(p)}</div>
+                            </div>
+                          : <div style={{ width:68, height:95, borderRadius:7, border:'2px dashed rgba(201,168,76,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                              <span style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.2)' }}>{p==='S'?'You':botName(p)}</span>
+                            </div>
+                        }
                       </div>
-                  }
+                    )
+                  })}
                 </div>
               )}
 
-              {/* Trick area */}
-              <div style={{ position:'relative', width:200, height:165, flexShrink:0 }}>
-                {['N','S','E','W'].map(p => {
-                  const play = game.currentTrick.find(t=>t.position===p)
-                  const offsets = {
-                    N:{top:0,left:'50%',transform:'translateX(-50%)'},
-                    S:{bottom:0,left:'50%',transform:'translateX(-50%)'},
-                    E:{right:0,top:'50%',transform:'translateY(-50%)'},
-                    W:{left:0,top:'50%',transform:'translateY(-50%)'}
-                  }
-                  return (
-                    <div key={p} style={{ position:'absolute', ...offsets[p] }}>
-                      {play
-                        ? <BCard card={play.card} w={52} h={73} />
-                        : <div style={{ width:52, height:73, borderRadius:6, border:'1.5px dashed rgba(201,168,76,0.12)' }} />
-                      }
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Play phase info */}
+              {/* Contract info */}
               {game.phase==='playing'&&game.contract&&(
-                <div style={{ textAlign:'center', fontSize:'0.78rem', color:'var(--text-muted)', background:'rgba(0,0,0,0.3)', borderRadius:8, padding:'6px 14px' }}>
-                  {isDeclarer&&<span style={{ color:'var(--gold)', display:'block', fontSize:'0.72rem' }}>You declared — play from both your hand and dummy</span>}
+                <div style={{ textAlign:'center', fontSize:'0.78rem', color:'var(--text-muted)', background:'rgba(0,0,0,0.3)', borderRadius:8, padding:'5px 14px' }}>
+                  {isDeclarer&&<span style={{ color:'var(--gold)', fontSize:'0.72rem' }}>★ You declared — click your cards AND dummy to play</span>}
+                  {!isDeclarer&&<span>Playing as defender</span>}
                 </div>
               )}
             </div>
@@ -477,7 +582,7 @@ export default function Bridge() {
               </div>
               {game.dummy==='E'&&game.dummyRevealed
                 ? <DummyCards hand={game.hands['E']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='E'} />
-                : <div style={{ display:'flex', flexDirection:'column', gap:2 }}>{Array.from({length:Math.min(game.hands['E']?.length||13,8)}).map((_,i)=><BCard key={i} faceDown w={40} h={56} />)}</div>
+                : <div style={{ display:'flex', flexDirection:'column', gap:2 }}>{Array.from({length:Math.min(game.hands['E']?.length||13,8)}).map((_,i)=><BCard key={i} faceDown w={42} h={59} />)}</div>
               }
             </div>
           </div>
@@ -486,12 +591,10 @@ export default function Bridge() {
           <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:6, paddingBottom:8 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize:'0.7rem', color:isMyTurn?'#5DCAA5':isDeclarer?'var(--gold)':'var(--text-muted)' }}>
-                You (S) · {countHCP(myHand)} HCP {isDeclarer?'· ★ Declarer':''} {isMyPlayTurn?'· Your turn':''}
+                You (S) · {countHCP(myHand)} HCP {isDeclarer?'· ★ Declarer':''} {isMyPlayTurn?'· Your turn to play':''}
               </span>
-              {/* Your bid bubble */}
               {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('S',game.auction)} thinking={false} />}
             </div>
-            {/* Cards grouped by suit */}
             <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
               {['S','H','D','C'].map(suit => {
                 const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
@@ -504,12 +607,8 @@ export default function Bridge() {
                         const isSelected = selectedCard?.id===card.id
                         const isLegal = !legalCards||legalCards.some(c=>c.id===card.id)
                         return (
-                          <BCard
-                            key={card.id}
-                            card={card}
-                            w={64} h={90}
-                            selected={isSelected}
-                            legal={isLegal?undefined:false}
+                          <BCard key={card.id} card={card} w={64} h={90}
+                            selected={isSelected} legal={isLegal?undefined:false}
                             onClick={() => {
                               if (!isMyPlayTurn||!isLegal) return
                               if (isSelected) { handleCardClick(card); setSelectedCard(null) }
@@ -524,51 +623,35 @@ export default function Bridge() {
               })}
             </div>
             {isMyPlayTurn&&<p style={{ fontSize:'0.68rem', color:'rgba(245,240,232,0.3)' }}>Click to select · Click again to play</p>}
-            {isMyBidTurn&&<p style={{ fontSize:'0.68rem', color:'rgba(245,240,232,0.3)' }}>Use the bidding panel above to make your bid</p>}
           </div>
         </div>
 
         {/* RIGHT PANEL */}
         <div style={{ width:185, background:'rgba(0,0,0,0.35)', borderLeft:'1px solid rgba(201,168,76,0.1)', padding:'10px 10px', display:'flex', flexDirection:'column', gap:10, flexShrink:0, overflowY:'auto' }}>
-
-          {/* Bidding history */}
           <div>
             <p style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:600 }}>Bidding History</p>
             <AuctionHistory auction={game.auction} dealer={game.dealer} />
           </div>
-
-          {/* Tricks */}
           {game.phase==='playing'&&(
             <div style={{ background:'rgba(0,0,0,0.3)', borderRadius:8, padding:'8px 10px' }}>
-              <p style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:5, fontWeight:600 }}>Score</p>
-              <p style={{ fontSize:'0.9rem', color:'#5DCAA5', marginBottom:2 }}>NS: {game.tricks.NS} tricks</p>
-              <p style={{ fontSize:'0.9rem', color:'#c0392b', marginBottom:4 }}>EW: {game.tricks.EW} tricks</p>
-              <p style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Contract needs {game.contract?.tricksNeeded}</p>
-              <p style={{ fontSize:'0.75rem', color: game.tricks[(isDeclarer?'NS':'EW')] >= (game.contract?.tricksNeeded||7) ? '#5DCAA5' : 'var(--text-muted)', marginTop:2 }}>
-                {game.tricks[(isDeclarer?'NS':'EW')]} of {game.contract?.tricksNeeded} made
-              </p>
+              <p style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:5, fontWeight:600 }}>Tricks</p>
+              <p style={{ fontSize:'0.9rem', color:'#5DCAA5', marginBottom:2 }}>NS: {game.tricks.NS}</p>
+              <p style={{ fontSize:'0.9rem', color:'#c0392b', marginBottom:4 }}>EW: {game.tricks.EW}</p>
+              <p style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Need {game.contract?.tricksNeeded} to make</p>
             </div>
           )}
-
-          {/* Your hand */}
           <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'8px 10px' }}>
             <p style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:5, fontWeight:600 }}>Your Hand · {countHCP(myHand)} HCP</p>
             {['S','H','D','C'].map(suit => {
               const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
               if (!cards.length) return null
-              return (
-                <p key={suit} style={{ fontSize:'0.8rem', color:SUIT_COLORS[suit]==='#1a1a2e'?'rgba(255,255,255,0.85)':SUIT_COLORS[suit], marginBottom:3, lineHeight:1.4 }}>
-                  {SUIT_SYMBOLS[suit]} {cards.map(c=>c.value).join(' ')}
-                </p>
-              )
+              return <p key={suit} style={{ fontSize:'0.8rem', color:SUIT_COLORS[suit]==='#1a1a2e'?'rgba(255,255,255,0.85)':SUIT_COLORS[suit], marginBottom:3 }}>{SUIT_SYMBOLS[suit]} {cards.map(c=>c.value).join(' ')}</p>
             })}
           </div>
-
-          {/* Vulnerability */}
           <div style={{ background:'rgba(0,0,0,0.2)', borderRadius:8, padding:'8px 10px' }}>
             <p style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:5, fontWeight:600 }}>Vulnerability</p>
-            <p style={{ fontSize:'0.8rem', color:game.vulnerability?.NS?'#c0392b':'#5DCAA5', marginBottom:2 }}>NS: {game.vulnerability?.NS?'Vulnerable':'Not vul'}</p>
-            <p style={{ fontSize:'0.8rem', color:game.vulnerability?.EW?'#c0392b':'#5DCAA5' }}>EW: {game.vulnerability?.EW?'Vulnerable':'Not vul'}</p>
+            <p style={{ fontSize:'0.8rem', color:game.vulnerability?.NS?'#c0392b':'#5DCAA5', marginBottom:2 }}>NS: {game.vulnerability?.NS?'Vul':'Not vul'}</p>
+            <p style={{ fontSize:'0.8rem', color:game.vulnerability?.EW?'#c0392b':'#5DCAA5' }}>EW: {game.vulnerability?.EW?'Vul':'Not vul'}</p>
           </div>
         </div>
       </div>
