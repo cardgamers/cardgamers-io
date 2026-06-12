@@ -215,11 +215,36 @@ function BidPanel({ auction, onBid, onPass }) {
 }
 
 // ─── Dummy face-up hand ───────────────────────────────────────────
-function DummyCards({ hand, currentTrick, contract, onPlay, canPlay }) {
+function DummyCards({ hand, currentTrick, contract, onPlay, canPlay, vertical }) {
   if (!hand) return null
   const legal = canPlay ? getLegalCards(hand, currentTrick, contract?.denomination==='NT'?null:contract?.denomination) : null
+
+  if (vertical) {
+    // For East/West dummy — show suits stacked vertically
+    return (
+      <div style={{ display:'flex', flexDirection:'column', gap:4, maxHeight:300, overflowY:'auto' }}>
+        {['S','H','D','C'].map(suit => {
+          const cards = hand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+          if (!cards.length) return null
+          return (
+            <div key={suit} style={{ display:'flex', alignItems:'center', gap:2 }}>
+              <span style={{ fontSize:'0.7rem', color:SUIT_COLORS[suit]==='#1a1a2e'?'rgba(255,255,255,0.6)':SUIT_COLORS[suit], width:12, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+              <div style={{ display:'flex', gap:1 }}>
+                {cards.map(c => {
+                  const isLegal = !legal||legal.some(x=>x.id===c.id)
+                  return <BCard key={c.id} card={c} w={34} h={48} legal={isLegal?undefined:false} onClick={()=>canPlay&&isLegal&&onPlay(c)} />
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // For North/South dummy — horizontal layout
   return (
-    <div style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap' }}>
+    <div style={{ display:'flex', gap:6, justifyContent:'center', flexWrap:'wrap' }}>
       {['S','H','D','C'].map(suit => {
         const cards = hand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
         if (!cards.length) return null
@@ -229,7 +254,7 @@ function DummyCards({ hand, currentTrick, contract, onPlay, canPlay }) {
             <div style={{ display:'flex', gap:2 }}>
               {cards.map(c => {
                 const isLegal = !legal||legal.some(x=>x.id===c.id)
-                return <BCard key={c.id} card={c} w={52} h={73} legal={isLegal?undefined:false} onClick={()=>canPlay&&isLegal&&onPlay(c)} />
+                return <BCard key={c.id} card={c} w={46} h={65} legal={isLegal?undefined:false} onClick={()=>canPlay&&isLegal&&onPlay(c)} />
               })}
             </div>
           </div>
@@ -536,10 +561,10 @@ export default function Bridge() {
                 {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
               </div>
               {game.dummy==='W'&&game.dummyRevealed
-                ? <DummyCards hand={game.hands['W']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='W'} />
-                : <div style={{ position:'relative', width:52, height: Math.min((game.hands['W']?.length||13)*14+45, 180) }}>
+                ? <DummyCards hand={game.hands['W']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='W'} vertical />
+                : <div style={{ position:'relative', width:46, height: Math.min((game.hands['W']?.length||13)*16+43, 200) }}>
                     {Array.from({length:Math.min(game.hands['W']?.length||13,13)}).map((_,i)=>(
-                      <div key={i} style={{ position:'absolute', top: i*14 }}>
+                      <div key={i} style={{ position:'absolute', top: i*16 }}>
                         <BCard faceDown w={42} h={59} />
                       </div>
                     ))}
@@ -604,10 +629,10 @@ export default function Bridge() {
                 <span style={{ fontSize:'0.65rem', color:game.contract?.declarer==='E'?'var(--gold)':'var(--text-muted)', writingMode:'vertical-rl' }}>{botName('E')} (E)</span>
               </div>
               {game.dummy==='E'&&game.dummyRevealed
-                ? <DummyCards hand={game.hands['E']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='E'} />
-                : <div style={{ position:'relative', width:52, height: Math.min((game.hands['E']?.length||13)*14+45, 180) }}>
+                ? <DummyCards hand={game.hands['E']} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader==='E'} vertical />
+                : <div style={{ position:'relative', width:46, height: Math.min((game.hands['E']?.length||13)*16+43, 200) }}>
                     {Array.from({length:Math.min(game.hands['E']?.length||13,13)}).map((_,i)=>(
-                      <div key={i} style={{ position:'absolute', top: i*14 }}>
+                      <div key={i} style={{ position:'absolute', top: i*16 }}>
                         <BCard faceDown w={42} h={59} />
                       </div>
                     ))}
