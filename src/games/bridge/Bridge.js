@@ -53,13 +53,22 @@ function ThinkingDots() {
   return <span>{'●'.repeat(d)}{'○'.repeat(3-d)}</span>
 }
 
+function suitColor(denom) {
+  if (denom === 'H' || denom === 'D') return '#e74c3c'
+  if (denom === 'S' || denom === 'C') return 'rgba(255,255,255,0.9)'
+  return '#7eb5f5' // NT
+}
+
 function BidBubble({ bid, thinking }) {
   if (!bid && !thinking) return null
-  const text = thinking?'...':bid.type==='pass'?'Pass':bid.type==='double'?'Dbl':`${bid.level}${DENOM_SYMBOLS[bid.denomination]}`
-  const col = thinking?'var(--gold)':bid.type==='bid'?'white':'rgba(245,240,232,0.5)'
+  const isPass = bid?.type === 'pass'
+  const isDbl = bid?.type === 'double'
+  const col = thinking ? 'var(--gold)' : isPass || isDbl ? 'rgba(245,240,232,0.5)' : 'white'
   return (
     <div style={{ background:'rgba(0,0,0,0.85)', border:`1.5px solid ${thinking?'var(--gold)':'rgba(255,255,255,0.2)'}`, borderRadius:8, padding:'3px 10px', fontSize:'0.82rem', fontWeight:700, color:col, whiteSpace:'nowrap' }}>
-      {thinking?<ThinkingDots/>:text}
+      {thinking ? <ThinkingDots/> : isPass ? 'Pass' : isDbl ? 'Dbl' : (
+        <span>{bid.level}<span style={{ color: suitColor(bid.denomination) }}>{DENOM_SYMBOLS[bid.denomination]}</span></span>
+      )}
     </div>
   )
 }
@@ -77,7 +86,9 @@ function AuctionHistory({ auction, dealer }) {
         {pad.map((b,i)=>{
           const col = b?.type==='bid'?'white':'rgba(245,240,232,0.35)'
           return <div key={i} style={{ textAlign:'center', padding:'3px 1px', borderRadius:3, fontSize:'0.75rem', fontWeight:600, background:b?'rgba(255,255,255,0.07)':'transparent', color:col, minHeight:22, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            {b?(b.type==='pass'?'P':b.type==='double'?'X':`${b.level}${DENOM_SYMBOLS[b.denomination]}`):''}</div>
+            {b ? (b.type==='pass' ? 'P' : b.type==='double' ? 'X' : (
+              <span>{b.level}<span style={{ color: suitColor(b.denomination) }}>{DENOM_SYMBOLS[b.denomination]}</span></span>
+            )) : ''}</div>
         })}
       </div>
     </div>
