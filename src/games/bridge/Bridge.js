@@ -780,19 +780,7 @@ export default function Bridge() {
               </>}
             </div>
           )}
-          {game.initialHCP && (
-            <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'8px 10px' }}>
-              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>HCP</p>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:2 }}>
-                <span style={{ fontSize:'0.72rem', color:'#5DCAA5' }}>NS</span>
-                <span style={{ fontSize:'0.82rem', color:'#5DCAA5', fontWeight:700 }}>{game.initialHCP.NS}</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between' }}>
-                <span style={{ fontSize:'0.72rem', color:'#c0392b' }}>EW</span>
-                <span style={{ fontSize:'0.82rem', color:'#c0392b', fontWeight:700 }}>{game.initialHCP.EW}</span>
-              </div>
-            </div>
-          )}
+{/* HCP only shown on result screen — removed from sidebar to avoid cheating */}
           <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'8px 10px' }}>
             <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Your Hand · {countHCP(myHand)} HCP</p>
             {['S','H','D','C'].map(suit => {
