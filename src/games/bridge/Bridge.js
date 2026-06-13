@@ -621,8 +621,8 @@ export default function Bridge() {
           <div style={{ flex:1, display:'flex', alignItems:'stretch', overflow:'hidden', minHeight:0, padding:'0 8px', gap:8 }}>
 
             {/* WEST */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, width:isWestDummy?'auto':70 }}>
-              <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)', maxHeight:100 }}>{playerLabel('W')}</span>
+            <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0 }}>
+              <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)' }}>{playerLabel('W')}</span>
               {isWestDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} horizontal={false} />
                 : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={60} cardH={84} overlap={15} />
@@ -677,13 +677,13 @@ export default function Bridge() {
             </div>
 
             {/* EAST */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, width:isEastDummy?'auto':70 }}>
-              <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('E'), writingMode:'vertical-rl', maxHeight:100 }}>{playerLabel('E')}</span>
+            <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0 }}>
+              {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
               {isEastDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} horizontal={false} />
                 : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={60} cardH={84} overlap={15} />
               }
-              {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
+              <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('E'), writingMode:'vertical-rl' }}>{playerLabel('E')}</span>
             </div>
           </div>
 
