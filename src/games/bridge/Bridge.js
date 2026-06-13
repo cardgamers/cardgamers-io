@@ -113,7 +113,7 @@ function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=t
   const legal = canPlay ? getLegalCards(hand, currentTrick, trump) : null
 
   if (horizontal) {
-    // Sorted by suit in columns
+    // Sorted by suit in columns — for North dummy
     return (
       <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
         {['S','H','D','C'].map(suit => {
@@ -136,25 +136,31 @@ function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=t
     )
   }
 
-  // Vertical dummy (for East/West)
+  // Vertical dummy (for East/West) — 2 columns of suits to save vertical space
+  const leftSuits = ['S','H']
+  const rightSuits = ['D','C']
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:6, alignItems:'center' }}>
-      {['S','H','D','C'].map(suit => {
-        const cards = hand.filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
-        if (!cards.length) return null
-        const col = SUIT_COLORS[suit] === '#1a1a2e' ? 'rgba(255,255,255,0.8)' : SUIT_COLORS[suit]
-        return (
-          <div key={suit} style={{ display:'flex', alignItems:'center', gap:4 }}>
-            <span style={{ fontSize:'0.8rem', color:col, fontWeight:700, width:14 }}>{SUIT_SYMBOLS[suit]}</span>
-            <FannedHand
-              cards={cards}
-              legalCards={legal}
-              onCardClick={c => canPlay && onPlay(c)}
-              cardW={68} cardH={95} overlap={22}
-            />
-          </div>
-        )
-      })}
+    <div style={{ display:'flex', flexDirection:'row', gap:6, alignItems:'flex-start' }}>
+      {[leftSuits, rightSuits].map((suitGroup, gi) => (
+        <div key={gi} style={{ display:'flex', flexDirection:'column', gap:5 }}>
+          {suitGroup.map(suit => {
+            const cards = hand.filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
+            if (!cards.length) return null
+            const col = SUIT_COLORS[suit] === '#1a1a2e' ? 'rgba(255,255,255,0.8)' : SUIT_COLORS[suit]
+            return (
+              <div key={suit} style={{ display:'flex', alignItems:'center', gap:3 }}>
+                <span style={{ fontSize:'0.85rem', color:col, fontWeight:700, width:14, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                <FannedHand
+                  cards={cards}
+                  legalCards={legal}
+                  onCardClick={c => canPlay && onPlay(c)}
+                  cardW={52} cardH={73} overlap={18}
+                />
+              </div>
+            )
+          })}
+        </div>
+      ))}
     </div>
   )
 }
