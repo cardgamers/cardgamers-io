@@ -55,8 +55,8 @@ function ThinkingDots() {
 
 function suitColor(denom) {
   if (denom === 'H' || denom === 'D') return '#e74c3c'
-  if (denom === 'S' || denom === 'C') return 'rgba(255,255,255,0.9)'
-  return '#7eb5f5' // NT
+  if (denom === 'NT') return '#7eb5f5'
+  return '#ffffff' // S and C — pure white on dark background
 }
 
 function BidBubble({ bid, thinking }) {
