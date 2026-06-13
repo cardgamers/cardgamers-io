@@ -442,8 +442,9 @@ export default function TeenPatti() {
 
   return (
     <div style={{
-      paddingTop:64, height:'100vh', display:'flex', flexDirection:'column', overflow:'hidden',
+      position:'fixed', inset:0, display:'flex', flexDirection:'column', overflow:'hidden',
       background:'radial-gradient(ellipse at center, #2d0000 0%, #1a0000 40%, #0a0000 100%)',
+      zIndex:100,
     }}>
       {/* Result overlay */}
       {phase === 'result' && winner && (
