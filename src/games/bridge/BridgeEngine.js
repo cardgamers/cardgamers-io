@@ -1,4 +1,4 @@
-// ─── Bridge Game Engine v2.1 — Smart Bot + Fixed Validation ──────
+// ─── Bridge Game Engine v2.2 — Smart Bot + Correct Declarer ──────
 
 export const SUITS = ['C', 'D', 'H', 'S']
 export const SUIT_SYMBOLS = { C: '♣', D: '♦', H: '♥', S: '♠' }
@@ -137,7 +137,7 @@ function countSuitWinners(cards, suit, playedCards) {
   return winners
 }
 
-// ─── Core bid validity — used everywhere ──────────────────────────
+// ─── Core bid validity ────────────────────────────────────────────
 function isBidHigherThan(bid, lastBid) {
   if (!lastBid) return true
   if (bid.type === 'pass') return true
@@ -157,7 +157,6 @@ function getLastRealBid(auction) {
   return null
 }
 
-// ─── Safe bid helper — always validates before returning ──────────
 function makeBid(level, denomination, auction) {
   const lastBid = getLastRealBid(auction)
   const bid = { level, denomination, type: 'bid' }
@@ -182,34 +181,29 @@ export function getBotBid(hand, auction, position, vulnerability, difficulty = '
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
-  // ── Opening bid ──
   if (myBids.length === 0 && partnerBids.length === 0 && oppBids.length === 0) {
     return getOpeningBid(hand, hcp, dist, tp, auction)
   }
 
-  // ── Overcall after opponent opens ──
   if (myBids.length === 0 && partnerBids.length === 0 && oppBids.length >= 1) {
     const result = getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, auction)
     if (result) return result
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
-  // ── Response to partner's opening ──
   if (myBids.length === 0 && partnerBids.length >= 1) {
     return getResponse(hand, hcp, dist, tp, partnerLastBid, lastRealBid, oppBids, auction)
   }
 
-  // ── Opener's rebid ──
   if (myBids.length === 1 && partnerBids.length >= 1) {
     return getOpenerRebid(hand, hcp, dist, tp, myBids[0], partnerLastBid, lastRealBid, auction)
   }
 
-  // ── Responder's rebid ──
   if (myBids.length === 1 && partnerBids.length >= 2) {
     return getResponderRebid(hand, hcp, dist, tp, myBids[0], partnerBids, lastRealBid, auction)
   }
 
-  // ── Blackwood 4NT response ──
+  // Blackwood 4NT response
   if (lastRealBid && lastRealBid.level === 4 && lastRealBid.denomination === 'NT' && lastRealBid.position === partnerPos) {
     const aces = countAces(hand)
     const responses = [
@@ -221,7 +215,7 @@ export function getBotBid(hand, auction, position, vulnerability, difficulty = '
     return { ...responses[aces], type: 'bid' }
   }
 
-  // ── Gerber 4C response ──
+  // Gerber 4C response
   if (lastRealBid && lastRealBid.level === 4 && lastRealBid.denomination === 'C' && lastRealBid.position === partnerPos) {
     const aces = countAces(hand)
     const responses = [
@@ -233,7 +227,7 @@ export function getBotBid(hand, auction, position, vulnerability, difficulty = '
     return { ...responses[aces], type: 'bid' }
   }
 
-  // ── Takeout double ──
+  // Takeout double
   if (oppBids.length === 1 && myBids.length === 0 && partnerBids.length === 0 && hcp >= 12) {
     const oppSuit = oppBids[0].denomination
     if (oppSuit !== 'NT') {
@@ -251,7 +245,6 @@ export function getBotBid(hand, auction, position, vulnerability, difficulty = '
 function getOpeningBid(hand, hcp, dist, tp, auction) {
   if (hcp < 10) return { level: 0, denomination: 'PASS', type: 'pass' }
 
-  // Preemptive bids
   if (hcp >= 5 && hcp <= 10) {
     for (const suit of ['S','H']) {
       if (dist[suit] >= 6 && hasHeadOfSequence(hand, suit)) {
@@ -265,26 +258,21 @@ function getOpeningBid(hand, hcp, dist, tp, auction) {
 
   if (hcp < 12) return { level: 0, denomination: 'PASS', type: 'pass' }
 
-  // Strong 2C
   if (hcp >= 22 || (hcp >= 19 && quickTricks(hand) >= 4)) {
     return makeBid(2, 'C', auction)
   }
 
-  // 2NT: 20-21 balanced
   if (hcp >= 20 && hcp <= 21 && isBalanced(hand)) {
     return makeBid(2, 'NT', auction)
   }
 
-  // 1NT: 15-17 balanced
   if (hcp >= 15 && hcp <= 17 && isBalanced(hand)) {
     return makeBid(1, 'NT', auction)
   }
 
-  // 1 of a major (5+ cards)
   if (dist['S'] >= 5 && dist['S'] >= dist['H']) return makeBid(1, 'S', auction)
   if (dist['H'] >= 5) return makeBid(1, 'H', auction)
 
-  // 4-card majors
   if (hcp >= 12 && hcp <= 21) {
     if (dist['S'] >= 4 && dist['S'] > dist['H']) return makeBid(1, 'S', auction)
     if (dist['H'] >= 4) return makeBid(1, 'H', auction)
@@ -298,7 +286,6 @@ function getOpeningBid(hand, hcp, dist, tp, auction) {
 function getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, auction) {
   if (hcp < 8) return null
 
-  // 1NT overcall: 15-18 balanced with stopper
   if (lastRealBid && lastRealBid.level === 1 && hcp >= 15 && hcp <= 18 && isBalanced(hand)) {
     const oppSuit = lastRealBid.denomination
     if (hasStopper(hand, oppSuit)) {
@@ -307,13 +294,10 @@ function getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, auction) {
     }
   }
 
-  // Simple overcall with 5+ card suit
   for (const suit of ['S','H','D','C']) {
     if (dist[suit] >= 5 && hcp >= 8) {
-      // Try 1-level first
       const bid1 = makeBid(1, suit, auction)
       if (bid1.type === 'bid') return bid1
-      // Try 2-level if strong enough
       if (hcp >= 11) {
         const bid2 = makeBid(2, suit, auction)
         if (bid2.type === 'bid') return bid2
@@ -327,46 +311,42 @@ function getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, auction) {
 function getResponse(hand, hcp, dist, tp, partnerOpening, lastRealBid, oppBids, auction) {
   if (!partnerOpening) return { level: 0, denomination: 'PASS', type: 'pass' }
 
-  // Response to 1NT (15-17)
   if (partnerOpening.level === 1 && partnerOpening.denomination === 'NT') {
     if (hcp <= 7) {
-      if (dist['H'] >= 5) return makeBid(2, 'D', auction) // Jacoby transfer → H
-      if (dist['S'] >= 5) return makeBid(2, 'H', auction) // Jacoby transfer → S
+      if (dist['H'] >= 5) return makeBid(2, 'D', auction)
+      if (dist['S'] >= 5) return makeBid(2, 'H', auction)
       if (dist['C'] >= 6) return makeBid(3, 'C', auction)
       if (dist['D'] >= 6) return makeBid(3, 'D', auction)
       return { level: 0, denomination: 'PASS', type: 'pass' }
     }
     if (hcp >= 8 && hcp <= 9) {
-      if (dist['H'] >= 4 || dist['S'] >= 4) return makeBid(2, 'C', auction) // Stayman
+      if (dist['H'] >= 4 || dist['S'] >= 4) return makeBid(2, 'C', auction)
       return makeBid(2, 'NT', auction)
     }
     if (hcp >= 10) {
-      if (dist['H'] >= 4 || dist['S'] >= 4) return makeBid(2, 'C', auction) // Stayman
-      if (hcp >= 15) return makeBid(4, 'NT', auction) // Blackwood
+      if (dist['H'] >= 4 || dist['S'] >= 4) return makeBid(2, 'C', auction)
+      if (hcp >= 15) return makeBid(4, 'NT', auction)
       return makeBid(3, 'NT', auction)
     }
   }
 
-  // Response to 2NT (20-21)
   if (partnerOpening.level === 2 && partnerOpening.denomination === 'NT') {
     if (hcp <= 3) return { level: 0, denomination: 'PASS', type: 'pass' }
-    if (dist['S'] >= 5) return makeBid(3, 'H', auction) // Transfer
-    if (dist['H'] >= 5) return makeBid(3, 'D', auction) // Transfer
-    if (hcp >= 7) return makeBid(4, 'NT', auction) // Blackwood
+    if (dist['S'] >= 5) return makeBid(3, 'H', auction)
+    if (dist['H'] >= 5) return makeBid(3, 'D', auction)
+    if (hcp >= 7) return makeBid(4, 'NT', auction)
     return makeBid(3, 'NT', auction)
   }
 
-  // Response to 2C (strong)
   if (partnerOpening.level === 2 && partnerOpening.denomination === 'C') {
     if (hcp >= 8) {
       if (dist['S'] >= 5) return makeBid(2, 'S', auction)
       if (dist['H'] >= 5) return makeBid(2, 'H', auction)
       return makeBid(2, 'NT', auction)
     }
-    return makeBid(2, 'D', auction) // Waiting
+    return makeBid(2, 'D', auction)
   }
 
-  // Response to 1 of a major
   if (partnerOpening.level === 1 && (partnerOpening.denomination === 'H' || partnerOpening.denomination === 'S')) {
     const suit = partnerOpening.denomination
     if (hcp < 6) return { level: 0, denomination: 'PASS', type: 'pass' }
@@ -375,7 +355,7 @@ function getResponse(hand, hcp, dist, tp, partnerOpening, lastRealBid, oppBids, 
       if (tp >= 6 && tp <= 9) return makeBid(2, suit, auction)
       if (tp >= 10 && tp <= 12) return makeBid(3, suit, auction)
       if (tp >= 13) {
-        if (hcp >= 16) return makeBid(4, 'NT', auction) // Blackwood
+        if (hcp >= 16) return makeBid(4, 'NT', auction)
         return makeBid(4, suit, auction)
       }
     }
@@ -386,7 +366,6 @@ function getResponse(hand, hcp, dist, tp, partnerOpening, lastRealBid, oppBids, 
     if (hcp >= 13 && isBalanced(hand)) return makeBid(3, 'NT', auction)
   }
 
-  // Response to 1 of a minor
   if (partnerOpening.level === 1 && (partnerOpening.denomination === 'C' || partnerOpening.denomination === 'D')) {
     if (hcp < 6) return { level: 0, denomination: 'PASS', type: 'pass' }
     if (dist['S'] >= 4) return makeBid(1, 'S', auction)
@@ -398,7 +377,6 @@ function getResponse(hand, hcp, dist, tp, partnerOpening, lastRealBid, oppBids, 
     if (hcp >= 16) return makeBid(4, 'NT', auction)
   }
 
-  // Response to weak 2
   if (partnerOpening.level === 2 && (partnerOpening.denomination === 'H' || partnerOpening.denomination === 'S')) {
     const suit = partnerOpening.denomination
     if (hcp >= 16 && dist[suit] >= 2) return makeBid(4, suit, auction)
@@ -417,7 +395,6 @@ function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastRea
   const respSuit = partnerResponse.denomination
   const respLevel = partnerResponse.level
 
-  // Partner raised our major
   if (respSuit === openSuit && (openSuit === 'H' || openSuit === 'S')) {
     if (respLevel === 2) {
       if (hcp >= 19) return makeBid(4, 'NT', auction)
@@ -436,7 +413,6 @@ function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastRea
     }
   }
 
-  // Partner bid 1NT
   if (respSuit === 'NT' && respLevel === 1) {
     if (hcp >= 20) return makeBid(3, 'NT', auction)
     if (hcp >= 18) return makeBid(2, 'NT', auction)
@@ -450,20 +426,17 @@ function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastRea
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
-  // Partner bid 2NT
   if (respSuit === 'NT' && respLevel === 2) {
     if (hcp >= 15) return makeBid(3, 'NT', auction)
     if (dist[openSuit] >= 6) return makeBid(3, openSuit, auction)
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
-  // Partner bid 3NT
   if (respSuit === 'NT' && respLevel === 3) {
     if (hcp >= 19 && countAces(hand) >= 2) return makeBid(4, 'NT', auction)
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
-  // Opened 1NT — handle transfers and Stayman
   if (openSuit === 'NT') {
     if (respSuit === 'D' && respLevel === 2) return makeBid(2, 'H', auction)
     if (respSuit === 'H' && respLevel === 2) return makeBid(2, 'S', auction)
@@ -475,14 +448,12 @@ function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastRea
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
-  // Partner new suit at 2 level
   if (respLevel === 2 && respSuit !== openSuit && respSuit !== 'NT') {
     if (dist[respSuit] >= 3) return makeBid(3, respSuit, auction)
     if (dist[openSuit] >= 6) return makeBid(3, openSuit, auction)
     return makeBid(2, 'NT', auction)
   }
 
-  // Partner new suit at 1 level
   if (respLevel === 1 && respSuit !== 'NT') {
     if (dist[respSuit] >= 4 && tp >= 16) return makeBid(3, respSuit, auction)
     if (dist[respSuit] >= 4 && tp >= 13) return makeBid(2, respSuit, auction)
@@ -543,15 +514,36 @@ export function isAuctionOver(auction) {
   return last3.every(b => b.type === 'pass')
 }
 
+// ─── FIXED: Correct declarer determination ────────────────────────
+// The declarer is the FIRST player on the winning side
+// who bid the denomination of the final contract.
+// Example: W bids 2NT, E bids 3NT — W is declarer because W first bid NT
 export function getContract(auction) {
   const lastBid = getLastRealBid(auction)
   if (!lastBid) return null
+
   const doubled = auction.some(b => b.type === 'double')
   const redoubled = auction.some(b => b.type === 'redouble')
+  const finalDenom = lastBid.denomination
+
+  // Determine which side won the auction
+  const winningSide = (lastBid.position === 'N' || lastBid.position === 'S')
+    ? ['N', 'S']
+    : ['E', 'W']
+
+  // Find the FIRST bid of the final denomination by the winning side
+  let declarer = lastBid.position
+  for (const b of auction) {
+    if (b.type === 'bid' && b.denomination === finalDenom && winningSide.includes(b.position)) {
+      declarer = b.position
+      break
+    }
+  }
+
   return {
     level: lastBid.level,
-    denomination: lastBid.denomination,
-    declarer: lastBid.position,
+    denomination: finalDenom,
+    declarer,
     doubled,
     redoubled,
     tricksNeeded: lastBid.level + 6,
@@ -631,7 +623,6 @@ function getDefenderLead(hand, legal, trumpSuit, trickHistory, playedCards) {
     if (suitCards.length >= 1) return suitCards[suitCards.length - 1]
   }
 
-  // Against suit — lead singleton
   for (const suit of SUITS) {
     if (suit !== trumpSuit) {
       const sc = hand.filter(c => c.suit === suit)
@@ -660,29 +651,24 @@ function getFollowCard(hand, legal, trick, trumpSuit, position, isDefender, part
   if (followCards.length > 0) {
     const winningCards = followCards.filter(c => canBeatCurrentWinner(c, currentWinner, trumpSuit))
 
-    // Second hand low
     if (trick.length === 1 && isDefender) {
       const seq = findTopOfSequence(followCards)
       if (seq && VALUE_RANK[seq.value] >= 12) return seq
       return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
-    // Third hand high
     if (trick.length === 2 && isDefender && !partnerWinning && winningCards.length > 0) {
       return winningCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
-    // Partner winning — play low
     if (partnerWinning) {
       return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
-    // Last to play — win cheaply
     if (isLastToPlay && winningCards.length > 0) {
       return winningCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
-    // Declarer — always try to win
     if (!isDefender && winningCards.length > 0) {
       return winningCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
@@ -690,7 +676,6 @@ function getFollowCard(hand, legal, trick, trumpSuit, position, isDefender, part
     return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
   }
 
-  // Void — trump or discard
   if (partnerWinning) {
     return findSmartDiscard(hand, legal, trumpSuit, playedCards)
   }
