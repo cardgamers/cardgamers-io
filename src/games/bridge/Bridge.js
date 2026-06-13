@@ -598,36 +598,47 @@ export default function Bridge() {
             </div>
           </div>
 
-          {/* SOUTH — your hand */}
+          {/* SOUTH — your hand (hidden when you are dummy) */}
           <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:5, paddingBottom:6 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize:'0.68rem', color:isMyTurn?'#5DCAA5':isDeclarer?'var(--gold)':'var(--text-muted)' }}>
-                You (S) · {countHCP(myHand)} HCP{isDeclarer?' · ★ Declarer':''}{isMyPlayTurn?' · Your turn':''}
+              <span style={{ fontSize:'0.68rem', color:isMyTurn?'#5DCAA5':isDeclarer?'var(--gold)':game.dummy==='S'?'rgba(201,168,76,0.6)':'var(--text-muted)' }}>
+                You (S) · {countHCP(myHand)} HCP
+                {isDeclarer?' · ★ Declarer':''}
+                {game.dummy==='S'&&game.dummyRevealed?' · Dummy — shown above':''}
+                {isMyPlayTurn?' · Your turn':''}
               </span>
               {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('S',game.auction)} />}
             </div>
-            <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
-              {['S','H','D','C'].map(suit=>{
-                const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
-                if (!cards.length) return null
-                return (
-                  <div key={suit} style={{ display:'flex', alignItems:'flex-end', gap:2 }}>
-                    <span style={{ fontSize:'1rem', color:SUIT_COLORS[suit]==='#1a1a2e'?'rgba(255,255,255,0.55)':SUIT_COLORS[suit], marginRight:2, alignSelf:'center', flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
-                    <div style={{ display:'flex', gap:3 }}>
-                      {cards.map(card=>{
-                        const isSelected = selectedCard?.id===card.id
-                        const isLegal = !legalCards||legalCards.some(c=>c.id===card.id)
-                        return (
-                          <BCard key={card.id} card={card} w={64} h={90} selected={isSelected} legal={isLegal?undefined:false}
-                            onClick={()=>{ if(!isMyPlayTurn||!isLegal)return; if(isSelected){handleCardClick(card);setSelectedCard(null)}else setSelectedCard(card) }}
-                          />
-                        )
-                      })}
+            {/* Only show cards at bottom if NOT dummy */}
+            {game.dummy !== 'S' && (
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
+                {['S','H','D','C'].map(suit=>{
+                  const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+                  if (!cards.length) return null
+                  return (
+                    <div key={suit} style={{ display:'flex', alignItems:'flex-end', gap:2 }}>
+                      <span style={{ fontSize:'1rem', color:SUIT_COLORS[suit]==='#1a1a2e'?'rgba(255,255,255,0.55)':SUIT_COLORS[suit], marginRight:2, alignSelf:'center', flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                      <div style={{ display:'flex', gap:3 }}>
+                        {cards.map(card=>{
+                          const isSelected = selectedCard?.id===card.id
+                          const isLegal = !legalCards||legalCards.some(c=>c.id===card.id)
+                          return (
+                            <BCard key={card.id} card={card} w={64} h={90} selected={isSelected} legal={isLegal?undefined:false}
+                              onClick={()=>{ if(!isMyPlayTurn||!isLegal)return; if(isSelected){handleCardClick(card);setSelectedCard(null)}else setSelectedCard(card) }}
+                            />
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
+            {game.dummy === 'S' && game.dummyRevealed && (
+              <p style={{ fontSize:'0.75rem', color:'rgba(201,168,76,0.5)', fontStyle:'italic' }}>
+                Your cards are shown above — {botName(game.contract?.declarer)} is playing your hand
+              </p>
+            )}
             {isMyPlayTurn&&<p style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.25)' }}>Click to select · Click again to play</p>}
           </div>
         </div>
