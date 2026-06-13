@@ -14,6 +14,7 @@ import Solitaire from './games/Solitaire'
 import Rummy from './games/Rummy'
 import Bridge from './games/bridge/Bridge'
 import TeenPatti from './games/TeenPatti'
+import Spades from './games/Spades';
 import ComingSoon from './pages/ComingSoon'
 import Contact from './pages/Contact';
 import About from './pages/About';
@@ -60,6 +61,7 @@ function AppRoutes() {
 <Route path="/tournaments" element={<Tournaments />} />
 <Route path="/blog" element={<ComingSoon />} />
 <Route path="/contact" element={<Contact />} />
+<Route path="/game/spades" element={<ProtectedRoute><Spades /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
