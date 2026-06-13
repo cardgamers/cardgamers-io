@@ -16,6 +16,7 @@ import Bridge from './games/bridge/Bridge'
 import TeenPatti from './games/TeenPatti'
 import ComingSoon from './pages/ComingSoon'
 import Contact from './pages/Contact';
+import About from './pages/About';
 import './index.css'
 
 function ProtectedRoute({ children }) {
@@ -52,7 +53,7 @@ function AppRoutes() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/how-to-play" element={<HowToPlay />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/about" element={<ComingSoon />} />
+        <Route path="/about" element={<About />} />
 <Route path="/games" element={<ComingSoon />} />
 <Route path="/tournaments" element={<ComingSoon />} />
 <Route path="/blog" element={<ComingSoon />} />
