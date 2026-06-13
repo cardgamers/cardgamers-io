@@ -7,7 +7,7 @@ const GAME_KEYS = [
   { id: 'rummy',     suit: '♥', name: 'Rummy',      key: 'rummy',     status: 'live',  path: '/game/rummy' },
   { id: 'teen-patti',suit: '🪔', name: 'Teen Patti', key: 'teenPatti', status: 'live',  path: '/game/teen-patti' },
   { id: 'solitaire', suit: '♣', name: 'Solitaire',  key: 'solitaire', status: 'live',  path: '/game/solitaire' },
-  { id: 'spades',    suit: '♠', name: 'Spades',     key: 'spades',    status: 'soon',  path: '#' },
+  { id: 'spades',    suit: '♠', name: 'Spades',     key: 'spades',    status: 'live',  path: '/game/spades' },
   { id: 'poker',     suit: '♦', name: 'Poker',      key: 'poker',     status: 'soon',  path: '#' },
 ]
 
