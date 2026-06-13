@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const games = [
+  { name: 'Spades', desc: 'Bid, bluff and take tricks. Play solo against bots or with a partner.', path: '/game/spades', emoji: '♠️' },
   { name: 'Solitaire',   desc: 'Classic single-player card game. Simple, relaxing, endlessly replayable.', path: '/game/solitaire',   emoji: '🂡' },
   { name: 'Rummy',       desc: 'Form sets and sequences. Play live against real opponents.',                path: '/game/rummy',       emoji: '🃏' },
   { name: 'Bridge',      desc: 'Rubber & Duplicate formats. Bot opponents available anytime.',             path: '/game/bridge',      emoji: '♠️' },
