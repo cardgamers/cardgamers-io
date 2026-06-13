@@ -15,6 +15,7 @@ import Rummy from './games/Rummy'
 import Bridge from './games/bridge/Bridge'
 import TeenPatti from './games/TeenPatti'
 import ComingSoon from './pages/ComingSoon'
+import Contact from './pages/Contact';
 import './index.css'
 
 function ProtectedRoute({ children }) {
@@ -55,7 +56,7 @@ function AppRoutes() {
 <Route path="/games" element={<ComingSoon />} />
 <Route path="/tournaments" element={<ComingSoon />} />
 <Route path="/blog" element={<ComingSoon />} />
-<Route path="/contact" element={<ComingSoon />} />
+<Route path="/contact" element={<Contact />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
