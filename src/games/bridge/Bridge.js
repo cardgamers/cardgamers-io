@@ -452,7 +452,7 @@ export default function Bridge() {
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, flexShrink:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:4 }}>
           <span style={{ fontSize:'0.6rem', color: isWestDummy ? 'var(--gold)' : game.contract?.declarer==='W' ? 'var(--gold)' : 'var(--text-muted)', writingMode:'vertical-rl', transform:'rotate(180deg)' }}>
-            {botName('W')} (W){isWestDummy ? ' ★ Dummy' : game.contract?.declarer==='W' ? ' ★' : ''}
+            {botName('W')} (W){isWestDummy ? ' ★ Dummy' : game.contract?.declarer==='W' ? ' ★ Declarer' : ''}
           </span>
           {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
         </div>
@@ -471,7 +471,7 @@ export default function Bridge() {
         <div style={{ display:'flex', alignItems:'center', gap:4 }}>
           {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
           <span style={{ fontSize:'0.6rem', color: isEastDummy ? 'var(--gold)' : game.contract?.declarer==='E' ? 'var(--gold)' : 'var(--text-muted)', writingMode:'vertical-rl' }}>
-            {botName('E')} (E){isEastDummy ? ' ★ Dummy' : game.contract?.declarer==='E' ? ' ★' : ''}
+            {botName('E')} (E){isEastDummy ? ' ★ Dummy' : game.contract?.declarer==='E' ? ' ★ Declarer' : ''}
           </span>
         </div>
         {isEastDummy

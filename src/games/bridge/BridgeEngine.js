@@ -526,15 +526,21 @@ export function getContract(auction) {
   const redoubled = auction.some(b => b.type === 'redouble')
   const finalDenom = lastBid.denomination
 
-  // Determine which side won the auction
+  // Determine which side won the auction based on the LAST real bid
   const winningSide = (lastBid.position === 'N' || lastBid.position === 'S')
     ? ['N', 'S']
     : ['E', 'W']
 
   // Find the FIRST bid of the final denomination by the winning side
+  // This handles cases like: W bids 2NT, E bids 3NT → W is declarer (first NT bidder on EW side)
   let declarer = lastBid.position
-  for (const b of auction) {
-    if (b.type === 'bid' && b.denomination === finalDenom && winningSide.includes(b.position)) {
+  for (let i = 0; i < auction.length; i++) {
+    const b = auction[i]
+    if (
+      b.type === 'bid' &&
+      b.denomination === finalDenom &&
+      winningSide.includes(b.position)
+    ) {
       declarer = b.position
       break
     }
