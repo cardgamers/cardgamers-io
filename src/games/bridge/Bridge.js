@@ -171,12 +171,15 @@ function BidBubble({ bid, thinking }) {
   if (!bid && !thinking) return null
   const isPass = bid?.type === 'pass'
   const isDbl = bid?.type === 'double'
+  const bg = thinking ? '#1a1a1a' : 'white'
+  const borderCol = thinking ? 'var(--gold)' : isPass ? 'rgba(0,0,0,0.15)' : 'rgba(201,168,76,0.9)'
+  const denomCol = !isPass && !isDbl && (bid?.denomination==='H'||bid?.denomination==='D') ? '#c0392b' : bid?.denomination==='NT' ? '#1a56db' : '#1a1a1a'
   return (
-    <div style={{ background:'#1a1a1a', border:`2px solid ${thinking?'var(--gold)':isPass?'rgba(255,255,255,0.2)':'rgba(201,168,76,0.5)'}`, borderRadius:8, padding:'6px 14px', fontSize:'1.05rem', fontWeight:800, whiteSpace:'nowrap', minWidth:48, textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.5)' }}>
+    <div style={{ background:bg, border:`2px solid ${borderCol}`, borderRadius:8, padding:'6px 14px', fontSize:'1.05rem', fontWeight:800, whiteSpace:'nowrap', minWidth:48, textAlign:'center', boxShadow:'0 3px 10px rgba(0,0,0,0.4)' }}>
       {thinking ? <span style={{ color:'var(--gold)' }}><ThinkingDots/></span>
-        : isPass ? <span style={{ color:'rgba(255,255,255,0.6)' }}>P</span>
-        : isDbl ? <span style={{ color:'#e74c3c' }}>X</span>
-        : <span><span style={{ color:'white' }}>{bid.level}</span><span style={{ color:suitColor(bid.denomination) }}>{DENOM_SYMBOLS[bid.denomination]}</span></span>
+        : isPass ? <span style={{ color:'#666' }}>P</span>
+        : isDbl ? <span style={{ color:'#c0392b' }}>X</span>
+        : <span><span style={{ color:'#1a1a1a' }}>{bid.level}</span><span style={{ color:denomCol }}>{DENOM_SYMBOLS[bid.denomination]}</span></span>
       }
     </div>
   )
@@ -618,13 +621,13 @@ export default function Bridge() {
           <div style={{ flex:1, display:'flex', alignItems:'stretch', overflow:'hidden', minHeight:0, padding:'0 8px', gap:8 }}>
 
             {/* WEST */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', gap:6, flexShrink:0, width:isWestDummy?'auto':70, paddingTop:8 }}>
-              {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, width:isWestDummy?'auto':70 }}>
               <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)', maxHeight:100 }}>{playerLabel('W')}</span>
               {isWestDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} horizontal={false} />
                 : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={56} cardH={78} overlap={14} />
               }
+              {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
             </div>
 
             {/* CENTER */}
@@ -674,13 +677,13 @@ export default function Bridge() {
             </div>
 
             {/* EAST */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', gap:6, flexShrink:0, width:isEastDummy?'auto':70, paddingTop:8 }}>
-              {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, width:isEastDummy?'auto':70 }}>
               <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('E'), writingMode:'vertical-rl', maxHeight:100 }}>{playerLabel('E')}</span>
               {isEastDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} horizontal={false} />
                 : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={56} cardH={78} overlap={14} />
               }
+              {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
             </div>
           </div>
 
