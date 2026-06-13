@@ -17,6 +17,7 @@ import TeenPatti from './games/TeenPatti'
 import ComingSoon from './pages/ComingSoon'
 import Contact from './pages/Contact';
 import About from './pages/About';
+import Games from './pages/Games';
 import './index.css'
 
 function ProtectedRoute({ children }) {
@@ -54,7 +55,7 @@ function AppRoutes() {
         <Route path="/how-to-play" element={<HowToPlay />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/about" element={<About />} />
-<Route path="/games" element={<ComingSoon />} />
+<Route path="/games" element={<Games />} />
 <Route path="/tournaments" element={<ComingSoon />} />
 <Route path="/blog" element={<ComingSoon />} />
 <Route path="/contact" element={<Contact />} />
