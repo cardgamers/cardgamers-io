@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "games": "Jeux",
+    "leaderboard": "Classement",
+    "howToPlay": "Comment jouer",
+    "tournaments": "Tournois",
+    "signIn": "Se connecter",
+    "playFree": "Jouer gratuitement →",
+    "myProfile": "Mon profil",
+    "gameHistory": "Historique",
+    "upgradePlus": "⭐ Passer à Plus",
+    "signOut": "Se déconnecter",
+    "createAccount": "♠ Créer un compte gratuit",
+    "upgradeMobile": "⭐ Passer à Plus — 6 $/mois"
+  },
+  "home": {
+    "onlineBar": "<strong>{{count}}</strong> joueurs en ligne en ce moment",
+    "eyebrow": "Gratuit · Sans téléchargement",
+    "heroTitle1": "La table de cartes",
+    "heroTitle2": "où le monde joue",
+    "heroSub": "Bridge, Rummy, Spades, Hearts — design élégant, vrais adversaires, tournois en direct. Jouez depuis n'importe quel appareil.",
+    "startPlaying": "♠ Jouer gratuitement",
+    "browseGames": "Voir les jeux →",
+    "stats": {
+      "games": "Jeux de cartes",
+      "opponents": "Adversaires en direct",
+      "free": "Toujours",
+      "freeLabel": "Gratuit",
+      "noLabel": "Sans",
+      "download": "Téléchargement",
+      "liveLabel": "24h/7j"
+    },
+    "gamesSection": {
+      "eye": "Les jeux",
+      "title": "Tous les grands jeux de cartes, en un seul endroit",
+      "sub": "Tous les jeux sont gratuits contre de vrais adversaires du monde entier."
+    },
+    "badge": {
+      "live": "En direct",
+      "soon": "Bientôt disponible"
+    },
+    "games": {
+      "bridge": { "desc": "Le jeu de cartes ultime. Enchères, stratégie et partenariat à 4 joueurs.", "players": "4 joueurs · Contrat & Rubber" },
+      "rummy": { "desc": "Formez des combinaisons et sortez en premier. Rapide, satisfaisant et infiniment rejouable.", "players": "2–4 joueurs · Gin & Indian" },
+      "teenPatti": { "desc": "Le royal jeu de cartes indien. Variantes Classique, Muflis et AK47. तीन पत्ती", "players": "2–4 joueurs · 3 variantes" },
+      "solitaire": { "desc": "Solitaire Klondike. Jouez à votre rythme, à tout moment.", "players": "1 joueur · Klondike" },
+      "spades": { "desc": "Faites équipe, misez vos levées et déjouez l'opposition.", "players": "4 joueurs · En équipe" },
+      "poker": { "desc": "Texas Hold'em avec des jetons ludiques. Pas d'argent réel, toute la stratégie.", "players": "2–9 joueurs · Hold'em" }
+    },
+    "howItWorks": {
+      "eye": "Comment ça marche",
+      "title": "Prêt à jouer en 60 secondes",
+      "sub": "Pas de téléchargement, pas d'installation, pas de carte bancaire.",
+      "steps": [
+        { "num": "01", "title": "Créez un compte gratuit", "desc": "Inscrivez-vous par email ou Google. En moins d'une minute. Vos statistiques sont sauvegardées dès la première partie." },
+        { "num": "02", "title": "Choisissez votre jeu", "desc": "Choisissez parmi Bridge, Rummy, Spades, Hearts ou Solitaire. Les lobbies ont toujours des joueurs en attente." },
+        { "num": "03", "title": "Rejoignez ou créez une table", "desc": "Rejoignez une partie ouverte ou créez une salle privée. Invitez des amis avec un lien." },
+        { "num": "04", "title": "Jouez et progressez", "desc": "Votre classement se met à jour après chaque partie. Grimpez dans le classement et rejoignez les tournois hebdomadaires." }
+      ]
+    },
+    "pricing": {
+      "eye": "Tarifs",
+      "title": "Toujours gratuit pour jouer",
+      "sub": "Sans pub et avec l'expérience complète pour moins qu'un café par mois.",
+      "mostPopular": "Le plus populaire",
+      "plans": {
+        "free": {
+          "period": "pour toujours",
+          "features": ["Tous les jeux de cartes", "Multijoueur en direct", "Statistiques de base", "Tournois publics"],
+          "negative": ["Publicités entre les mains", "Historique limité"],
+          "cta": "Jouer gratuitement"
+        },
+        "plus": {
+          "period": "/mois · annulable à tout moment",
+          "features": ["Tout ce qui est gratuit", "Zéro publicité", "Historique complet et replays", "Avatar et profil personnalisés", "Matchmaking prioritaire", "Entrées mensuelles aux tournois"],
+          "cta": "Obtenir Plus →"
+        },
+        "club": {
+          "period": "/mois pour tout votre club",
+          "features": ["Salle de club privée", "Jusqu'à 20 membres", "Classement du club", "Organisez vos propres tournois", "Toutes les fonctionnalités Plus", "Tableau de bord admin"],
+          "cta": "Créer un Club"
+        }
+      }
+    },
+    "footer": {
+      "links": ["À propos", "Jeux", "Tournois", "Classement", "Blog", "Politique de confidentialité", "Conditions d'utilisation", "Contact"],
+      "copy": "© 2026 CardGamers.io — Jouez aux jeux de cartes en ligne gratuitement. Conçu pour les joueurs du monde entier."
+    }
+  }
+}

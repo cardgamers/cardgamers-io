@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "games": "Games",
+    "leaderboard": "Leaderboard",
+    "howToPlay": "How to Play",
+    "tournaments": "Tournaments",
+    "signIn": "Sign In",
+    "playFree": "Play Free →",
+    "myProfile": "My Profile",
+    "gameHistory": "Game History",
+    "upgradePlus": "⭐ Upgrade to Plus",
+    "signOut": "Sign Out",
+    "createAccount": "♠ Create Free Account",
+    "upgradeMobile": "⭐ Upgrade to Plus — $6/mo"
+  },
+  "home": {
+    "onlineBar": "<strong>{{count}}</strong> players online right now",
+    "eyebrow": "Free to play · No download needed",
+    "heroTitle1": "The card table",
+    "heroTitle2": "the world plays at",
+    "heroSub": "Bridge, Rummy, Spades, Hearts — beautifully designed, real opponents, live tournaments. Play from any device, any time.",
+    "startPlaying": "♠ Start Playing Free",
+    "browseGames": "Browse Games →",
+    "stats": {
+      "games": "Card Games",
+      "opponents": "Live Opponents",
+      "free": "Always",
+      "freeLabel": "Free",
+      "noLabel": "No",
+      "download": "Download",
+      "liveLabel": "24/7"
+    },
+    "gamesSection": {
+      "eye": "The games",
+      "title": "Every great card game, in one place",
+      "sub": "All games are free to play against real opponents worldwide."
+    },
+    "badge": {
+      "live": "Live now",
+      "soon": "Coming soon"
+    },
+    "games": {
+      "bridge": { "desc": "The ultimate card game. Bidding, strategy, and partnership across 4 players.", "players": "4 players · Contract & Rubber" },
+      "rummy": { "desc": "Build melds and go out first. Fast, satisfying, endlessly replayable.", "players": "2–4 players · Gin & Indian" },
+      "teenPatti": { "desc": "The royal Indian card game. Classic, Muflis and AK47 variants. तीन पत्ती", "players": "2–4 players · 3 variants" },
+      "solitaire": { "desc": "Klondike Solitaire. Play at your own pace, any time.", "players": "1 player · Klondike" },
+      "spades": { "desc": "Team up, bid your tricks, and outplay the opposition.", "players": "4 players · Partnership" },
+      "poker": { "desc": "Texas Hold'em with fun chips. No real money, all the strategy.", "players": "2–9 players · Hold'em" }
+    },
+    "howItWorks": {
+      "eye": "How it works",
+      "title": "Up and playing in 60 seconds",
+      "sub": "No downloads, no installs, no credit card.",
+      "steps": [
+        { "num": "01", "title": "Create a free account", "desc": "Sign up with email or Google. Under a minute. Your stats are saved from game one." },
+        { "num": "02", "title": "Pick your game", "desc": "Choose from Bridge, Rummy, Spades, Hearts, or Solitaire. Live lobbies always have players waiting." },
+        { "num": "03", "title": "Join or create a table", "desc": "Jump into an open game or create a private room. Invite friends with a link." },
+        { "num": "04", "title": "Play and level up", "desc": "Your rating updates after every game. Climb the leaderboard and join weekly tournaments." }
+      ]
+    },
+    "pricing": {
+      "eye": "Pricing",
+      "title": "Always free to play",
+      "sub": "Go ad-free and unlock the full experience for less than a coffee a month.",
+      "mostPopular": "Most Popular",
+      "plans": {
+        "free": {
+          "period": "forever",
+          "features": ["All card games", "Live multiplayer", "Basic stats & rankings", "Public tournaments"],
+          "negative": ["Ads between hands", "Limited game history"],
+          "cta": "Play Free"
+        },
+        "plus": {
+          "period": "/month · cancel anytime",
+          "features": ["Everything in Free", "Zero ads, ever", "Full game history & replays", "Custom avatar & profile", "Priority matchmaking", "Monthly tournament entries"],
+          "cta": "Get Plus →"
+        },
+        "club": {
+          "period": "/month for your whole club",
+          "features": ["Private club room", "Up to 20 members", "Club leaderboard", "Host your own tournaments", "All Plus features included", "Club admin dashboard"],
+          "cta": "Start a Club"
+        }
+      }
+    },
+    "footer": {
+      "links": ["About", "Games", "Tournaments", "Leaderboard", "Blog", "Privacy Policy", "Terms of Service", "Contact"],
+      "copy": "© 2026 CardGamers.io — Play card games online free. Built for card players everywhere."
+    }
+  }
+}
