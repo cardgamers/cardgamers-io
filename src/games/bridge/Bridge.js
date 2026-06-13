@@ -425,17 +425,22 @@ export default function Bridge() {
 
   function renderNorthSlot() {
     const isNorthDummy = dummyPos === 'N' && showDummy
+    const northHand = game.hands['N'] || []
+    // In bot game: always show North hand face up so player can follow the game
+    const showNorthFaceUp = game.phase === 'playing' && !isNorthDummy
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:'0.68rem', color: isNorthDummy ? 'var(--gold)' : 'var(--text-muted)' }}>
+          <span style={{ fontSize:'0.68rem', color: isNorthDummy ? 'var(--gold)' : game.contract?.declarer==='N' ? 'var(--gold)' : 'var(--text-muted)' }}>
             {botName('N')} (N){isNorthDummy ? ' — Dummy ★' : game.contract?.declarer==='N' ? ' ★ Declarer' : ''}
           </span>
           {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
         </div>
         {isNorthDummy
           ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} />
-          : <FaceDownHand count={game.hands['N']?.length||13} horizontal />
+          : showNorthFaceUp
+            ? <DummyHand hand={northHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,false)} canPlay={false} />
+            : <FaceDownHand count={northHand.length||13} horizontal />
         }
       </div>
     )
@@ -612,8 +617,8 @@ export default function Bridge() {
               </span>
               {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('S',game.auction)} />}
             </div>
-            {game.dummy !== 'S' && (
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
+            {/* Always show South cards face up in bot game */}
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
                 {['S','H','D','C'].map(suit=>{
                   const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
                   if (!cards.length) return null
@@ -635,10 +640,9 @@ export default function Bridge() {
                   )
                 })}
               </div>
-            )}
             {game.dummy === 'S' && game.dummyRevealed && (
               <p style={{ fontSize:'0.75rem', color:'rgba(201,168,76,0.5)', fontStyle:'italic' }}>
-                Your cards are shown above — {botName(game.contract?.declarer)} is playing your hand
+                {botName(game.contract?.declarer)} is playing your hand as dummy
               </p>
             )}
             {isMyPlayTurn&&<p style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.25)' }}>Click to select · Click again to play</p>}
@@ -677,3 +681,4 @@ export default function Bridge() {
     </div>
   )
 }
+
