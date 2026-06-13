@@ -18,6 +18,7 @@ import ComingSoon from './pages/ComingSoon'
 import Contact from './pages/Contact';
 import About from './pages/About';
 import Games from './pages/Games';
+import Tournaments from './pages/Tournaments';
 import './index.css'
 
 function ProtectedRoute({ children }) {
@@ -56,7 +57,7 @@ function AppRoutes() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/about" element={<About />} />
 <Route path="/games" element={<Games />} />
-<Route path="/tournaments" element={<ComingSoon />} />
+<Route path="/tournaments" element={<Tournaments />} />
 <Route path="/blog" element={<ComingSoon />} />
 <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<Navigate to="/" />} />
