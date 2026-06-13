@@ -7,6 +7,7 @@ const GAMES = [
   { id: 'bridge', label: 'Bridge', icon: '♠' },
   { id: 'rummy', label: 'Rummy', icon: '♥' },
   { id: 'solitaire', label: 'Solitaire', icon: '♣' },
+  { id: 'teen-patti', label: 'Teen Patti', icon: '🪔' },
 ]
 
 const PERIODS = [
@@ -23,15 +24,22 @@ export default function Leaderboard() {
 
   useEffect(() => {
     setLoading(true)
-    supabase
-      .from('leaderboard')
-      .select('*')
-      .order('rating', { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        setRows(data || [])
-        setLoading(false)
-      })
+    let query = supabase.from('leaderboard').select('*')
+
+    if (activeGame === 'all') {
+      query = query.order('rating', { ascending: false })
+    } else {
+      const gameCol = activeGame === 'teen-patti' ? 'teen_patti' : activeGame
+      query = query
+        .gt(`${gameCol}_played`, 0)
+        .order(`${gameCol}_won`, { ascending: false })
+    }
+
+    query.limit(50).then(({ data }) => {
+      // Filter by period
+      setRows(data || [])
+      setLoading(false)
+    })
   }, [activeGame, activePeriod])
 
   const rankColor = i => i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'var(--text-muted)'
@@ -118,13 +126,18 @@ export default function Leaderboard() {
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ background:'rgba(0,0,0,0.2)' }}>
-                  {['Rank','Player','Rating','Games','Win %'].map(h => (
+                  {['Rank','Player','Rating', activeGame==='all'?'Games':'Played', activeGame==='all'?'Wins':'Won', 'Win %'].map(h => (
                     <th key={h} style={{ padding:'0.85rem 1.25rem', textAlign:h==='Rank'||h==='Player'?'left':'right', fontSize:'0.72rem', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, i) => (
+                {rows.map((row, i) => {
+                  const gameCol = activeGame === 'teen-patti' ? 'teen_patti' : activeGame
+                  const gamesPlayed = activeGame === 'all' ? row.games_played : (row[`${gameCol}_played`] || 0)
+                  const gamesWon = activeGame === 'all' ? row.games_won : (row[`${gameCol}_won`] || 0)
+                  const winPct = gamesPlayed > 0 ? Math.round(gamesWon / gamesPlayed * 100) : 0
+                  return (
                   <tr key={row.username} style={{ borderTop:'1px solid var(--border)', background: i===0?'rgba(201,168,76,0.05)':i===1?'rgba(192,192,192,0.03)':i===2?'rgba(205,127,50,0.03)':'transparent' }}>
                     <td style={{ padding:'0.85rem 1.25rem', width:60 }}>
                       <span style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.1rem', fontWeight:700, color:rankColor(i) }}>
@@ -134,7 +147,7 @@ export default function Leaderboard() {
                     <td style={{ padding:'0.85rem 1.25rem' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                         <div style={{ width:34, height:34, borderRadius:'50%', background:'var(--gold)', color:'var(--felt-dark)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:'0.9rem', flexShrink:0 }}>
-                          {row.username[0].toUpperCase()}
+                          {row.username?.[0]?.toUpperCase()}
                         </div>
                         <div>
                           <div style={{ fontWeight:500, color:'var(--cream)', fontSize:'0.9rem' }}>{row.username}</div>
@@ -145,10 +158,11 @@ export default function Leaderboard() {
                       </div>
                     </td>
                     <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', fontWeight:700, color:'var(--gold)', fontSize:'0.95rem' }}>{row.rating}</td>
-                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--text-muted)', fontSize:'0.88rem' }}>{row.games_played}</td>
-                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--green-accent)', fontSize:'0.88rem', fontWeight:600 }}>{row.win_pct}%</td>
+                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--text-muted)', fontSize:'0.88rem' }}>{gamesPlayed}</td>
+                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--green-accent)', fontSize:'0.88rem' }}>{gamesWon}</td>
+                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--green-accent)', fontSize:'0.88rem', fontWeight:600 }}>{winPct}%</td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           )}

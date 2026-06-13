@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { saveGameResult } from '../lib/saveGameResult'
 
 // ─── Constants ────────────────────────────────────────────────────
 const SUITS = ['♠', '♥', '♦', '♣']
@@ -276,31 +277,9 @@ export default function TeenPatti() {
   // ── Save result ───────────────────────────────────────────────
   useEffect(() => {
     if (phase !== 'result' || !winner || resultSaved) return
-    async function save() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-        const playerWon = winner.isUser
-        const ratingChange = playerWon ? 20 : -10
-        await supabase.from('game_history').insert({
-          user_id: user.id, game_type: 'teen_patti',
-          result: playerWon ? 'win' : 'loss',
-          score: playerWon ? pot : 0,
-          rating_change: ratingChange,
-          played_at: new Date().toISOString(),
-        })
-        const { data: prof } = await supabase.from('profiles').select('games_played,games_won,rating,username,plan').eq('id', user.id).single()
-        if (prof) {
-          const newRating = Math.max(100, (prof.rating||1000) + ratingChange)
-          const newPlayed = (prof.games_played||0) + 1
-          const newWon = (prof.games_won||0) + (playerWon?1:0)
-          await supabase.from('profiles').update({ games_played:newPlayed, games_won:newWon, rating:newRating }).eq('id', user.id)
-          await supabase.from('leaderboard').upsert({ user_id:user.id, username:prof.username, rating:newRating, games_played:newPlayed, games_won:newWon, win_pct:Math.round(newWon/newPlayed*100), plan:prof.plan }, { onConflict:'user_id' })
-        }
-        setResultSaved(true)
-      } catch(e) { console.error(e) }
-    }
-    save()
+    const playerWon = winner.isUser
+    saveGameResult('teen_patti', playerWon, playerWon ? pot : 0, playerWon ? 20 : -10)
+    setResultSaved(true)
   }, [phase, winner, resultSaved, pot])
 
   // ── Player actions ────────────────────────────────────────────

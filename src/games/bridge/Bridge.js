@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { supabase } from '../../lib/supabase'
+import { saveGameResult } from '../../lib/saveGameResult'
 import {
   SUIT_SYMBOLS, SUIT_COLORS, DENOM_SYMBOLS,
   PARTNERS, NEXT_PLAYER, VALUE_RANK,
@@ -230,86 +230,32 @@ export default function Bridge() {
   // Save result when hand completes
   useEffect(() => {
     if (!game || game.phase !== 'complete' || !game.scoring || resultSaved) return
-    async function saveResult() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-        const isDeclarer = game.contract?.declarer === 'S'
-        const isNS = game.contract?.declarer === 'N' || game.contract?.declarer === 'S'
-        const playerWon = isDeclarer ? game.scoring.made : !game.scoring.made
-
-        // Calculate bridge rating change
-        let ratingChange = 0
-        if (isDeclarer) {
-          if (game.scoring.made) {
-            const level = game.contract.level
-            const overtricks = game.tricks[isNS ? 'NS' : 'EW'] - game.contract.tricksNeeded
-            ratingChange = 20 + (level * 5) + (overtricks * 3)
-            if (level === 6) ratingChange += 50 // small slam
-            if (level === 7) ratingChange += 100 // grand slam
-            if (game.vulnerability?.[isNS ? 'NS' : 'EW']) ratingChange = Math.round(ratingChange * 1.3)
-          } else {
-            const undertricks = game.contract.tricksNeeded - game.tricks[isNS ? 'NS' : 'EW']
-            ratingChange = -(10 + undertricks * 8)
-          }
-        } else {
-          // Defender
-          if (!game.scoring.made) {
-            const undertricks = game.contract.tricksNeeded - game.tricks[isNS ? 'NS' : 'EW']
-            ratingChange = 15 + (undertricks * 5)
-          } else {
-            ratingChange = -5
-          }
-        }
-
-        // Save game history
-        await supabase.from('game_history').insert({
-          user_id: user.id,
-          game_type: 'bridge',
-          result: playerWon ? 'win' : 'loss',
-          score: playerWon ? (game.scoring.declarerScore || game.scoring.defenderScore) : 0,
-          rating_change: ratingChange,
-          played_at: new Date().toISOString(),
-          metadata: JSON.stringify({
-            contract: `${game.contract.level}${game.contract.denomination}`,
-            declarer: game.contract.declarer,
-            made: game.scoring.made,
-            ns_tricks: game.tricks.NS,
-            ew_tricks: game.tricks.EW,
-            mode: game.mode,
-          })
-        })
-
-        // Update profile stats
-        const { data: prof } = await supabase
-          .from('profiles').select('games_played,games_won,rating').eq('id', user.id).single()
-        if (prof) {
-          const newRating = Math.max(100, (prof.rating || 1000) + ratingChange)
-          const newPlayed = (prof.games_played || 0) + 1
-          const newWon = (prof.games_won || 0) + (playerWon ? 1 : 0)
-          await supabase.from('profiles').update({
-            games_played: newPlayed,
-            games_won: newWon,
-            rating: newRating,
-          }).eq('id', user.id)
-
-          // Update leaderboard
-          await supabase.from('leaderboard').upsert({
-            user_id: user.id,
-            username: prof.username,
-            rating: newRating,
-            games_played: newPlayed,
-            games_won: newWon,
-            win_pct: Math.round(newWon / newPlayed * 100),
-            plan: prof.plan,
-          }, { onConflict: 'user_id' })
-        }
-        setResultSaved(true)
-      } catch (e) {
-        console.error('Failed to save bridge result:', e)
+    const isDeclarer = game.contract?.declarer === 'S'
+    const isNS = game.contract?.declarer === 'N' || game.contract?.declarer === 'S'
+    const playerWon = isDeclarer ? game.scoring.made : !game.scoring.made
+    let ratingChange = 0
+    if (isDeclarer) {
+      if (game.scoring.made) {
+        const level = game.contract.level
+        const overtricks = game.tricks[isNS?'NS':'EW'] - game.contract.tricksNeeded
+        ratingChange = 20 + (level * 5) + (overtricks * 3)
+        if (level === 6) ratingChange += 50
+        if (level === 7) ratingChange += 100
+        if (game.vulnerability?.[isNS?'NS':'EW']) ratingChange = Math.round(ratingChange * 1.3)
+      } else {
+        const undertricks = game.contract.tricksNeeded - game.tricks[isNS?'NS':'EW']
+        ratingChange = -(10 + undertricks * 8)
       }
+    } else {
+      ratingChange = !game.scoring.made ? 15 : -5
     }
-    saveResult()
+    saveGameResult('bridge', playerWon, game.scoring.declarerScore || game.scoring.defenderScore || 0, ratingChange, {
+      contract: `${game.contract.level}${game.contract.denomination}`,
+      declarer: game.contract.declarer,
+      made: game.scoring.made,
+      mode: game.mode,
+    })
+    setResultSaved(true)
   }, [game, resultSaved])
 
   function getPlayerLastBid(pos, auction) {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useSocket } from '../hooks/useSocket'
-import { supabase } from '../lib/supabase'
+import { saveGameResult } from '../lib/saveGameResult'
 
 const RED_SUITS = ['H', 'D']
 const SUIT_SYMBOLS = { S: '♠', H: '♥', D: '♦', C: '♣' }
@@ -353,46 +353,8 @@ export default function Rummy() {
   async function handleGameOver(result) {
     setGameOver(result)
     setScreen('gameover')
-    // Save result to Supabase
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const playerWon = result.winnerName === username
-      const ratingChange = playerWon ? 25 : -15
-
-      await supabase.from('game_history').insert({
-        user_id: user.id,
-        game_type: 'rummy',
-        result: playerWon ? 'win' : 'loss',
-        score: result.score || 0,
-        rating_change: ratingChange,
-        played_at: new Date().toISOString(),
-      })
-
-      const { data: prof } = await supabase
-        .from('profiles').select('games_played,games_won,rating,username,plan').eq('id', user.id).single()
-      if (prof) {
-        const newRating = Math.max(100, (prof.rating || 1000) + ratingChange)
-        const newPlayed = (prof.games_played || 0) + 1
-        const newWon = (prof.games_won || 0) + (playerWon ? 1 : 0)
-        await supabase.from('profiles').update({
-          games_played: newPlayed,
-          games_won: newWon,
-          rating: newRating,
-        }).eq('id', user.id)
-        await supabase.from('leaderboard').upsert({
-          user_id: user.id,
-          username: prof.username,
-          rating: newRating,
-          games_played: newPlayed,
-          games_won: newWon,
-          win_pct: Math.round(newWon / newPlayed * 100),
-          plan: prof.plan,
-        }, { onConflict: 'user_id' })
-      }
-    } catch (e) {
-      console.error('Failed to save rummy result:', e)
-    }
+    const playerWon = result.winnerName === username
+    await saveGameResult('rummy', playerWon, result.score || 0, playerWon ? 25 : -15)
   }
 
   if (!connected) return (
