@@ -440,22 +440,23 @@ export default function Bridge() {
   function renderNorthSlot() {
     const isNorthDummy = dummyPos === 'N' && showDummy
     const northHand = game.hands['N'] || []
-    // In bot game: show North face up only when NS are declaring (player is on NS side)
-    const nsIsDeclaring = game.contract?.declarer === 'N' || game.contract?.declarer === 'S'
-    const showNorthFaceUp = game.phase === 'playing' && !isNorthDummy && nsIsDeclaring
+    const declarer = game.contract?.declarer
+    // Show North face up ONLY when North is dummy (partner of S declarer)
+    // N is dummy when S is declarer. N's cards show face up automatically via isNorthDummy.
+    // When N is declarer, N plays — N cards stay face down (bot plays them)
+    // When EW declare, N is opponent — face down
+    const showNorthFaceUp = isNorthDummy // only show face up when North is dummy
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:'0.68rem', color: isNorthDummy ? 'var(--gold)' : game.contract?.declarer==='N' ? 'var(--gold)' : 'var(--text-muted)' }}>
-            {botName('N')} (N){isNorthDummy ? ' — Dummy ★' : game.contract?.declarer==='N' ? ' ★ Declarer' : ''}
+          <span style={{ fontSize:'0.68rem', color: isNorthDummy ? 'var(--gold)' : declarer==='N' ? 'var(--gold)' : 'var(--text-muted)' }}>
+            {botName('N')} (N){isNorthDummy ? ' — Dummy ★' : declarer==='N' ? ' ★ Declarer' : ''}
           </span>
           {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
         </div>
-        {isNorthDummy
+        {showNorthFaceUp
           ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} />
-          : showNorthFaceUp
-            ? <DummyHand hand={northHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,false)} canPlay={false} />
-            : <FaceDownHand count={northHand.length||13} horizontal />
+          : <FaceDownHand count={northHand.length||13} horizontal />
         }
       </div>
     )
