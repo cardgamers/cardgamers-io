@@ -63,11 +63,14 @@ function BidBubble({ bid, thinking }) {
   if (!bid && !thinking) return null
   const isPass = bid?.type === 'pass'
   const isDbl = bid?.type === 'double'
-  const col = thinking ? 'var(--gold)' : isPass || isDbl ? 'rgba(245,240,232,0.5)' : 'white'
+  const containerCol = thinking ? 'var(--gold)' : isPass || isDbl ? 'rgba(245,240,232,0.5)' : 'rgba(255,255,255,0.9)'
   return (
-    <div style={{ background:'rgba(0,0,0,0.85)', border:`1.5px solid ${thinking?'var(--gold)':'rgba(255,255,255,0.2)'}`, borderRadius:8, padding:'3px 10px', fontSize:'0.82rem', fontWeight:700, color:col, whiteSpace:'nowrap' }}>
+    <div style={{ background:'rgba(0,0,0,0.85)', border:`1.5px solid ${thinking?'var(--gold)':'rgba(255,255,255,0.2)'}`, borderRadius:8, padding:'3px 10px', fontSize:'0.82rem', fontWeight:700, whiteSpace:'nowrap', color:containerCol }}>
       {thinking ? <ThinkingDots/> : isPass ? 'Pass' : isDbl ? 'Dbl' : (
-        <span>{bid.level}<span style={{ color: suitColor(bid.denomination) }}>{DENOM_SYMBOLS[bid.denomination]}</span></span>
+        <span style={{ color:'rgba(255,255,255,0.9)' }}>
+          {bid.level}
+          <span style={{ color: suitColor(bid.denomination) }}>{DENOM_SYMBOLS[bid.denomination]}</span>
+        </span>
       )}
     </div>
   )
