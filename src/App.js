@@ -51,6 +51,11 @@ function AppRoutes() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/how-to-play" element={<HowToPlay />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/about" element={<ComingSoon />} />
+<Route path="/games" element={<ComingSoon />} />
+<Route path="/tournaments" element={<ComingSoon />} />
+<Route path="/blog" element={<ComingSoon />} />
+<Route path="/contact" element={<ComingSoon />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
