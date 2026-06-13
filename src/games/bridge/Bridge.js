@@ -127,7 +127,7 @@ function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=t
                 cards={cards}
                 legalCards={legal}
                 onCardClick={c => canPlay && onPlay(c)}
-                cardW={56} cardH={78} overlap={20}
+                cardW={70} cardH={98} overlap={24}
               />
             </div>
           )
@@ -610,7 +610,7 @@ export default function Bridge() {
             </div>
             {isNorthDummy
               ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} horizontal />
-              : <FannedHand cards={game.hands['N']||[]} faceDown cardW={52} cardH={72} overlap={20} />
+              : <FannedHand cards={game.hands['N']||[]} faceDown cardW={64} cardH={90} overlap={22} />
             }
           </div>
 
@@ -623,7 +623,7 @@ export default function Bridge() {
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
               {isWestDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} horizontal={false} />
-                : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={44} cardH={62} overlap={18} />
+                : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={52} cardH={73} overlap={18} />
               }
             </div>
 
@@ -655,10 +655,10 @@ export default function Bridge() {
                       <div key={p} style={{ position:'absolute', ...offsets[p] }}>
                         {play
                           ? <div style={{ textAlign:'center' }}>
-                              <BCard card={play.card} w={76} h={106} />
+                              <BCard card={play.card} w={86} h={120} />
                               <div style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.45)', marginTop:3 }}>{p==='S'?'You':botName(p)}</div>
                             </div>
-                          : <div style={{ width:76, height:106, borderRadius:8, border:'2px dashed rgba(201,168,76,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                          : <div style={{ width:86, height:120, borderRadius:8, border:'2px dashed rgba(201,168,76,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                               <span style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.15)' }}>{p==='S'?'You':botName(p)}</span>
                             </div>
                         }
@@ -679,7 +679,7 @@ export default function Bridge() {
               <span style={{ fontSize:'0.6rem', fontWeight:600, color:labelColor('E'), writingMode:'vertical-rl', maxHeight:120 }}>{playerLabel('E')}</span>
               {isEastDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} horizontal={false} />
-                : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={44} cardH={62} overlap={18} />
+                : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={52} cardH={73} overlap={18} />
               }
             </div>
           </div>
@@ -700,13 +700,13 @@ export default function Bridge() {
                 const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
                 return (
                   <div key={suit} style={{ display:'flex', alignItems:'center', gap:4 }}>
-                    <span style={{ fontSize:'1.1rem', color:col, fontWeight:700, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                    <span style={{ fontSize:'1.4rem', color:col, fontWeight:700, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
                     <FannedHand
                       cards={cards}
                       legalCards={legalCards}
                       selectedCard={selectedCard}
                       onCardClick={handleSouthCardClick}
-                      cardW={68} cardH={95} overlap={24}
+                      cardW={88} cardH={123} overlap={28}
                     />
                   </div>
                 )
