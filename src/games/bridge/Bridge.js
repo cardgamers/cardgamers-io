@@ -47,14 +47,12 @@ function BCard({ card, selected, legal, onClick, w=72, h=101, faceDown }) {
   )
 }
 
-// ─── Thinking dots ────────────────────────────────────────────────
 function ThinkingDots() {
   const [d, setD] = useState(1)
   useEffect(() => { const t = setInterval(()=>setD(x=>x===3?1:x+1),500); return()=>clearInterval(t) },[])
   return <span>{'●'.repeat(d)}{'○'.repeat(3-d)}</span>
 }
 
-// ─── Bid bubble ───────────────────────────────────────────────────
 function BidBubble({ bid, thinking }) {
   if (!bid && !thinking) return null
   const text = thinking?'...':bid.type==='pass'?'Pass':bid.type==='double'?'Dbl':`${bid.level}${DENOM_SYMBOLS[bid.denomination]}`
@@ -66,7 +64,6 @@ function BidBubble({ bid, thinking }) {
   )
 }
 
-// ─── Auction history ──────────────────────────────────────────────
 function AuctionHistory({ auction, dealer }) {
   const pos = ['W','N','E','S']
   const pad = [...Array(pos.indexOf(dealer)).fill(null), ...auction]
@@ -87,7 +84,6 @@ function AuctionHistory({ auction, dealer }) {
   )
 }
 
-// ─── Step bid panel ───────────────────────────────────────────────
 function BidPanel({ auction, onBid, onPass }) {
   const [selLevel, setSelLevel] = useState(null)
   const [selDenom, setSelDenom] = useState(null)
@@ -95,14 +91,11 @@ function BidPanel({ auction, onBid, onPass }) {
   const last = auction.reduce((l,b)=>b.type==='bid'?b:l, null)
   const levelOk = lv => !last || lv > last.level || lv === last.level
   const denomOk = (lv,d) => { if(!last)return true; if(lv>last.level)return true; if(lv===last.level)return dn.indexOf(d)>dn.indexOf(last.denomination); return false }
-
   const denomColors = { C:'rgba(255,255,255,0.9)', D:'#e74c3c', H:'#e74c3c', S:'rgba(255,255,255,0.9)', NT:'#7eb5f5' }
 
   return (
     <div style={{ background:'rgba(0,0,0,0.8)', borderRadius:14, padding:'14px 16px', border:'1px solid rgba(201,168,76,0.25)', width:'100%', maxWidth:320 }}>
       <p style={{ fontSize:'0.7rem', color:'var(--gold)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:12, textAlign:'center' }}>Your Bid</p>
-
-      {/* Step 1: Level */}
       <div style={{ marginBottom:12 }}>
         <p style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.45)', marginBottom:7 }}>
           Step 1 — Level {selLevel&&<span style={{ color:'var(--gold)' }}>· {selLevel} selected</span>}
@@ -121,8 +114,6 @@ function BidPanel({ auction, onBid, onPass }) {
           })}
         </div>
       </div>
-
-      {/* Step 2: Denomination */}
       <div style={{ marginBottom:12, opacity:selLevel?1:0.4 }}>
         <p style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.45)', marginBottom:7 }}>
           Step 2 — Suit {selDenom&&<span style={{ color:'var(--gold)' }}>· {DENOM_SYMBOLS[selDenom]} selected</span>}
@@ -141,8 +132,6 @@ function BidPanel({ auction, onBid, onPass }) {
           })}
         </div>
       </div>
-
-      {/* Confirm + Pass */}
       <div style={{ display:'flex', gap:8 }}>
         <button onClick={()=>{if(selLevel&&selDenom){onBid(selLevel,selDenom);setSelLevel(null);setSelDenom(null)}}} disabled={!selLevel||!selDenom} style={{
           flex:2, padding:'10px', borderRadius:8, fontWeight:700, fontSize:'0.9rem',
@@ -161,7 +150,6 @@ function BidPanel({ auction, onBid, onPass }) {
   )
 }
 
-// ─── Dummy hand (face up, horizontal by suit) ─────────────────────
 function DummyHand({ hand, currentTrick, contract, onPlay, canPlay }) {
   if (!hand) return null
   const legal = canPlay ? getLegalCards(hand, currentTrick, contract?.denomination==='NT'?null:contract?.denomination) : null
@@ -186,7 +174,6 @@ function DummyHand({ hand, currentTrick, contract, onPlay, canPlay }) {
   )
 }
 
-// ─── Compact face-down hand ───────────────────────────────────────
 function FaceDownHand({ count=13, horizontal=true }) {
   const n = Math.min(count, 13)
   if (horizontal) {
@@ -211,6 +198,28 @@ function FaceDownHand({ count=13, horizontal=true }) {
   )
 }
 
+// ─── Slot component — renders correct hand for each position ──────
+function PositionSlot({ pos, game, botName, showDummy, dummyHand, dummyPos, botThinking, getPlayerLastBid, handleCardClick, isDummyTurn }) {
+  const label = pos === 'S' ? 'You' : botName(pos)
+  const isDummy = dummyPos === pos
+  const isRevealed = showDummy && isDummy
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <span style={{ fontSize:'0.68rem', color: isRevealed ? 'var(--gold)' : 'var(--text-muted)' }}>
+          {label} ({pos}){isRevealed ? ' — Dummy ★' : game.contract?.declarer===pos ? ' ★ Declarer' : ''}
+        </span>
+        {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid(pos, game.auction)} thinking={botThinking===pos} />}
+      </div>
+      {isRevealed
+        ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader===pos} />
+        : <FaceDownHand count={game.hands[pos]?.length||13} horizontal />
+      }
+    </div>
+  )
+}
+
 // ─── Main Bridge component ────────────────────────────────────────
 export default function Bridge() {
   const { profile } = useAuth()
@@ -227,7 +236,6 @@ export default function Bridge() {
   const lastTrickTimer = useRef(null)
   const isPlusUser = profile?.plan==='plus'||profile?.plan==='club'
 
-  // Save result when hand completes
   useEffect(() => {
     if (!game || game.phase !== 'complete' || !game.scoring || resultSaved) return
     const isDeclarer = game.contract?.declarer === 'S'
@@ -267,11 +275,7 @@ export default function Bridge() {
     ng.auction.push({...bid, position:ng.currentBidder})
     if (isAuctionOver(ng.auction)) {
       const contract = getContract(ng.auction)
-      if (!contract) {
-        // All passed — mark for redeal, handled in useEffect
-        ng.phase = 'redeal'
-        return
-      }
+      if (!contract) { ng.phase = 'redeal'; return }
       ng.contract = contract
       ng.dummy = PARTNERS[contract.declarer]
       ng.phase = 'playing'
@@ -342,7 +346,6 @@ export default function Bridge() {
 
   useEffect(()=>{
     if (!game) return
-    // Handle all-pass redeal
     if (game.phase==='redeal') {
       const fresh = createBridgeGame(game.mode,'S',game.difficulty,game.botNames)
       setGame(fresh)
@@ -383,7 +386,6 @@ export default function Bridge() {
     setSelectedCard(null)
   }
 
-  // ── Menu ──────────────────────────────────────────────────────────
   if (screen==='menu') return (
     <div style={{ paddingTop:80, minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'3rem 1.5rem' }}>
       <div style={{ maxWidth:500, width:'100%' }}>
@@ -432,15 +434,14 @@ export default function Bridge() {
   const isMyTurn = isMyBidTurn||isMyPlayTurn||isDummyTurn
   const botName = p=>p==='N'?'Alex':p==='E'?'Sam':'Jordan'
 
-  // KEY INSIGHT: dummy hand always shows at North position visually
-  // regardless of who is actually dummy
+  // dummy is always the partner of declarer — shown face-up in their ACTUAL position
   const dummyPos = game.dummy
   const dummyHand = dummyPos ? game.hands[dummyPos] : null
   const showDummy = game.dummyRevealed && dummyHand
 
-  // North visual slot shows: dummy hand if revealed, else North's face-down cards
-  // West/East always show face-down compact stacks
-  // The actual positions shown as labels reflect true positions
+  // Which position sits at North (top), West (left), East (right)
+  // Player is always South. The other 3 positions rotate accordingly.
+  // N=top, W=left, E=right always in real Bridge — we keep this fixed.
 
   return (
     <div style={{ paddingTop:64, height:'100vh', display:'flex', flexDirection:'column', background:'#0f2219', overflow:'hidden' }}>
@@ -468,7 +469,7 @@ export default function Bridge() {
       {showLastTrick&&lastTrick&&(
         <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', zIndex:150, background:'rgba(0,0,0,0.93)', border:'2px solid rgba(201,168,76,0.4)', borderRadius:16, padding:'20px 28px', textAlign:'center', boxShadow:'0 8px 40px rgba(0,0,0,0.6)' }}>
           <p style={{ fontSize:'0.85rem', color:'var(--gold)', fontWeight:700, marginBottom:12 }}>
-            {lastTrick.winner==='S'?'You won':''+botName(lastTrick.winner)+' won'} the trick 👑
+            {lastTrick.winner==='S'?'You won':botName(lastTrick.winner)+' won'} the trick 👑
           </p>
           <div style={{ display:'flex', gap:10, justifyContent:'center', alignItems:'flex-end' }}>
             {lastTrick.trick.map((t,i)=>(
@@ -509,41 +510,40 @@ export default function Bridge() {
       <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
         <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'8px 12px', gap:6, overflow:'hidden', minWidth:0 }}>
 
-          {/* NORTH SLOT — shows dummy if revealed, else North face-down */}
+          {/* NORTH SLOT — always North's cards (face down unless North is dummy) */}
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize:'0.68rem', color:'var(--text-muted)' }}>
-                {showDummy
-                  ? `${dummyPos==='S'?'You':botName(dummyPos)} (${dummyPos}) — Dummy ★`
-                  : `${botName('N')} (N)${game.contract?.declarer==='N'?' ★ Declarer':''}`
-                }
+              <span style={{ fontSize:'0.68rem', color: dummyPos==='N' && showDummy ? 'var(--gold)' : 'var(--text-muted)' }}>
+                {botName('N')} (N){dummyPos==='N' && showDummy ? ' — Dummy ★' : game.contract?.declarer==='N' ? ' ★ Declarer' : ''}
               </span>
               {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
             </div>
-            {showDummy
-              ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn&&game.currentLeader===dummyPos} />
+            {dummyPos==='N' && showDummy
+              ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} />
               : <FaceDownHand count={game.hands['N']?.length||13} horizontal />
             }
           </div>
 
-          {/* MIDDLE */}
+          {/* MIDDLE ROW */}
           <div style={{ flex:1, display:'flex', alignItems:'center', gap:8, overflow:'hidden', minHeight:0 }}>
 
-            {/* WEST — always compact vertical stack */}
+            {/* WEST SLOT */}
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, flexShrink:0 }}>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize:'0.6rem', color:game.contract?.declarer==='W'?'var(--gold)':'var(--text-muted)', writingMode:'vertical-rl', transform:'rotate(180deg)' }}>
-                  {botName('W')} (W){game.contract?.declarer==='W'?' ★':''}
+                <span style={{ fontSize:'0.6rem', color: dummyPos==='W' && showDummy ? 'var(--gold)' : game.contract?.declarer==='W'?'var(--gold)':'var(--text-muted)', writingMode:'vertical-rl', transform:'rotate(180deg)' }}>
+                  {botName('W')} (W){dummyPos==='W' && showDummy ? ' ★ Dummy' : game.contract?.declarer==='W'?' ★':''}
                 </span>
                 {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
               </div>
-              <FaceDownHand count={game.hands['W']?.length||13} horizontal={false} />
+              {dummyPos==='W' && showDummy
+                ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} />
+                : <FaceDownHand count={game.hands['W']?.length||13} horizontal={false} />
+              }
             </div>
 
             {/* CENTER */}
             <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, minWidth:0 }}>
 
-              {/* Bidding */}
               {game.phase==='bidding'&&(
                 isMyBidTurn
                   ? <BidPanel auction={game.auction} onBid={handleBid} onPass={handlePass} />
@@ -553,7 +553,6 @@ export default function Bridge() {
                     </div>
               )}
 
-              {/* Trick area */}
               {game.phase==='playing'&&(
                 <div style={{ position:'relative', width:260, height:210, flexShrink:0 }}>
                   {['N','S','E','W'].map(p=>{
@@ -586,19 +585,22 @@ export default function Bridge() {
               )}
             </div>
 
-            {/* EAST — always compact vertical stack */}
+            {/* EAST SLOT */}
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, flexShrink:0 }}>
               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                 {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
-                <span style={{ fontSize:'0.6rem', color:game.contract?.declarer==='E'?'var(--gold)':'var(--text-muted)', writingMode:'vertical-rl' }}>
-                  {botName('E')} (E){game.contract?.declarer==='E'?' ★':''}
+                <span style={{ fontSize:'0.6rem', color: dummyPos==='E' && showDummy ? 'var(--gold)' : game.contract?.declarer==='E'?'var(--gold)':'var(--text-muted)', writingMode:'vertical-rl' }}>
+                  {botName('E')} (E){dummyPos==='E' && showDummy ? ' ★ Dummy' : game.contract?.declarer==='E'?' ★':''}
                 </span>
               </div>
-              <FaceDownHand count={game.hands['E']?.length||13} horizontal={false} />
+              {dummyPos==='E' && showDummy
+                ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} />
+                : <FaceDownHand count={game.hands['E']?.length||13} horizontal={false} />
+              }
             </div>
           </div>
 
-          {/* SOUTH — your hand (hidden when you are dummy) */}
+          {/* SOUTH — your hand */}
           <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:5, paddingBottom:6 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize:'0.68rem', color:isMyTurn?'#5DCAA5':isDeclarer?'var(--gold)':game.dummy==='S'?'rgba(201,168,76,0.6)':'var(--text-muted)' }}>
@@ -609,7 +611,6 @@ export default function Bridge() {
               </span>
               {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('S',game.auction)} />}
             </div>
-            {/* Only show cards at bottom if NOT dummy */}
             {game.dummy !== 'S' && (
               <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
                 {['S','H','D','C'].map(suit=>{
