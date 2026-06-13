@@ -440,8 +440,9 @@ export default function Bridge() {
   function renderNorthSlot() {
     const isNorthDummy = dummyPos === 'N' && showDummy
     const northHand = game.hands['N'] || []
-    // In bot game: always show North hand face up so player can follow the game
-    const showNorthFaceUp = game.phase === 'playing' && !isNorthDummy
+    // In bot game: show North face up only when NS are declaring (player is on NS side)
+    const nsIsDeclaring = game.contract?.declarer === 'N' || game.contract?.declarer === 'S'
+    const showNorthFaceUp = game.phase === 'playing' && !isNorthDummy && nsIsDeclaring
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
