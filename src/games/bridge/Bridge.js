@@ -198,28 +198,6 @@ function FaceDownHand({ count=13, horizontal=true }) {
   )
 }
 
-// ─── Slot component — renders correct hand for each position ──────
-function PositionSlot({ pos, game, botName, showDummy, dummyHand, dummyPos, botThinking, getPlayerLastBid, handleCardClick, isDummyTurn }) {
-  const label = pos === 'S' ? 'You' : botName(pos)
-  const isDummy = dummyPos === pos
-  const isRevealed = showDummy && isDummy
-
-  return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
-      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <span style={{ fontSize:'0.68rem', color: isRevealed ? 'var(--gold)' : 'var(--text-muted)' }}>
-          {label} ({pos}){isRevealed ? ' — Dummy ★' : game.contract?.declarer===pos ? ' ★ Declarer' : ''}
-        </span>
-        {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid(pos, game.auction)} thinking={botThinking===pos} />}
-      </div>
-      {isRevealed
-        ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader===pos} />
-        : <FaceDownHand count={game.hands[pos]?.length||13} horizontal />
-      }
-    </div>
-  )
-}
-
 // ─── Main Bridge component ────────────────────────────────────────
 export default function Bridge() {
   const { profile } = useAuth()
@@ -386,6 +364,7 @@ export default function Bridge() {
     setSelectedCard(null)
   }
 
+  // ── Menu ──────────────────────────────────────────────────────────
   if (screen==='menu') return (
     <div style={{ paddingTop:80, minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'3rem 1.5rem' }}>
       <div style={{ maxWidth:500, width:'100%' }}>
@@ -434,14 +413,69 @@ export default function Bridge() {
   const isMyTurn = isMyBidTurn||isMyPlayTurn||isDummyTurn
   const botName = p=>p==='N'?'Alex':p==='E'?'Sam':'Jordan'
 
-  // dummy is always the partner of declarer — shown face-up in their ACTUAL position
   const dummyPos = game.dummy
   const dummyHand = dummyPos ? game.hands[dummyPos] : null
   const showDummy = game.dummyRevealed && dummyHand
 
-  // Which position sits at North (top), West (left), East (right)
-  // Player is always South. The other 3 positions rotate accordingly.
-  // N=top, W=left, E=right always in real Bridge — we keep this fixed.
+  // Helper — render the correct hand for any position
+  // North = always face down (top slot)
+  // West = left slot: face down, OR dummy face up if West is dummy
+  // East = right slot: face down, OR dummy face up if East is dummy
+  // South = player's hand at bottom
+
+  function renderNorthSlot() {
+    const isNorthDummy = dummyPos === 'N' && showDummy
+    return (
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <span style={{ fontSize:'0.68rem', color: isNorthDummy ? 'var(--gold)' : 'var(--text-muted)' }}>
+            {botName('N')} (N){isNorthDummy ? ' — Dummy ★' : game.contract?.declarer==='N' ? ' ★ Declarer' : ''}
+          </span>
+          {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
+        </div>
+        {isNorthDummy
+          ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} />
+          : <FaceDownHand count={game.hands['N']?.length||13} horizontal />
+        }
+      </div>
+    )
+  }
+
+  function renderWestSlot() {
+    const isWestDummy = dummyPos === 'W' && showDummy
+    return (
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+          <span style={{ fontSize:'0.6rem', color: isWestDummy ? 'var(--gold)' : game.contract?.declarer==='W' ? 'var(--gold)' : 'var(--text-muted)', writingMode:'vertical-rl', transform:'rotate(180deg)' }}>
+            {botName('W')} (W){isWestDummy ? ' ★ Dummy' : game.contract?.declarer==='W' ? ' ★' : ''}
+          </span>
+          {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
+        </div>
+        {isWestDummy
+          ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} />
+          : <FaceDownHand count={game.hands['W']?.length||13} horizontal={false} />
+        }
+      </div>
+    )
+  }
+
+  function renderEastSlot() {
+    const isEastDummy = dummyPos === 'E' && showDummy
+    return (
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+          {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
+          <span style={{ fontSize:'0.6rem', color: isEastDummy ? 'var(--gold)' : game.contract?.declarer==='E' ? 'var(--gold)' : 'var(--text-muted)', writingMode:'vertical-rl' }}>
+            {botName('E')} (E){isEastDummy ? ' ★ Dummy' : game.contract?.declarer==='E' ? ' ★' : ''}
+          </span>
+        </div>
+        {isEastDummy
+          ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} />
+          : <FaceDownHand count={game.hands['E']?.length||13} horizontal={false} />
+        }
+      </div>
+    )
+  }
 
   return (
     <div style={{ paddingTop:64, height:'100vh', display:'flex', flexDirection:'column', background:'#0f2219', overflow:'hidden' }}>
@@ -510,38 +544,16 @@ export default function Bridge() {
       <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
         <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'8px 12px', gap:6, overflow:'hidden', minWidth:0 }}>
 
-          {/* NORTH SLOT — always North's cards (face down unless North is dummy) */}
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flexShrink:0 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize:'0.68rem', color: dummyPos==='N' && showDummy ? 'var(--gold)' : 'var(--text-muted)' }}>
-                {botName('N')} (N){dummyPos==='N' && showDummy ? ' — Dummy ★' : game.contract?.declarer==='N' ? ' ★ Declarer' : ''}
-              </span>
-              {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
-            </div>
-            {dummyPos==='N' && showDummy
-              ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} />
-              : <FaceDownHand count={game.hands['N']?.length||13} horizontal />
-            }
-          </div>
+          {/* NORTH SLOT — top of table, opposite South */}
+          {renderNorthSlot()}
 
-          {/* MIDDLE ROW */}
+          {/* MIDDLE ROW — West | Center | East */}
           <div style={{ flex:1, display:'flex', alignItems:'center', gap:8, overflow:'hidden', minHeight:0 }}>
 
-            {/* WEST SLOT */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, flexShrink:0 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                <span style={{ fontSize:'0.6rem', color: dummyPos==='W' && showDummy ? 'var(--gold)' : game.contract?.declarer==='W'?'var(--gold)':'var(--text-muted)', writingMode:'vertical-rl', transform:'rotate(180deg)' }}>
-                  {botName('W')} (W){dummyPos==='W' && showDummy ? ' ★ Dummy' : game.contract?.declarer==='W'?' ★':''}
-                </span>
-                {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
-              </div>
-              {dummyPos==='W' && showDummy
-                ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} />
-                : <FaceDownHand count={game.hands['W']?.length||13} horizontal={false} />
-              }
-            </div>
+            {/* WEST SLOT — always on the left */}
+            {renderWestSlot()}
 
-            {/* CENTER */}
+            {/* CENTER — bidding panel or trick area */}
             <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, minWidth:0 }}>
 
               {game.phase==='bidding'&&(
@@ -585,22 +597,11 @@ export default function Bridge() {
               )}
             </div>
 
-            {/* EAST SLOT */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, flexShrink:0 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                {game.phase==='bidding'&&<BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
-                <span style={{ fontSize:'0.6rem', color: dummyPos==='E' && showDummy ? 'var(--gold)' : game.contract?.declarer==='E'?'var(--gold)':'var(--text-muted)', writingMode:'vertical-rl' }}>
-                  {botName('E')} (E){dummyPos==='E' && showDummy ? ' ★ Dummy' : game.contract?.declarer==='E'?' ★':''}
-                </span>
-              </div>
-              {dummyPos==='E' && showDummy
-                ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} />
-                : <FaceDownHand count={game.hands['E']?.length||13} horizontal={false} />
-              }
-            </div>
+            {/* EAST SLOT — always on the right */}
+            {renderEastSlot()}
           </div>
 
-          {/* SOUTH — your hand */}
+          {/* SOUTH — your hand at the bottom */}
           <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:5, paddingBottom:6 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize:'0.68rem', color:isMyTurn?'#5DCAA5':isDeclarer?'var(--gold)':game.dummy==='S'?'rgba(201,168,76,0.6)':'var(--text-muted)' }}>
