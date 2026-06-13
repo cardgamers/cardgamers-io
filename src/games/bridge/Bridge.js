@@ -421,7 +421,13 @@ export default function Bridge() {
   }, [game, doBotAction])
 
   function startGame() {
-    setGame(createBridgeGame(gameMode,'S',difficulty,{N:'North',E:'East',W:'West'}))
+    const newGame = createBridgeGame(gameMode,'S',difficulty,{N:'North',E:'East',W:'West'})
+    // Store initial HCP before any cards are played
+    newGame.initialHCP = {
+      NS: countHCP(newGame.hands['N']) + countHCP(newGame.hands['S']),
+      EW: countHCP(newGame.hands['E']) + countHCP(newGame.hands['W']),
+    }
+    setGame(newGame)
     setScreen('game'); setSelectedCard(null); setBotThinking(null)
     setLastTrick(null); setShowLastTrick(false); setResultSaved(false)
   }
@@ -561,7 +567,7 @@ export default function Bridge() {
             <p style={{ color:'var(--cream)', marginBottom:'0.2rem' }}>{game.contract.level}{DENOM_SYMBOLS[game.contract.denomination]} by {game.contract.declarer==='S'?'South':botName(game.contract.declarer)}</p>
             <p style={{ color:'var(--text-muted)', fontSize:'0.9rem', marginBottom:'0.2rem' }}>NS: {game.tricks.NS} tricks · EW: {game.tricks.EW} tricks</p>
             <p style={{ color:'rgba(245,240,232,0.4)', fontSize:'0.8rem', marginBottom:'0.5rem' }}>
-              NS: {countHCP(game.hands['N']||[]) + countHCP(game.hands['S']||[])} HCP &nbsp;·&nbsp; EW: {countHCP(game.hands['E']||[]) + countHCP(game.hands['W']||[])} HCP
+              NS: {game.initialHCP?.NS ?? '?'} HCP &nbsp;·&nbsp; EW: {game.initialHCP?.EW ?? '?'} HCP
             </p>
             <div style={{ fontSize:'1.6rem', fontWeight:700, color:'var(--gold)', margin:'0.75rem 0' }}>
               {game.scoring.made ? `NS +${game.scoring.declarerScore}` : `EW +${game.scoring.defenderScore}`} pts
