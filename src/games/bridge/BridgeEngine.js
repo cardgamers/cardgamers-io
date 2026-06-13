@@ -1,4 +1,4 @@
-// ─── Bridge Game Engine v2 — Smart Bot ───────────────────────────
+// ─── Bridge Game Engine v2.1 — Smart Bot + Fixed Validation ──────
 
 export const SUITS = ['C', 'D', 'H', 'S']
 export const SUIT_SYMBOLS = { C: '♣', D: '♦', H: '♥', S: '♠' }
@@ -90,11 +90,6 @@ export function isBalanced(hand) {
   return lengths[0] <= 5 && lengths[3] >= 2
 }
 
-function longestSuit(hand) {
-  const dist = getDistribution(hand)
-  return SUITS.reduce((best, suit) => dist[suit] > dist[best] ? suit : best, 'C')
-}
-
 function hasStopper(hand, suit) {
   const sc = hand.filter(c => c.suit === suit)
   if (sc.some(c => c.value === 'A')) return true
@@ -105,7 +100,6 @@ function hasStopper(hand, suit) {
 }
 
 function countAces(hand) { return hand.filter(c => c.value === 'A').length }
-function countKings(hand) { return hand.filter(c => c.value === 'K').length }
 
 function quickTricks(hand) {
   let qt = 0
@@ -124,27 +118,16 @@ function quickTricks(hand) {
   return qt
 }
 
-function suitQuality(hand, suit) {
-  // Returns quality score for a suit — used for choosing what to bid/lead
-  const sc = hand.filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
-  let score = sc.length * 10
-  for (const c of sc) score += Math.max(0, VALUE_RANK[c.value] - 9)
-  return score
-}
-
 function hasHeadOfSequence(hand, suit) {
   const cards = hand.filter(c => c.suit === suit)
   return cards.some(c => VALUE_RANK[c.value] >= 10)
 }
 
-// ─── Count winners in a suit ──────────────────────────────────────
-function countSuitWinners(hand, suit, playedCards) {
-  const remaining = hand.filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
+function countSuitWinners(cards, suit, playedCards) {
+  const remaining = cards.filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
   const alreadyPlayed = playedCards.filter(c => c.suit === suit).map(c => VALUE_RANK[c.value])
   let winners = 0
-  let rank = 14 // Ace
   for (const card of remaining) {
-    // Count how many cards above this card are still out
     let higherOut = 0
     for (let r = VALUE_RANK[card.value] + 1; r <= 14; r++) {
       if (!alreadyPlayed.includes(r) && !remaining.some(c => VALUE_RANK[c.value] === r)) higherOut++
@@ -154,18 +137,45 @@ function countSuitWinners(hand, suit, playedCards) {
   return winners
 }
 
+// ─── Core bid validity — used everywhere ──────────────────────────
+function isBidHigherThan(bid, lastBid) {
+  if (!lastBid) return true
+  if (bid.type === 'pass') return true
+  if (bid.type === 'double' || bid.type === 'redouble') return true
+  const denomOrder = ['C','D','H','S','NT']
+  if (bid.level > lastBid.level) return true
+  if (bid.level === lastBid.level) {
+    return denomOrder.indexOf(bid.denomination) > denomOrder.indexOf(lastBid.denomination)
+  }
+  return false
+}
+
+function getLastRealBid(auction) {
+  for (let i = auction.length - 1; i >= 0; i--) {
+    if (auction[i].type === 'bid') return auction[i]
+  }
+  return null
+}
+
+// ─── Safe bid helper — always validates before returning ──────────
+function makeBid(level, denomination, auction) {
+  const lastBid = getLastRealBid(auction)
+  const bid = { level, denomination, type: 'bid' }
+  if (isBidHigherThan(bid, lastBid)) return bid
+  return { level: 0, denomination: 'PASS', type: 'pass' }
+}
+
 // ─── Standard American Bidding ────────────────────────────────────
 export function getBotBid(hand, auction, position, vulnerability, difficulty = 'hard') {
   const hcp = countHCP(hand)
   const dist = getDistribution(hand)
   const tp = totalPoints(hand)
   const partnerPos = PARTNERS[position]
-
-  const myBids = auction.filter(b => b.position === position && b.type !== 'pass')
-  const partnerBids = auction.filter(b => b.position === partnerPos && b.type !== 'pass')
-  const oppBids = auction.filter(b => b.position !== position && b.position !== partnerPos)
-  const lastCall = auction.length ? auction[auction.length - 1] : null
   const lastRealBid = getLastRealBid(auction)
+
+  const myBids = auction.filter(b => b.position === position && b.type === 'bid')
+  const partnerBids = auction.filter(b => b.position === partnerPos && b.type === 'bid')
+  const oppBids = auction.filter(b => b.position !== position && b.position !== partnerPos && b.type === 'bid')
   const partnerLastBid = partnerBids.length ? partnerBids[partnerBids.length - 1] : null
 
   if (difficulty === 'easy' && Math.random() < 0.2) {
@@ -173,20 +183,20 @@ export function getBotBid(hand, auction, position, vulnerability, difficulty = '
   }
 
   // ── Opening bid ──
-  if (myBids.length === 0 && partnerBids.length === 0 && !oppBids.some(b => b.type === 'bid')) {
-    return getOpeningBid(hand, hcp, dist, tp)
+  if (myBids.length === 0 && partnerBids.length === 0 && oppBids.length === 0) {
+    return getOpeningBid(hand, hcp, dist, tp, auction)
   }
 
   // ── Overcall after opponent opens ──
   if (myBids.length === 0 && partnerBids.length === 0 && oppBids.length >= 1) {
-    const result = getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, position, auction)
+    const result = getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, auction)
     if (result) return result
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
   // ── Response to partner's opening ──
   if (myBids.length === 0 && partnerBids.length >= 1) {
-    return getResponse(hand, hcp, dist, tp, partnerLastBid, lastRealBid, oppBids, auction, position)
+    return getResponse(hand, hcp, dist, tp, partnerLastBid, lastRealBid, oppBids, auction)
   }
 
   // ── Opener's rebid ──
@@ -202,42 +212,54 @@ export function getBotBid(hand, auction, position, vulnerability, difficulty = '
   // ── Blackwood 4NT response ──
   if (lastRealBid && lastRealBid.level === 4 && lastRealBid.denomination === 'NT' && lastRealBid.position === partnerPos) {
     const aces = countAces(hand)
-    const r = [{ level:5, denomination:'C' }, { level:5, denomination:'D' }, { level:5, denomination:'H' }, { level:5, denomination:'S' }]
-    return { ...r[aces], type: 'bid' }
+    const responses = [
+      { level:5, denomination:'C' },
+      { level:5, denomination:'D' },
+      { level:5, denomination:'H' },
+      { level:5, denomination:'S' }
+    ]
+    return { ...responses[aces], type: 'bid' }
   }
 
   // ── Gerber 4C response ──
   if (lastRealBid && lastRealBid.level === 4 && lastRealBid.denomination === 'C' && lastRealBid.position === partnerPos) {
     const aces = countAces(hand)
-    const r = [{ level:4, denomination:'D' }, { level:4, denomination:'H' }, { level:4, denomination:'S' }, { level:4, denomination:'NT' }]
-    return { ...r[aces], type: 'bid' }
+    const responses = [
+      { level:4, denomination:'D' },
+      { level:4, denomination:'H' },
+      { level:4, denomination:'S' },
+      { level:4, denomination:'NT' }
+    ]
+    return { ...responses[aces], type: 'bid' }
   }
 
   // ── Takeout double ──
-  if (oppBids.filter(b=>b.type==='bid').length === 1 && myBids.length === 0 && partnerBids.length === 0 && hcp >= 12) {
-    const oppSuit = oppBids.find(b=>b.type==='bid').denomination
+  if (oppBids.length === 1 && myBids.length === 0 && partnerBids.length === 0 && hcp >= 12) {
+    const oppSuit = oppBids[0].denomination
     if (oppSuit !== 'NT') {
       const unbid = SUITS.filter(s => s !== oppSuit)
       const hasSupport = unbid.every(s => dist[s] >= 3)
-      if (hasSupport || hcp >= 17) return { level: 0, denomination: 'DBL', type: 'double' }
+      if (hasSupport || hcp >= 17) {
+        return { level: 0, denomination: 'DBL', type: 'double' }
+      }
     }
   }
 
   return { level: 0, denomination: 'PASS', type: 'pass' }
 }
 
-function getOpeningBid(hand, hcp, dist, tp) {
+function getOpeningBid(hand, hcp, dist, tp, auction) {
   if (hcp < 10) return { level: 0, denomination: 'PASS', type: 'pass' }
 
   // Preemptive bids
   if (hcp >= 5 && hcp <= 10) {
     for (const suit of ['S','H']) {
       if (dist[suit] >= 6 && hasHeadOfSequence(hand, suit)) {
-        return { level: 2, denomination: suit, type: 'bid' }
+        return makeBid(2, suit, auction)
       }
     }
     for (const suit of SUITS) {
-      if (dist[suit] >= 7) return { level: 3, denomination: suit, type: 'bid' }
+      if (dist[suit] >= 7) return makeBid(3, suit, auction)
     }
   }
 
@@ -245,53 +267,56 @@ function getOpeningBid(hand, hcp, dist, tp) {
 
   // Strong 2C
   if (hcp >= 22 || (hcp >= 19 && quickTricks(hand) >= 4)) {
-    return { level: 2, denomination: 'C', type: 'bid' }
+    return makeBid(2, 'C', auction)
   }
 
   // 2NT: 20-21 balanced
   if (hcp >= 20 && hcp <= 21 && isBalanced(hand)) {
-    return { level: 2, denomination: 'NT', type: 'bid' }
+    return makeBid(2, 'NT', auction)
   }
 
   // 1NT: 15-17 balanced
   if (hcp >= 15 && hcp <= 17 && isBalanced(hand)) {
-    return { level: 1, denomination: 'NT', type: 'bid' }
+    return makeBid(1, 'NT', auction)
   }
 
   // 1 of a major (5+ cards)
-  if (dist['S'] >= 5 && dist['S'] >= dist['H']) return { level: 1, denomination: 'S', type: 'bid' }
-  if (dist['H'] >= 5) return { level: 1, denomination: 'H', type: 'bid' }
+  if (dist['S'] >= 5 && dist['S'] >= dist['H']) return makeBid(1, 'S', auction)
+  if (dist['H'] >= 5) return makeBid(1, 'H', auction)
 
-  // 4-card majors (if strong enough)
+  // 4-card majors
   if (hcp >= 12 && hcp <= 21) {
-    if (dist['S'] >= 4 && dist['S'] > dist['H']) return { level: 1, denomination: 'S', type: 'bid' }
-    if (dist['H'] >= 4) return { level: 1, denomination: 'H', type: 'bid' }
-    if (dist['D'] >= dist['C']) return { level: 1, denomination: 'D', type: 'bid' }
-    return { level: 1, denomination: 'C', type: 'bid' }
+    if (dist['S'] >= 4 && dist['S'] > dist['H']) return makeBid(1, 'S', auction)
+    if (dist['H'] >= 4) return makeBid(1, 'H', auction)
+    if (dist['D'] >= dist['C']) return makeBid(1, 'D', auction)
+    return makeBid(1, 'C', auction)
   }
 
   return { level: 0, denomination: 'PASS', type: 'pass' }
 }
 
-function getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, position, auction) {
+function getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, auction) {
   if (hcp < 8) return null
-  const oppLevel = lastRealBid ? lastRealBid.level : 1
 
-  // 1NT overcall: 15-18 balanced with stopper in opp suit
-  if (oppLevel === 1 && hcp >= 15 && hcp <= 18 && isBalanced(hand)) {
+  // 1NT overcall: 15-18 balanced with stopper
+  if (lastRealBid && lastRealBid.level === 1 && hcp >= 15 && hcp <= 18 && isBalanced(hand)) {
     const oppSuit = lastRealBid.denomination
     if (hasStopper(hand, oppSuit)) {
-      return { level: 1, denomination: 'NT', type: 'bid' }
+      const bid = makeBid(1, 'NT', auction)
+      if (bid.type === 'bid') return bid
     }
   }
 
-  // Simple overcall with good suit
+  // Simple overcall with 5+ card suit
   for (const suit of ['S','H','D','C']) {
     if (dist[suit] >= 5 && hcp >= 8) {
-      const bid = { level: oppLevel, denomination: suit, type: 'bid' }
-      if (isValidBidLevel(bid, lastRealBid)) return bid
-      if (isValidBidLevel({ level: oppLevel + 1, denomination: suit, type: 'bid' }, lastRealBid) && hcp >= 11) {
-        return { level: oppLevel + 1, denomination: suit, type: 'bid' }
+      // Try 1-level first
+      const bid1 = makeBid(1, suit, auction)
+      if (bid1.type === 'bid') return bid1
+      // Try 2-level if strong enough
+      if (hcp >= 11) {
+        const bid2 = makeBid(2, suit, auction)
+        if (bid2.type === 'bid') return bid2
       }
     }
   }
@@ -299,107 +324,93 @@ function getOvercall(hand, hcp, dist, tp, oppBids, lastRealBid, position, auctio
   return null
 }
 
-function getResponse(hand, hcp, dist, tp, partnerOpening, lastBid, oppBids, auction, position) {
+function getResponse(hand, hcp, dist, tp, partnerOpening, lastRealBid, oppBids, auction) {
   if (!partnerOpening) return { level: 0, denomination: 'PASS', type: 'pass' }
-  const opening = partnerOpening
 
   // Response to 1NT (15-17)
-  if (opening.level === 1 && opening.denomination === 'NT') {
+  if (partnerOpening.level === 1 && partnerOpening.denomination === 'NT') {
     if (hcp <= 7) {
-      if (dist['H'] >= 5) return { level: 2, denomination: 'D', type: 'bid' } // Jacoby transfer → H
-      if (dist['S'] >= 5) return { level: 2, denomination: 'H', type: 'bid' } // Jacoby transfer → S
-      if (dist['C'] >= 6) return { level: 3, denomination: 'C', type: 'bid' }
-      if (dist['D'] >= 6) return { level: 3, denomination: 'D', type: 'bid' }
+      if (dist['H'] >= 5) return makeBid(2, 'D', auction) // Jacoby transfer → H
+      if (dist['S'] >= 5) return makeBid(2, 'H', auction) // Jacoby transfer → S
+      if (dist['C'] >= 6) return makeBid(3, 'C', auction)
+      if (dist['D'] >= 6) return makeBid(3, 'D', auction)
       return { level: 0, denomination: 'PASS', type: 'pass' }
     }
     if (hcp >= 8 && hcp <= 9) {
-      if (dist['H'] >= 4 || dist['S'] >= 4) return { level: 2, denomination: 'C', type: 'bid' } // Stayman
-      return { level: 2, denomination: 'NT', type: 'bid' }
+      if (dist['H'] >= 4 || dist['S'] >= 4) return makeBid(2, 'C', auction) // Stayman
+      return makeBid(2, 'NT', auction)
     }
     if (hcp >= 10) {
-      if (dist['H'] >= 4 || dist['S'] >= 4) return { level: 2, denomination: 'C', type: 'bid' } // Stayman
-      if (hcp >= 10 && hcp <= 14) return { level: 3, denomination: 'NT', type: 'bid' }
-      if (hcp >= 15) return { level: 4, denomination: 'NT', type: 'bid' } // Blackwood
+      if (dist['H'] >= 4 || dist['S'] >= 4) return makeBid(2, 'C', auction) // Stayman
+      if (hcp >= 15) return makeBid(4, 'NT', auction) // Blackwood
+      return makeBid(3, 'NT', auction)
     }
   }
 
   // Response to 2NT (20-21)
-  if (opening.level === 2 && opening.denomination === 'NT') {
+  if (partnerOpening.level === 2 && partnerOpening.denomination === 'NT') {
     if (hcp <= 3) return { level: 0, denomination: 'PASS', type: 'pass' }
-    if (dist['S'] >= 5) return { level: 3, denomination: 'H', type: 'bid' } // Transfer
-    if (dist['H'] >= 5) return { level: 3, denomination: 'D', type: 'bid' } // Transfer
-    if (hcp >= 4 && hcp <= 6) return { level: 3, denomination: 'NT', type: 'bid' }
-    if (hcp >= 7) return { level: 4, denomination: 'NT', type: 'bid' } // Blackwood
+    if (dist['S'] >= 5) return makeBid(3, 'H', auction) // Transfer
+    if (dist['H'] >= 5) return makeBid(3, 'D', auction) // Transfer
+    if (hcp >= 7) return makeBid(4, 'NT', auction) // Blackwood
+    return makeBid(3, 'NT', auction)
   }
 
   // Response to 2C (strong)
-  if (opening.level === 2 && opening.denomination === 'C') {
+  if (partnerOpening.level === 2 && partnerOpening.denomination === 'C') {
     if (hcp >= 8) {
-      // Positive response — show suit or NT
-      if (dist['S'] >= 5) return { level: 2, denomination: 'S', type: 'bid' }
-      if (dist['H'] >= 5) return { level: 2, denomination: 'H', type: 'bid' }
-      return { level: 2, denomination: 'NT', type: 'bid' }
+      if (dist['S'] >= 5) return makeBid(2, 'S', auction)
+      if (dist['H'] >= 5) return makeBid(2, 'H', auction)
+      return makeBid(2, 'NT', auction)
     }
-    return { level: 2, denomination: 'D', type: 'bid' } // Waiting
+    return makeBid(2, 'D', auction) // Waiting
   }
 
   // Response to 1 of a major
-  if (opening.level === 1 && (opening.denomination === 'H' || opening.denomination === 'S')) {
-    const suit = opening.denomination
+  if (partnerOpening.level === 1 && (partnerOpening.denomination === 'H' || partnerOpening.denomination === 'S')) {
+    const suit = partnerOpening.denomination
     if (hcp < 6) return { level: 0, denomination: 'PASS', type: 'pass' }
 
     if (dist[suit] >= 3) {
-      if (tp >= 6 && tp <= 9) return { level: 2, denomination: suit, type: 'bid' }
-      if (tp >= 10 && tp <= 12) return { level: 3, denomination: suit, type: 'bid' }
+      if (tp >= 6 && tp <= 9) return makeBid(2, suit, auction)
+      if (tp >= 10 && tp <= 12) return makeBid(3, suit, auction)
       if (tp >= 13) {
-        if (hcp >= 16) return { level: 4, denomination: 'NT', type: 'bid' } // Blackwood
-        return { level: 4, denomination: suit, type: 'bid' }
+        if (hcp >= 16) return makeBid(4, 'NT', auction) // Blackwood
+        return makeBid(4, suit, auction)
       }
     }
 
-    // Splinter (singleton in side suit, 4+ card support, game values)
-    if (dist[suit] >= 4 && tp >= 13) {
-      for (const s of SUITS) {
-        if (s !== suit && dist[s] === 1) {
-          const splinterLevel = s === 'C' ? 4 : s === 'D' ? 4 : 3
-          return { level: splinterLevel, denomination: s, type: 'bid' }
-        }
-      }
-    }
-
-    if (suit === 'H' && dist['S'] >= 4 && hcp >= 6) return { level: 1, denomination: 'S', type: 'bid' }
-    if (hcp >= 6 && hcp <= 9) return { level: 1, denomination: 'NT', type: 'bid' }
-    if (hcp >= 10 && hcp <= 12 && isBalanced(hand)) return { level: 2, denomination: 'NT', type: 'bid' }
-    if (hcp >= 13 && isBalanced(hand)) return { level: 3, denomination: 'NT', type: 'bid' }
+    if (suit === 'H' && dist['S'] >= 4 && hcp >= 6) return makeBid(1, 'S', auction)
+    if (hcp >= 6 && hcp <= 9) return makeBid(1, 'NT', auction)
+    if (hcp >= 10 && hcp <= 12 && isBalanced(hand)) return makeBid(2, 'NT', auction)
+    if (hcp >= 13 && isBalanced(hand)) return makeBid(3, 'NT', auction)
   }
 
   // Response to 1 of a minor
-  if (opening.level === 1 && (opening.denomination === 'C' || opening.denomination === 'D')) {
+  if (partnerOpening.level === 1 && (partnerOpening.denomination === 'C' || partnerOpening.denomination === 'D')) {
     if (hcp < 6) return { level: 0, denomination: 'PASS', type: 'pass' }
-
-    if (dist['S'] >= 4 && hcp >= 6) return { level: 1, denomination: 'S', type: 'bid' }
-    if (dist['H'] >= 4 && hcp >= 6) return { level: 1, denomination: 'H', type: 'bid' }
-    if (dist['D'] >= 4 && opening.denomination === 'C' && hcp >= 6) return { level: 1, denomination: 'D', type: 'bid' }
-
-    if (hcp >= 6 && hcp <= 9) return { level: 1, denomination: 'NT', type: 'bid' }
-    if (hcp >= 10 && hcp <= 12) return { level: 2, denomination: 'NT', type: 'bid' }
-    if (hcp >= 13 && hcp <= 15) return { level: 3, denomination: 'NT', type: 'bid' }
-    if (hcp >= 16) return { level: 4, denomination: 'NT', type: 'bid' } // Blackwood
+    if (dist['S'] >= 4) return makeBid(1, 'S', auction)
+    if (dist['H'] >= 4) return makeBid(1, 'H', auction)
+    if (dist['D'] >= 4 && partnerOpening.denomination === 'C') return makeBid(1, 'D', auction)
+    if (hcp >= 6 && hcp <= 9) return makeBid(1, 'NT', auction)
+    if (hcp >= 10 && hcp <= 12) return makeBid(2, 'NT', auction)
+    if (hcp >= 13 && hcp <= 15) return makeBid(3, 'NT', auction)
+    if (hcp >= 16) return makeBid(4, 'NT', auction)
   }
 
   // Response to weak 2
-  if (opening.level === 2 && (opening.denomination === 'H' || opening.denomination === 'S')) {
-    const suit = opening.denomination
-    if (hcp >= 16 && dist[suit] >= 2) return { level: 4, denomination: suit, type: 'bid' }
-    if (hcp >= 14) return { level: 2, denomination: 'NT', type: 'bid' }
-    if (hcp >= 10 && dist[suit] >= 3) return { level: 3, denomination: suit, type: 'bid' }
+  if (partnerOpening.level === 2 && (partnerOpening.denomination === 'H' || partnerOpening.denomination === 'S')) {
+    const suit = partnerOpening.denomination
+    if (hcp >= 16 && dist[suit] >= 2) return makeBid(4, suit, auction)
+    if (hcp >= 14) return makeBid(2, 'NT', auction)
+    if (hcp >= 10 && dist[suit] >= 3) return makeBid(3, suit, auction)
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
   return { level: 0, denomination: 'PASS', type: 'pass' }
 }
 
-function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastBid, auction) {
+function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastRealBid, auction) {
   if (!partnerResponse) return { level: 0, denomination: 'PASS', type: 'pass' }
 
   const openSuit = myOpening.denomination
@@ -409,33 +420,31 @@ function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastBid
   // Partner raised our major
   if (respSuit === openSuit && (openSuit === 'H' || openSuit === 'S')) {
     if (respLevel === 2) {
-      if (hcp >= 19) return { level: 4, denomination: 'NT', type: 'bid' } // Blackwood
-      if (hcp >= 17) return { level: 4, denomination: openSuit, type: 'bid' }
-      if (hcp >= 15) return { level: 3, denomination: openSuit, type: 'bid' }
+      if (hcp >= 19) return makeBid(4, 'NT', auction)
+      if (hcp >= 17) return makeBid(4, openSuit, auction)
+      if (hcp >= 15) return makeBid(3, openSuit, auction)
       return { level: 0, denomination: 'PASS', type: 'pass' }
     }
     if (respLevel === 3) {
-      if (hcp >= 17) return { level: 4, denomination: 'NT', type: 'bid' }
-      if (hcp >= 14) return { level: 4, denomination: openSuit, type: 'bid' }
+      if (hcp >= 17) return makeBid(4, 'NT', auction)
+      if (hcp >= 14) return makeBid(4, openSuit, auction)
       return { level: 0, denomination: 'PASS', type: 'pass' }
     }
     if (respLevel === 4) {
-      // Game bid — check for slam
-      if (hcp >= 19 && countAces(hand) >= 2) return { level: 4, denomination: 'NT', type: 'bid' }
+      if (hcp >= 19 && countAces(hand) >= 2) return makeBid(4, 'NT', auction)
       return { level: 0, denomination: 'PASS', type: 'pass' }
     }
   }
 
   // Partner bid 1NT
   if (respSuit === 'NT' && respLevel === 1) {
-    if (hcp >= 20) return { level: 3, denomination: 'NT', type: 'bid' }
-    if (hcp >= 18) return { level: 2, denomination: 'NT', type: 'bid' }
-    if (dist[openSuit] >= 6) return { level: 2, denomination: openSuit, type: 'bid' }
-    // Show second suit
+    if (hcp >= 20) return makeBid(3, 'NT', auction)
+    if (hcp >= 18) return makeBid(2, 'NT', auction)
+    if (dist[openSuit] >= 6) return makeBid(2, openSuit, auction)
     for (const suit of ['S','H','D','C']) {
       if (suit !== openSuit && dist[suit] >= 4) {
-        const bid = { level: 2, denomination: suit, type: 'bid' }
-        if (isValidBidLevel(bid, lastBid)) return bid
+        const bid = makeBid(2, suit, auction)
+        if (bid.type === 'bid') return bid
       }
     }
     return { level: 0, denomination: 'PASS', type: 'pass' }
@@ -443,97 +452,79 @@ function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastBid
 
   // Partner bid 2NT
   if (respSuit === 'NT' && respLevel === 2) {
-    if (hcp >= 15) return { level: 3, denomination: 'NT', type: 'bid' }
-    if (dist[openSuit] >= 6) return { level: 3, denomination: openSuit, type: 'bid' }
+    if (hcp >= 15) return makeBid(3, 'NT', auction)
+    if (dist[openSuit] >= 6) return makeBid(3, openSuit, auction)
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
   // Partner bid 3NT
   if (respSuit === 'NT' && respLevel === 3) {
-    if (hcp >= 19 && countAces(hand) >= 2) return { level: 4, denomination: 'NT', type: 'bid' }
+    if (hcp >= 19 && countAces(hand) >= 2) return makeBid(4, 'NT', auction)
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
   // Opened 1NT — handle transfers and Stayman
   if (openSuit === 'NT') {
-    if (respSuit === 'D' && respLevel === 2) return { level: 2, denomination: 'H', type: 'bid' } // Complete H transfer
-    if (respSuit === 'H' && respLevel === 2) return { level: 2, denomination: 'S', type: 'bid' } // Complete S transfer
+    if (respSuit === 'D' && respLevel === 2) return makeBid(2, 'H', auction)
+    if (respSuit === 'H' && respLevel === 2) return makeBid(2, 'S', auction)
     if (respSuit === 'C' && respLevel === 2) {
-      if (dist['S'] >= 4) return { level: 2, denomination: 'S', type: 'bid' }
-      if (dist['H'] >= 4) return { level: 2, denomination: 'H', type: 'bid' }
-      return { level: 2, denomination: 'D', type: 'bid' }
+      if (dist['S'] >= 4) return makeBid(2, 'S', auction)
+      if (dist['H'] >= 4) return makeBid(2, 'H', auction)
+      return makeBid(2, 'D', auction)
     }
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
-  // Partner new suit at 2 level — shows 10+ HCP
+  // Partner new suit at 2 level
   if (respLevel === 2 && respSuit !== openSuit && respSuit !== 'NT') {
-    const combinedHCP = hcp + 10
-    if (combinedHCP >= 25) {
-      const allStoppers = SUITS.every(s => hasStopper(hand, s) || dist[s] === 0)
-      if (allStoppers) return { level: 3, denomination: 'NT', type: 'bid' }
-    }
-    if (dist[respSuit] >= 3) return { level: 3, denomination: respSuit, type: 'bid' }
-    if (dist[openSuit] >= 6) return { level: 3, denomination: openSuit, type: 'bid' }
-    return { level: 2, denomination: 'NT', type: 'bid' }
+    if (dist[respSuit] >= 3) return makeBid(3, respSuit, auction)
+    if (dist[openSuit] >= 6) return makeBid(3, openSuit, auction)
+    return makeBid(2, 'NT', auction)
   }
 
   // Partner new suit at 1 level
   if (respLevel === 1 && respSuit !== 'NT') {
-    if (dist[respSuit] >= 4) {
-      if (tp >= 16) return { level: 3, denomination: respSuit, type: 'bid' }
-      if (tp >= 13) return { level: 2, denomination: respSuit, type: 'bid' }
-    }
-    if (hcp >= 19) return { level: 2, denomination: 'NT', type: 'bid' }
-    if (hcp >= 17) return { level: 2, denomination: 'NT', type: 'bid' }
-    if (dist[openSuit] >= 6) return { level: 2, denomination: openSuit, type: 'bid' }
-    // Reverse bid — show second suit at 2 level if strong enough
+    if (dist[respSuit] >= 4 && tp >= 16) return makeBid(3, respSuit, auction)
+    if (dist[respSuit] >= 4 && tp >= 13) return makeBid(2, respSuit, auction)
+    if (hcp >= 19) return makeBid(2, 'NT', auction)
+    if (hcp >= 17) return makeBid(2, 'NT', auction)
+    if (dist[openSuit] >= 6) return makeBid(2, openSuit, auction)
     for (const suit of ['S','H','D','C']) {
       if (suit !== openSuit && dist[suit] >= 4 && hcp >= 17) {
-        const bid = { level: 2, denomination: suit, type: 'bid' }
-        if (isValidBidLevel(bid, lastBid)) return bid
+        const bid = makeBid(2, suit, auction)
+        if (bid.type === 'bid') return bid
       }
     }
-    if (hcp >= 12 && hcp <= 14) return { level: 2, denomination: openSuit, type: 'bid' }
+    if (hcp >= 12 && hcp <= 14) return makeBid(2, openSuit, auction)
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
   return { level: 0, denomination: 'PASS', type: 'pass' }
 }
 
-function getResponderRebid(hand, hcp, dist, tp, myFirstBid, partnerBids, lastBid, auction) {
+function getResponderRebid(hand, hcp, dist, tp, myFirstBid, partnerBids, lastRealBid, auction) {
   const partnerRebid = partnerBids[partnerBids.length - 1]
   if (!partnerRebid) return { level: 0, denomination: 'PASS', type: 'pass' }
 
   const prSuit = partnerRebid.denomination
   const prLevel = partnerRebid.level
 
-  // Partner rebid their suit
   if (prSuit === partnerBids[0].denomination && prSuit !== 'NT') {
     if (dist[prSuit] >= 3 && hcp >= 10) {
       const gameLevel = (prSuit === 'H' || prSuit === 'S') ? 4 : 5
-      if (tp >= 12) return { level: gameLevel, denomination: prSuit, type: 'bid' }
+      if (tp >= 12) return makeBid(gameLevel, prSuit, auction)
     }
-    if (hcp >= 11) return { level: prLevel + 1, denomination: prSuit, type: 'bid' }
+    if (hcp >= 11) return makeBid(prLevel + 1, prSuit, auction)
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
-  // Partner bid NT
   if (prSuit === 'NT') {
-    if (prLevel === 1 && hcp >= 11) return { level: 3, denomination: 'NT', type: 'bid' }
-    if (prLevel === 2 && hcp >= 8) return { level: 3, denomination: 'NT', type: 'bid' }
+    if (prLevel === 1 && hcp >= 11) return makeBid(3, 'NT', auction)
+    if (prLevel === 2 && hcp >= 8) return makeBid(3, 'NT', auction)
     return { level: 0, denomination: 'PASS', type: 'pass' }
   }
 
   return { level: 0, denomination: 'PASS', type: 'pass' }
-}
-
-function isValidBidLevel(bid, lastBid) {
-  if (!lastBid) return true
-  const denomOrder = ['C','D','H','S','NT']
-  if (bid.level > lastBid.level) return true
-  if (bid.level === lastBid.level) return denomOrder.indexOf(bid.denomination) > denomOrder.indexOf(lastBid.denomination)
-  return false
 }
 
 // ─── Bidding validation ───────────────────────────────────────────
@@ -543,12 +534,7 @@ export function isValidBid(bid, auction) {
     const last = getLastRealBid(auction)
     return last && last.type === 'bid'
   }
-  const lastBid = getLastRealBid(auction)
-  if (!lastBid) return true
-  const denomOrder = ['C','D','H','S','NT']
-  if (bid.level > lastBid.level) return true
-  if (bid.level === lastBid.level) return denomOrder.indexOf(bid.denomination) > denomOrder.indexOf(lastBid.denomination)
-  return false
+  return isBidHigherThan(bid, getLastRealBid(auction))
 }
 
 export function isAuctionOver(auction) {
@@ -572,14 +558,7 @@ export function getContract(auction) {
   }
 }
 
-function getLastRealBid(auction) {
-  for (let i = auction.length - 1; i >= 0; i--) {
-    if (auction[i].type === 'bid') return auction[i]
-  }
-  return null
-}
-
-// ─── Smart Card Play Engine ───────────────────────────────────────
+// ─── Smart Card Play ──────────────────────────────────────────────
 export function getLegalCards(hand, trick, trumpSuit) {
   if (trick.length === 0) return hand
   const ledSuit = trick[0].card.suit
@@ -599,8 +578,7 @@ export function getBotCardPlay(hand, trick, trumpSuit, contract, position, trick
   const isDefender = (position === 'E' || position === 'W')
   const partnerPos = PARTNERS[position]
   const playedCards = trickHistory.flatMap(t => t.trick.map(p => p.card))
-  const tricksPlayed = trickHistory.length
-  const tricksLeft = 13 - tricksPlayed
+  const tricksLeft = 13 - trickHistory.length
 
   if (trick.length === 0) {
     return getLeadCard(hand, legal, trumpSuit, contract, position, isDefender, trickHistory, playedCards, partnerPos, tricksLeft)
@@ -609,96 +587,61 @@ export function getBotCardPlay(hand, trick, trumpSuit, contract, position, trick
   return getFollowCard(hand, legal, trick, trumpSuit, position, isDefender, partnerPos, trickHistory, playedCards, tricksLeft, contract)
 }
 
-// ─── Opening leads ────────────────────────────────────────────────
 function getLeadCard(hand, legal, trumpSuit, contract, position, isDefender, trickHistory, playedCards, partnerPos, tricksLeft) {
-
   if (!isDefender) {
-    return getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, playedCards, tricksLeft)
+    return getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, playedCards)
   }
-
-  return getDefenderLead(hand, legal, trumpSuit, contract, trickHistory, playedCards, tricksLeft)
+  return getDefenderLead(hand, legal, trumpSuit, trickHistory, playedCards)
 }
 
-function getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, playedCards, tricksLeft) {
+function getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, playedCards) {
   const isTrumpContract = trumpSuit && trumpSuit !== 'NT'
 
-  // Count our sure winners
-  const sureWinners = SUITS.reduce((sum, suit) => sum + countSuitWinners(hand, suit, playedCards), 0)
-  const tricksNeeded = contract ? contract.tricksNeeded : 7
-
   if (isTrumpContract) {
-    // Draw trumps aggressively when we have more
-    const myTrumps = hand.filter(c => c.suit === trumpSuit)
-    if (myTrumps.length >= 4) {
-      const topTrump = myTrumps.sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
-      return topTrump
+    const myTrumps = legal.filter(c => c.suit === trumpSuit)
+    if (myTrumps.length >= 3) {
+      return myTrumps.sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
     }
-
-    // Establish long suit
-    const bestSuit = findBestEstablishSuit(hand, legal, trumpSuit, playedCards)
-    if (bestSuit) {
-      const suitCards = legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
-      return suitCards[0]
-    }
-
-    // Lead top of sequence
     const seq = findTopOfSequence(legal.filter(c => c.suit !== trumpSuit))
     if (seq) return seq
-
-    // Lead highest non-trump
     const nonTrumps = legal.filter(c => c.suit !== trumpSuit)
     if (nonTrumps.length > 0) return nonTrumps.sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
   }
 
-  // NT contract — run longest suit
   const bestSuit = findBestEstablishSuit(hand, legal, null, playedCards)
   if (bestSuit) {
-    const suitCards = legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
-    return suitCards[0]
+    return legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
   }
-
-  // Lead top of sequence
   const seq = findTopOfSequence(legal)
   if (seq) return seq
-
   return legal.sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
 }
 
-function getDefenderLead(hand, legal, trumpSuit, contract, trickHistory, playedCards, tricksLeft) {
+function getDefenderLead(hand, legal, trumpSuit, trickHistory, playedCards) {
   const isTrumpContract = trumpSuit && trumpSuit !== 'NT'
   const nonTrumps = legal.filter(c => c.suit !== trumpSuit)
 
-  // Against NT — lead 4th best of longest strongest suit
   if (!isTrumpContract) {
     const bestSuit = findBestLeadSuit(hand, legal, null, playedCards)
     const suitCards = legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
-
-    // Top of honour sequence
     const seq = findTopOfSequence(suitCards)
     if (seq) return seq
-
-    // 4th best
     if (suitCards.length >= 4) return suitCards[3]
-    // MUD (Middle-Up-Down) from small cards
     if (suitCards.length === 3 && VALUE_RANK[suitCards[0].value] <= 9) return suitCards[1]
-    // Lowest from 2
     if (suitCards.length >= 1) return suitCards[suitCards.length - 1]
   }
 
-  // Against suit contract
-  // Lead singleton for ruff potential
+  // Against suit — lead singleton
   for (const suit of SUITS) {
     if (suit !== trumpSuit) {
       const sc = hand.filter(c => c.suit === suit)
-      if (sc.length === 1) return sc[0]
+      if (sc.length === 1 && legal.some(c => c.suit === suit)) return sc[0]
     }
   }
 
-  // Top of sequence in non-trump
   const seq = findTopOfSequence(nonTrumps.length ? nonTrumps : legal)
   if (seq) return seq
 
-  // Avoid leading into declarer's likely suits — lead safe low card
   const bestSuit = findBestLeadSuit(hand, legal, trumpSuit, playedCards)
   const suitCards = legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
   if (suitCards.length >= 4) return suitCards[3]
@@ -707,39 +650,34 @@ function getDefenderLead(hand, legal, trumpSuit, contract, trickHistory, playedC
   return legal[legal.length - 1]
 }
 
-// ─── Following to a trick ─────────────────────────────────────────
 function getFollowCard(hand, legal, trick, trumpSuit, position, isDefender, partnerPos, trickHistory, playedCards, tricksLeft, contract) {
-  const ledSuit = trick[0].card.suit
   const currentWinner = getCurrentWinner(trick, trumpSuit)
   const partnerWinning = currentWinner && currentWinner.position === partnerPos
-  const followCards = legal.filter(c => c.suit === ledSuit)
+  const followCards = legal.filter(c => c.suit === trick[0].card.suit)
   const trumpCards = legal.filter(c => c.suit === trumpSuit)
   const isLastToPlay = trick.length === 3
 
-  // ── Following suit ──
   if (followCards.length > 0) {
     const winningCards = followCards.filter(c => canBeatCurrentWinner(c, currentWinner, trumpSuit))
 
-    // Second hand low (unless strong sequence)
+    // Second hand low
     if (trick.length === 1 && isDefender) {
       const seq = findTopOfSequence(followCards)
-      if (seq && VALUE_RANK[seq.value] >= 12) return seq // Play top of KQ sequence etc
-      return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0] // Low
+      if (seq && VALUE_RANK[seq.value] >= 12) return seq
+      return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
     // Third hand high
-    if (trick.length === 2 && isDefender && !partnerWinning) {
-      if (winningCards.length > 0) {
-        return winningCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0] // Lowest winner
-      }
+    if (trick.length === 2 && isDefender && !partnerWinning && winningCards.length > 0) {
+      return winningCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
-    // Partner is winning — don't overtake, play low
+    // Partner winning — play low
     if (partnerWinning) {
       return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
-    // Last to play — win cheaply if possible
+    // Last to play — win cheaply
     if (isLastToPlay && winningCards.length > 0) {
       return winningCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
@@ -749,64 +687,41 @@ function getFollowCard(hand, legal, trick, trumpSuit, position, isDefender, part
       return winningCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
-    // Can't win — play lowest or signal
     return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
   }
 
-  // ── Void in led suit — trump or discard ──
-
-  // Partner is winning — discard
+  // Void — trump or discard
   if (partnerWinning) {
-    return findSmartDiscard(hand, legal, trumpSuit, trickHistory, playedCards)
+    return findSmartDiscard(hand, legal, trumpSuit, playedCards)
   }
 
-  // Trump if useful
   if (trumpCards.length > 0 && trumpSuit && trumpSuit !== 'NT') {
     const winningTrumps = trumpCards.filter(c => canBeatCurrentWinner(c, currentWinner, trumpSuit))
-
-    if (!isDefender) {
-      // Declarer — trump with lowest winner
-      if (winningTrumps.length > 0) {
-        return winningTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      }
-    } else {
-      // Defender — overruff only if worth it
-      if (winningTrumps.length > 0 && trick.length === 3) {
-        return winningTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      }
-      if (winningTrumps.length > 0 && VALUE_RANK[winningTrumps[0].value] >= 11) {
-        return winningTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      }
+    if (winningTrumps.length > 0) {
+      if (!isDefender) return winningTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      if (isLastToPlay) return winningTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      if (VALUE_RANK[winningTrumps[0].value] >= 11) return winningTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
   }
 
-  // Discard smartly
-  return findSmartDiscard(hand, legal, trumpSuit, trickHistory, playedCards)
+  return findSmartDiscard(hand, legal, trumpSuit, playedCards)
 }
 
-// ─── Smart discard — protect honours, shed losers ─────────────────
-function findSmartDiscard(hand, legal, trumpSuit, trickHistory, playedCards) {
+function findSmartDiscard(hand, legal, trumpSuit, playedCards) {
   const nonTrumps = legal.filter(c => c.suit !== trumpSuit)
   if (!nonTrumps.length) return legal.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
 
-  // Find suit with no more winners to protect
   let worstCard = null
   let worstScore = Infinity
-
   for (const card of nonTrumps) {
     const suitCards = hand.filter(c => c.suit === card.suit)
     const winners = countSuitWinners(suitCards, card.suit, playedCards)
     const score = winners * 10 + VALUE_RANK[card.value]
-    if (score < worstScore) {
-      worstScore = score
-      worstCard = card
-    }
+    if (score < worstScore) { worstScore = score; worstCard = card }
   }
-
   return worstCard || nonTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────
 function findTopOfSequence(cards) {
   const bySuit = {}
   for (const c of cards) {
@@ -853,10 +768,6 @@ function findBestEstablishSuit(hand, legal, trumpSuit, playedCards) {
   return bestSuit
 }
 
-function canWinTrick(cards, trick, trumpSuit) {
-  return cards.filter(c => canBeatCurrentWinner(c, getCurrentWinner(trick, trumpSuit), trumpSuit))
-}
-
 function canBeatCurrentWinner(card, winner, trumpSuit) {
   if (!winner) return true
   if (card.suit === trumpSuit && winner.card.suit !== trumpSuit) return true
@@ -893,8 +804,12 @@ export function calculateRubberScore(contract, tricksMade, vulnerability) {
   if (tricksMade < tricksNeeded) {
     let penalty = 0
     if (!doubled && !redoubled) penalty = undertricks * (vul ? 100 : 50)
-    else if (doubled) penalty = vul ? (undertricks===1?200:200+(undertricks-1)*300) : (undertricks===1?100:undertricks===2?300:300+(undertricks-2)*300)
-    else penalty = vul ? (undertricks===1?400:400+(undertricks-1)*600) : (undertricks===1?200:undertricks===2?600:600+(undertricks-2)*600)
+    else if (doubled) penalty = vul
+      ? (undertricks===1?200:200+(undertricks-1)*300)
+      : (undertricks===1?100:undertricks===2?300:300+(undertricks-2)*300)
+    else penalty = vul
+      ? (undertricks===1?400:400+(undertricks-1)*600)
+      : (undertricks===1?200:undertricks===2?600:600+(undertricks-2)*600)
     return { declarerScore: 0, defenderScore: penalty, made: false }
   }
 
