@@ -506,79 +506,76 @@ export default function TeenPatti() {
         {/* Decorative table felt */}
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at center, rgba(139,0,0,0.3) 0%, transparent 70%)', pointerEvents:'none', zIndex:0 }} />
 
-        {/* Players arranged around table */}
-        <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'0.75rem', gap:8, zIndex:1, position:'relative', overflow:'hidden' }}>
+        {/* Players arranged around table - proper compass layout */}
+        <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'8px 12px', gap:0, zIndex:1, position:'relative', overflow:'hidden' }}>
 
-          {/* Top row — bots 1 and 2 */}
-          <div style={{ display:'flex', justifyContent:'space-around', alignItems:'flex-start', flexShrink:0 }}>
-            {players.slice(1,3).map((p,i) => (
-              <PlayerSeat key={p.id} player={p} isCurrent={currentPlayer===i+1} isWinner={winner?.id===p.id} gamePhase={phase} />
-            ))}
+          {/* NORTH — Raju */}
+          <div style={{ display:'flex', justifyContent:'center', flexShrink:0, paddingBottom:4 }}>
+            <PlayerSeat player={players[1]} isCurrent={currentPlayer===1} isWinner={winner?.id===players[1]?.id} gamePhase={phase} />
           </div>
 
-          {/* Middle row — bot 3 left, pot centre, empty right */}
-          <div style={{ flex:1, display:'flex', alignItems:'center', gap:8 }}>
-            <div style={{ width:160, flexShrink:0, display:'flex', justifyContent:'center' }}>
-              {players[3] && <PlayerSeat player={players[3]} isCurrent={currentPlayer===3} isWinner={winner?.id===players[3].id} gamePhase={phase} />}
+          {/* MIDDLE ROW — West + Pot + East */}
+          <div style={{ flex:1, display:'flex', alignItems:'center', gap:8, minHeight:0 }}>
+            {/* WEST — Vikram */}
+            <div style={{ display:'flex', justifyContent:'center', width:140, flexShrink:0 }}>
+              <PlayerSeat player={players[3]} isCurrent={currentPlayer===3} isWinner={winner?.id===players[3]?.id} gamePhase={phase} />
             </div>
+
             {/* Centre pot */}
             <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <div style={{ background:'rgba(0,0,0,0.5)', borderRadius:16, padding:'0.75rem 1.5rem', border:'1px solid rgba(255,215,0,0.25)', textAlign:'center' }}>
-                <div style={{ fontSize:'0.62rem', color:'rgba(255,215,0,0.5)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:4 }}>Total Pot</div>
+              <div style={{ background:'rgba(0,0,0,0.55)', borderRadius:16, padding:'0.75rem 1.75rem', border:'1px solid rgba(255,215,0,0.25)', textAlign:'center' }}>
+                <div style={{ fontSize:'0.6rem', color:'rgba(255,215,0,0.5)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:4 }}>Total Pot</div>
                 <div style={{ fontSize:'1.8rem', fontWeight:700, color:'#FFD700' }}>🪙 {pot}</div>
-                <div style={{ fontSize:'0.7rem', color:'rgba(255,215,0,0.4)', marginTop:2 }}>{activePlayers.length} players active</div>
+                <div style={{ fontSize:'0.68rem', color:'rgba(255,215,0,0.4)', marginTop:2 }}>{activePlayers.length} players active</div>
               </div>
             </div>
-            <div style={{ width:160, flexShrink:0 }} />
+
+            {/* EAST — Priya */}
+            <div style={{ display:'flex', justifyContent:'center', width:140, flexShrink:0 }}>
+              <PlayerSeat player={players[2]} isCurrent={currentPlayer===2} isWinner={winner?.id===players[2]?.id} gamePhase={phase} />
+            </div>
           </div>
 
-          {/* Bottom — player hand + actions */}
-          <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-            {/* Name + chips */}
+          {/* SOUTH — Player */}
+          <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:5, paddingTop:4 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <div style={{ width:36, height:36, borderRadius:'50%', background: isMyTurn?'linear-gradient(135deg,#FFD700,#FFA500)':'linear-gradient(135deg,#8B0000,#4a0000)', border:`2px solid ${isMyTurn?'#FFD700':'rgba(255,215,0,0.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem' }}>
-                🎮
-              </div>
+              <div style={{ width:36, height:36, borderRadius:'50%', background:isMyTurn?'linear-gradient(135deg,#FFD700,#FFA500)':'linear-gradient(135deg,#8B0000,#4a0000)', border:`2px solid ${isMyTurn?'#FFD700':'rgba(255,215,0,0.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', boxShadow:isMyTurn?'0 0 12px rgba(255,215,0,0.5)':'none' }}>🎮</div>
               <div>
-                <div style={{ fontSize:'0.78rem', fontWeight:600, color:'#FFD700' }}>{me?.name || 'You'}</div>
-                <div style={{ fontSize:'0.62rem', color:'rgba(255,215,0,0.5)' }}>{seen?'Seen':'Blind'}</div>
+                <div style={{ fontSize:'0.78rem', fontWeight:600, color:'#FFD700' }}>{me?.name||'You'}</div>
+                <div style={{ fontSize:'0.62rem', color: seen?'rgba(100,220,100,0.8)':'rgba(255,215,0,0.5)' }}>{seen?'Seen':'Blind'}</div>
               </div>
               {me && <Chips amount={me.chips} />}
               {winner?.isUser && <span>👑</span>}
             </div>
 
-            {/* Cards — smaller */}
-            <div style={{ display:'flex', gap:5 }}>
-              {me?.cards.map((c,i) => (
-                <TPCard key={i} card={seen ? c : null} faceDown={!seen} small />
-              ))}
+            {/* Cards */}
+            <div style={{ display:'flex', gap:6 }}>
+              {me?.cards.map((c,i) => <TPCard key={i} card={seen?c:null} faceDown={!seen} small />)}
             </div>
 
             {/* Action buttons */}
             {isMyTurn && (
-              <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap', justifyContent:'center' }}>
+              <div style={{ display:'flex', gap:'0.5rem', flexWrap:'wrap', justifyContent:'center' }}>
                 {!seen && (
                   <button onClick={handleSeeCards} style={{ padding:'0.45rem 0.9rem', borderRadius:8, fontWeight:700, fontSize:'0.78rem', background:'rgba(255,215,0,0.15)', border:'2px solid rgba(255,215,0,0.4)', color:'#FFD700', cursor:'pointer' }}>
                     👁 See Cards
                   </button>
                 )}
                 <button onClick={handleChaal} style={{ padding:'0.45rem 0.9rem', borderRadius:8, fontWeight:700, fontSize:'0.78rem', background:'linear-gradient(135deg,#2d7a2d,#1a4d1a)', border:'2px solid rgba(100,200,100,0.4)', color:'white', cursor:'pointer' }}>
-                  ✅ Chaal ({seen ? currentBet*2 : currentBet})
+                  ✅ Chaal ({seen?currentBet*2:currentBet})
                 </button>
                 <button onClick={handlePack} style={{ padding:'0.45rem 0.9rem', borderRadius:8, fontWeight:700, fontSize:'0.78rem', background:'rgba(200,50,50,0.2)', border:'2px solid rgba(200,50,50,0.4)', color:'#ff8888', cursor:'pointer' }}>
                   ❌ Pack
                 </button>
-                {seen && activePlayers.length === 2 && (
+                {seen && activePlayers.length===2 && (
                   <button onClick={handleShow} style={{ padding:'0.45rem 0.9rem', borderRadius:8, fontWeight:700, fontSize:'0.78rem', background:'linear-gradient(135deg,#FFD700,#FFA500)', border:'none', color:'#1a0000', cursor:'pointer' }}>
                     🃏 Show
                   </button>
                 )}
               </div>
             )}
-            {!isMyTurn && phase === 'betting' && (
-              <p style={{ fontSize:'0.75rem', color:'rgba(255,215,0,0.5)', margin:0 }}>
-                Waiting for {players[currentPlayer]?.name}...
-              </p>
+            {!isMyTurn && phase==='betting' && (
+              <p style={{ fontSize:'0.75rem', color:'rgba(255,215,0,0.5)', margin:0 }}>Waiting for {players[currentPlayer]?.name}...</p>
             )}
           </div>
         </div>
