@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { createDeck, shuffle, dealHands, sortHand, botBid, botPlay, getValidCards, trickWinner, calcTeamScore } from './spades';
+import { createDeck, shuffle, dealHands, sortHand, botBid, botPlay, getValidCards, trickWinner, calcTeamScore } from './Spades';
 
 const PLAYER_NAMES = ['You', 'West (Bot)', 'Partner (Bot)', 'East (Bot)'];
 const TEAM_NAMES = ['Your team', 'Bots'];
