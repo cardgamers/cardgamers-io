@@ -207,7 +207,7 @@ function AuctionHistory({ auction, dealer }) {
             {b ? (
               b.type==='pass' ? <span style={{ color:'rgba(255,255,255,0.3)' }}>P</span>
               : b.type==='double' ? <span style={{ color:'#e74c3c' }}>X</span>
-              : <span><span style={{ color:'white' }}>{b.level}</span><span style={{ color:suitColor(b.denomination) }}>{DENOM_SYMBOLS[b.denomination]}</span></span>
+              : <span style={{ color:'white' }}>{b.level}<span style={{ color: b.denomination==='H'||b.denomination==='D'?'#e74c3c': b.denomination==='NT'?'#7eb5f5':'#ffffff' }}>{DENOM_SYMBOLS[b.denomination]}</span></span>
             ) : ''}
           </div>
         ))}
@@ -756,12 +756,41 @@ export default function Bridge() {
             <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Bidding History</p>
             <AuctionHistory auction={game.auction} dealer={game.dealer} />
           </div>
-          {game.phase==='playing' && (
+          {game.contract && (
             <div style={{ background:'rgba(0,0,0,0.3)', borderRadius:8, padding:'8px 10px' }}>
-              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Tricks</p>
-              <p style={{ fontSize:'1rem', color:'#5DCAA5', marginBottom:2, fontWeight:700 }}>NS: {game.tricks.NS}</p>
-              <p style={{ fontSize:'1rem', color:'#c0392b', marginBottom:4, fontWeight:700 }}>EW: {game.tricks.EW}</p>
-              <p style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>Need {game.contract?.tricksNeeded}</p>
+              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Contract</p>
+              <p style={{ fontSize:'1rem', fontWeight:700, marginBottom:4 }}>
+                <span style={{ color:'white' }}>{game.contract.level}</span>
+                <span style={{ color: game.contract.denomination==='H'||game.contract.denomination==='D'?'#e74c3c':game.contract.denomination==='NT'?'#7eb5f5':'#ffffff' }}>{DENOM_SYMBOLS[game.contract.denomination]}</span>
+                <span style={{ color:'var(--text-muted)', fontSize:'0.75rem', marginLeft:4 }}>by {game.contract.declarer==='S'?'South':game.contract.declarer==='N'?'North':game.contract.declarer==='E'?'East':'West'}</span>
+              </p>
+              {game.phase==='playing' && <>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:2 }}>
+                  <span style={{ fontSize:'0.72rem', color:'#5DCAA5' }}>NS won</span>
+                  <span style={{ fontSize:'0.82rem', color:'#5DCAA5', fontWeight:700 }}>{game.tricks.NS}</span>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                  <span style={{ fontSize:'0.72rem', color:'#c0392b' }}>EW won</span>
+                  <span style={{ fontSize:'0.82rem', color:'#c0392b', fontWeight:700 }}>{game.tricks.EW}</span>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:4 }}>
+                  <span style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>Need</span>
+                  <span style={{ fontSize:'0.82rem', color:'var(--gold)', fontWeight:700 }}>{game.contract.tricksNeeded - game.tricks[(game.contract.declarer==='N'||game.contract.declarer==='S')?'NS':'EW']} more</span>
+                </div>
+              </>}
+            </div>
+          )}
+          {game.initialHCP && (
+            <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'8px 10px' }}>
+              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>HCP</p>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:2 }}>
+                <span style={{ fontSize:'0.72rem', color:'#5DCAA5' }}>NS</span>
+                <span style={{ fontSize:'0.82rem', color:'#5DCAA5', fontWeight:700 }}>{game.initialHCP.NS}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span style={{ fontSize:'0.72rem', color:'#c0392b' }}>EW</span>
+                <span style={{ fontSize:'0.82rem', color:'#c0392b', fontWeight:700 }}>{game.initialHCP.EW}</span>
+              </div>
             </div>
           )}
           <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'8px 10px' }}>
