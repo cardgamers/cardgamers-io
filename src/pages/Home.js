@@ -172,7 +172,7 @@ export default function Home() {
             </span>
             <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
               {t('home.footer.links', { returnObjects: true }).map(l => (
-                <Link key={l} to="/" style={{ fontSize: '0.8rem', color: 'rgba(245,240,232,0.4)' }}>{l}</Link>
+                <Link key={l} to={l==='About'?'/about':l==='Games'?'/games':l==='Tournaments'?'/tournaments':l==='Leaderboard'?'/leaderboard':l==='Blog'?'/blog':l==='Privacy Policy'?'/privacy':l==='Terms of Service'?'/terms':l==='Contact'?'/contact':'/'} style={{ fontSize: '0.8rem', color: 'rgba(245,240,232,0.4)' }}>{l}</Link>
               ))}
             </div>
           </div>
