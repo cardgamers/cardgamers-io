@@ -127,7 +127,7 @@ function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=t
                 cards={cards}
                 legalCards={legal}
                 onCardClick={c => canPlay && onPlay(c)}
-                cardW={70} cardH={98} overlap={24}
+                cardW={80} cardH={112} overlap={26}
               />
             </div>
           )
@@ -172,9 +172,9 @@ function BidBubble({ bid, thinking }) {
   const isPass = bid?.type === 'pass'
   const isDbl = bid?.type === 'double'
   return (
-    <div style={{ background:'#1a1a1a', border:`2px solid ${thinking?'var(--gold)':isPass?'rgba(255,255,255,0.2)':'rgba(201,168,76,0.5)'}`, borderRadius:8, padding:'4px 10px', fontSize:'0.9rem', fontWeight:700, whiteSpace:'nowrap', minWidth:42, textAlign:'center' }}>
+    <div style={{ background:'#1a1a1a', border:`2px solid ${thinking?'var(--gold)':isPass?'rgba(255,255,255,0.2)':'rgba(201,168,76,0.5)'}`, borderRadius:8, padding:'6px 14px', fontSize:'1.05rem', fontWeight:800, whiteSpace:'nowrap', minWidth:48, textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.5)' }}>
       {thinking ? <span style={{ color:'var(--gold)' }}><ThinkingDots/></span>
-        : isPass ? <span style={{ color:'rgba(255,255,255,0.45)' }}>P</span>
+        : isPass ? <span style={{ color:'rgba(255,255,255,0.6)' }}>P</span>
         : isDbl ? <span style={{ color:'#e74c3c' }}>X</span>
         : <span><span style={{ color:'white' }}>{bid.level}</span><span style={{ color:suitColor(bid.denomination) }}>{DENOM_SYMBOLS[bid.denomination]}</span></span>
       }
@@ -610,7 +610,7 @@ export default function Bridge() {
             </div>
             {isNorthDummy
               ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} horizontal />
-              : <FannedHand cards={game.hands['N']||[]} faceDown cardW={64} cardH={90} overlap={22} />
+              : <FannedHand cards={game.hands['N']||[]} faceDown cardW={72} cardH={101} overlap={24} />
             }
           </div>
 
@@ -618,12 +618,12 @@ export default function Bridge() {
           <div style={{ flex:1, display:'flex', alignItems:'stretch', overflow:'hidden', minHeight:0, padding:'0 8px', gap:8 }}>
 
             {/* WEST */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0, width:isWestDummy?'auto':60 }}>
-              <span style={{ fontSize:'0.6rem', fontWeight:600, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)', maxHeight:120 }}>{playerLabel('W')}</span>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0, width:isWestDummy?'auto':70 }}>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
+              <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)', maxHeight:120 }}>{playerLabel('W')}</span>
               {isWestDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} horizontal={false} />
-                : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={52} cardH={73} overlap={18} />
+                : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={60} cardH={84} overlap={20} />
               }
             </div>
 
@@ -655,10 +655,10 @@ export default function Bridge() {
                       <div key={p} style={{ position:'absolute', ...offsets[p] }}>
                         {play
                           ? <div style={{ textAlign:'center' }}>
-                              <BCard card={play.card} w={86} h={120} />
+                              <BCard card={play.card} w={92} h={129} />
                               <div style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.45)', marginTop:3 }}>{p==='S'?'You':botName(p)}</div>
                             </div>
-                          : <div style={{ width:86, height:120, borderRadius:8, border:'2px dashed rgba(201,168,76,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                          : <div style={{ width:92, height:129, borderRadius:8, border:'2px dashed rgba(201,168,76,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                               <span style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.15)' }}>{p==='S'?'You':botName(p)}</span>
                             </div>
                         }
@@ -674,12 +674,12 @@ export default function Bridge() {
             </div>
 
             {/* EAST */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0, width:isEastDummy?'auto':60 }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0, width:isEastDummy?'auto':70 }}>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
-              <span style={{ fontSize:'0.6rem', fontWeight:600, color:labelColor('E'), writingMode:'vertical-rl', maxHeight:120 }}>{playerLabel('E')}</span>
+              <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('E'), writingMode:'vertical-rl', maxHeight:120 }}>{playerLabel('E')}</span>
               {isEastDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} horizontal={false} />
-                : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={52} cardH={73} overlap={18} />
+                : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={60} cardH={84} overlap={20} />
               }
             </div>
           </div>
@@ -706,7 +706,7 @@ export default function Bridge() {
                       legalCards={legalCards}
                       selectedCard={selectedCard}
                       onCardClick={handleSouthCardClick}
-                      cardW={88} cardH={123} overlap={28}
+                      cardW={100} cardH={140} overlap={30}
                     />
                   </div>
                 )
