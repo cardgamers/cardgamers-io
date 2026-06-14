@@ -271,14 +271,62 @@ export default function Solitaire() {
   const [won, setWon] = useState(false)
   const [history, setHistory] = useState([])
   const [resultSaved, setResultSaved] = useState(false)
+  const [percentiles, setPercentiles] = useState(null)
   const [lastClickTime, setLastClickTime] = useState({})
   const layout = useLayout()
   const { W, H, fs, ss, faceDownH, faceUpOverlap, gap } = layout
 
   useEffect(() => {
     if (!won || resultSaved) return
-    saveGameResult('solitaire', true, score, 15, { moves, duration_seconds: time })
-    setResultSaved(true)
+    
+    async function saveAndRank() {
+      // Save result
+      await saveGameResult('solitaire', true, score, 15, { moves, duration_seconds: time })
+      setResultSaved(true)
+
+      // Fetch all solitaire wins to calculate percentiles
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const supabase = createClient(
+          process.env.REACT_APP_SUPABASE_URL,
+          process.env.REACT_APP_SUPABASE_ANON_KEY
+        )
+        const { data } = await supabase
+          .from('game_history')
+          .select('duration_seconds, moves, score')
+          .eq('game_type', 'solitaire')
+          .eq('result', 'win')
+          .not('duration_seconds', 'is', null)
+
+        if (data && data.length >= 3) {
+          // Time percentile — lower is better
+          const times = data.map(d => d.duration_seconds).sort((a,b) => a-b)
+          const timeRank = times.filter(t => t <= time).length
+          const timePct = Math.round((1 - timeRank / times.length) * 100)
+
+          // Moves percentile — lower is better
+          const movesArr = data.map(d => d.moves).filter(Boolean).sort((a,b) => a-b)
+          const movesRank = movesArr.filter(m => m <= moves).length
+          const movesPct = movesArr.length >= 3 ? Math.round((1 - movesRank / movesArr.length) * 100) : null
+
+          // Score percentile — higher is better
+          const scores = data.map(d => d.score).sort((a,b) => a-b)
+          const scoreRank = scores.filter(s => s < score).length
+          const scorePct = Math.round((scoreRank / scores.length) * 100)
+
+          setPercentiles({
+            time: timePct,
+            moves: movesPct,
+            score: scorePct,
+            totalGames: data.length
+          })
+        }
+      } catch(e) {
+        console.log('Percentile fetch failed:', e)
+      }
+    }
+
+    saveAndRank()
   }, [won, resultSaved, score, moves, time])
 
   useEffect(() => {
@@ -301,7 +349,7 @@ export default function Solitaire() {
   function newGame() {
     setGame(dealGame()); setSelected(null)
     setMoves(0); setScore(0); setTime(0)
-    setWon(false); setHistory([]); setResultSaved(false)
+    setWon(false); setHistory([]); setResultSaved(false); setPercentiles(null)
   }
 
   // Auto-move to foundation
@@ -494,11 +542,48 @@ export default function Solitaire() {
           <div style={{ background:'linear-gradient(135deg,#1a3d28,#0f2a1a)', border:'2px solid #c9a84c', borderRadius:20, padding:'2.5rem 2rem', textAlign:'center', maxWidth:380, width:'90%', boxShadow:'0 20px 60px rgba(0,0,0,0.6)' }}>
             <div style={{ fontSize:'3.5rem', marginBottom:'0.75rem' }}>🏆</div>
             <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'2rem', color:'#c9a84c', marginBottom:'0.25rem' }}>You Won!</h2>
-            <p style={{ color:'rgba(245,240,232,0.5)', fontSize:'0.85rem', marginBottom:'1.5rem' }}>
+            <p style={{ color:'rgba(245,240,232,0.5)', fontSize:'0.85rem', marginBottom:'1rem' }}>
               Score: <strong style={{ color:'#c9a84c' }}>{score}</strong> &nbsp;·&nbsp;
               Moves: <strong style={{ color:'#c9a84c' }}>{moves}</strong> &nbsp;·&nbsp;
               Time: <strong style={{ color:'#c9a84c' }}>{fmt(time)}</strong>
             </p>
+
+            {/* Percentile stats */}
+            {percentiles && (
+              <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:12, padding:'0.85rem 1rem', marginBottom:'1.25rem', display:'flex', gap:'1rem', justifyContent:'center' }}>
+                <div style={{ textAlign:'center' }}>
+                  <div style={{ fontSize:'1.4rem', fontWeight:800, color: percentiles.time <= 25 ? '#5DCAA5' : percentiles.time <= 50 ? '#c9a84c' : 'rgba(245,240,232,0.6)' }}>
+                    Top {Math.max(1, percentiles.time)}%
+                  </div>
+                  <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.4)', marginTop:2 }}>Speed</div>
+                </div>
+                {percentiles.moves !== null && (
+                  <div style={{ textAlign:'center', borderLeft:'1px solid rgba(255,255,255,0.1)', paddingLeft:'1rem' }}>
+                    <div style={{ fontSize:'1.4rem', fontWeight:800, color: percentiles.moves <= 25 ? '#5DCAA5' : percentiles.moves <= 50 ? '#c9a84c' : 'rgba(245,240,232,0.6)' }}>
+                      Top {Math.max(1, percentiles.moves)}%
+                    </div>
+                    <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.4)', marginTop:2 }}>Efficiency</div>
+                  </div>
+                )}
+                <div style={{ textAlign:'center', borderLeft:'1px solid rgba(255,255,255,0.1)', paddingLeft:'1rem' }}>
+                  <div style={{ fontSize:'1.4rem', fontWeight:800, color: percentiles.score >= 75 ? '#5DCAA5' : percentiles.score >= 50 ? '#c9a84c' : 'rgba(245,240,232,0.6)' }}>
+                    Top {Math.max(1, 100 - percentiles.score)}%
+                  </div>
+                  <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.4)', marginTop:2 }}>Score</div>
+                </div>
+              </div>
+            )}
+            {percentiles && (
+              <p style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.3)', marginBottom:'1rem' }}>
+                Based on {percentiles.totalGames} completed games
+              </p>
+            )}
+            {!percentiles && resultSaved && (
+              <p style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.3)', marginBottom:'1rem' }}>
+                Play more games to unlock percentile rankings!
+              </p>
+            )}
+
             <div style={{ display:'flex', gap:'1rem', justifyContent:'center' }}>
               <button className="btn-gold" onClick={newGame}>Play Again</button>
               <Link to="/lobby" className="btn-outline">Lobby</Link>
@@ -529,34 +614,34 @@ export default function Solitaire() {
       <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
         <div style={{ flex:1, overflow:'auto', padding:`${isMobile?'0.5rem':'0.75rem'} ${isMobile?'0.4rem':'0.75rem'}` }}>
 
-        {/* Top row */}
-        <div style={{ display:'flex', gap:gap, marginBottom:isMobile?'0.5rem':'0.75rem', alignItems:'center', width:'100%' }}>
+        {/* Top row — mirrors 7-column tableau layout exactly */}
+        <div style={{ display:'flex', gap:gap, marginBottom:isMobile?'0.5rem':'0.75rem', alignItems:'flex-start', width:'100%' }}>
 
-          {/* Stock */}
-          <div onClick={drawStock} style={{ cursor:'pointer', flexShrink:0, position:'relative' }}>
+          {/* Col 1: Stock */}
+          <div onClick={drawStock} style={{ cursor:'pointer', flex:1, maxWidth:W, position:'relative' }}>
             {game.stock.length > 0
               ? <Card card={{faceUp:false}} W={W} H={H} fs={fs} ss={ss} />
               : <Slot label="↺" onClick={drawStock} W={W} H={H} />
             }
-            <div style={{ position:'absolute', bottom:-14, left:'50%', transform:'translateX(-50%)', fontSize:'0.55rem', color:'rgba(245,240,232,0.3)', whiteSpace:'nowrap' }}>
+            <div style={{ textAlign:'center', fontSize:'0.55rem', color:'rgba(245,240,232,0.3)', marginTop:2 }}>
               {game.stock.length > 0 ? game.stock.length : 'Reset'}
             </div>
           </div>
 
-          {/* Waste — show top card clearly */}
-          <div style={{ position:'relative', width:W, height:H, flexShrink:0 }} onClick={handleWaste}>
+          {/* Col 2: Waste */}
+          <div onClick={handleWaste} style={{ cursor:'pointer', flex:1, maxWidth:W }}>
             {game.waste.length === 0
               ? <Slot label="" W={W} H={H} />
               : <Card card={game.waste[game.waste.length-1]} selected={wasteSel} W={W} H={H} fs={fs} ss={ss} />
             }
           </div>
 
-          {/* 3 empty spacers to align foundations above cols 4-7 */}
-          {[0,1,2].map(i => <div key={i} style={{ flex:1, maxWidth:W, minWidth:W }} />)}
+          {/* Col 3: Empty */}
+          <div style={{ flex:1, maxWidth:W }} />
 
-          {/* Foundations — above cols 4-7 */}
+          {/* Cols 4-7: Foundations */}
           {game.foundations.map((f, fi) => (
-            <div key={fi} onClick={() => handleFoundation(fi)} style={{ cursor:'pointer', flex:1, maxWidth:W, minWidth:W }}>
+            <div key={fi} onClick={() => handleFoundation(fi)} style={{ cursor:'pointer', flex:1, maxWidth:W }}>
               {f.length > 0
                 ? <Card card={f[f.length-1]} W={W} H={H} fs={fs} ss={ss} />
                 : <Slot label={SUITS[fi]} W={W} H={H} />

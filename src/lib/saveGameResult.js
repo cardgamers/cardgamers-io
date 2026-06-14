@@ -6,25 +6,26 @@ import { supabase } from './supabase'
  * @param {boolean} playerWon
  * @param {number} score
  * @param {number} ratingChange
- * @param {object} metadata - optional extra data
+ * @param {object} metadata - optional extra data { moves, duration_seconds, ... }
  */
 export async function saveGameResult(gameType, playerWon, score = 0, ratingChange = 0, metadata = {}) {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // Save game history
+    // Save game history — now includes moves and duration_seconds as proper columns
     await supabase.from('game_history').insert({
       user_id: user.id,
       game_type: gameType,
       result: playerWon ? 'win' : 'loss',
       score,
-      rating_change: ratingChange,
+      duration_seconds: metadata.duration_seconds || null,
+      moves: metadata.moves || null,
       played_at: new Date().toISOString(),
-      metadata: JSON.stringify(metadata),
+      metadata: metadata,
     })
 
-    // Get current profile + leaderboard
+    // Get current profile
     const { data: prof } = await supabase
       .from('profiles')
       .select('games_played, games_won, rating, username, plan')
@@ -51,7 +52,6 @@ export async function saveGameResult(gameType, playerWon, score = 0, ratingChang
       .eq('user_id', user.id)
       .single()
 
-    // Build per-game column updates
     const gameCol = gameType === 'teen_patti' ? 'teen_patti' : gameType
     const playedCol = `${gameCol}_played`
     const wonCol = `${gameCol}_won`
@@ -65,7 +65,6 @@ export async function saveGameResult(gameType, playerWon, score = 0, ratingChang
       win_pct: Math.round(newWon / newPlayed * 100),
       plan: prof.plan,
       updated_at: new Date().toISOString(),
-      // Per-game stats
       bridge_played: lb?.bridge_played || 0,
       bridge_won: lb?.bridge_won || 0,
       rummy_played: lb?.rummy_played || 0,
@@ -76,7 +75,6 @@ export async function saveGameResult(gameType, playerWon, score = 0, ratingChang
       teen_patti_won: lb?.teen_patti_won || 0,
     }
 
-    // Increment the specific game counters
     lbUpdate[playedCol] = (lb?.[playedCol] || 0) + 1
     if (playerWon) lbUpdate[wonCol] = (lb?.[wonCol] || 0) + 1
 
