@@ -69,8 +69,8 @@ function useLayout() {
     const vw = window.innerWidth
     const vh = window.innerHeight
     // Card width based on viewport — 7 columns + 6 gaps must fit
-    const maxW = Math.floor((vw - 32) / 7) - 6
-    const W = Math.min(Math.max(maxW, 38), 90)
+    const maxW = Math.floor((vw - 32) / 7) - 4
+    const W = Math.min(Math.max(maxW, 44), 110)
     const H = Math.round(W * 1.4)
     const fs = Math.max(8, Math.round(W * 0.16))
     const ss = Math.max(14, Math.round(W * 0.32))
@@ -167,6 +167,96 @@ function Confetti() {
         }} />
       ))}
       <style>{`@keyframes fall { from{transform:translateY(0) rotate(0deg)} to{transform:translateY(110vh) rotate(720deg)} }`}</style>
+    </div>
+  )
+}
+
+// ─── Hint engine ─────────────────────────────────────────────────
+function findHint(game) {
+  const { tableau, waste, foundations } = game
+
+  // 1. Move waste top to foundation
+  if (waste.length > 0) {
+    const card = waste[waste.length-1]
+    for (let fi=0; fi<4; fi++) {
+      if (canPlaceOnFoundation(card, foundations[fi], fi)) {
+        return `Move ${card.value}${card.suit} from waste → foundation`
+      }
+    }
+  }
+
+  // 2. Move tableau top card to foundation
+  for (let ci=0; ci<7; ci++) {
+    const col = tableau[ci]
+    if (!col.length) continue
+    const card = col[col.length-1]
+    if (!card.faceUp) continue
+    for (let fi=0; fi<4; fi++) {
+      if (canPlaceOnFoundation(card, foundations[fi], fi)) {
+        return `Move ${card.value}${card.suit} from column ${ci+1} → foundation`
+      }
+    }
+  }
+
+  // 3. Move waste to tableau
+  if (waste.length > 0) {
+    const card = waste[waste.length-1]
+    for (let ci=0; ci<7; ci++) {
+      if (canPlaceOnTableau(card, tableau[ci])) {
+        return `Move ${card.value}${card.suit} from waste → column ${ci+1}`
+      }
+    }
+  }
+
+  // 4. Move between tableau columns
+  for (let from=0; from<7; from++) {
+    const col = tableau[from]
+    for (let ci=col.length-1; ci>=0; ci--) {
+      if (!col[ci].faceUp) break
+      const card = col[ci]
+      for (let to=0; to<7; to++) {
+        if (to===from) continue
+        if (canPlaceOnTableau(card, tableau[to])) {
+          // Only suggest if it uncovers a face-down card or moves a King to empty
+          if (ci > 0 && !col[ci-1].faceUp) {
+            return `Move ${card.value}${card.suit} from column ${from+1} → column ${to+1}`
+          }
+          if (card.value==='K' && tableau[to].length===0 && col.length > 1) {
+            return `Move K${card.suit} to empty column ${to+1}`
+          }
+        }
+      }
+    }
+  }
+
+  // 5. Draw from stock
+  if (game.stock.length > 0) return 'Draw from stock'
+  if (game.waste.length > 0) return 'Reset stock and draw'
+
+  return 'No obvious moves — try undoing some moves'
+}
+
+function HintButton({ game }) {
+  const [hint, setHint] = useState(null)
+  const [showing, setShowing] = useState(false)
+
+  function showHint() {
+    const h = findHint(game)
+    setHint(h)
+    setShowing(true)
+    setTimeout(() => setShowing(false), 4000)
+  }
+
+  return (
+    <div>
+      <button onClick={showHint} style={{ width:'100%', padding:'8px', borderRadius:8, background:'rgba(201,168,76,0.15)', border:'1.5px solid rgba(201,168,76,0.5)', color:'#c9a84c', fontWeight:700, fontSize:'0.85rem', cursor:'pointer' }}>
+        💡 Show hint
+      </button>
+      {showing && hint && (
+        <div style={{ marginTop:8, padding:'8px 10px', background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:8, fontSize:'0.75rem', color:'rgba(245,240,232,0.8)', lineHeight:1.4 }}>
+          {hint}
+        </div>
+      )}
     </div>
   )
 }
@@ -436,6 +526,7 @@ export default function Solitaire() {
       </div>
 
       {/* Board */}
+      <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
       <div style={{ flex:1, overflow:'auto', padding:`${isMobile?'0.5rem':'0.75rem'} ${isMobile?'0.4rem':'0.75rem'}` }}>
 
         {/* Top row */}
@@ -504,6 +595,76 @@ export default function Solitaire() {
           })}
         </div>
       </div>
+
+      </div>{/* end tableau scroll */}
+
+      {/* Right panel — hint + stats */}
+      {!isMobile && (
+        <div style={{ width:200, background:'rgba(0,0,0,0.3)', borderLeft:'1px solid rgba(201,168,76,0.1)', padding:'1rem 0.85rem', display:'flex', flexDirection:'column', gap:12, flexShrink:0, overflowY:'auto' }}>
+          
+          {/* Hint button */}
+          <div>
+            <p style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8, fontWeight:700 }}>Hint</p>
+            <HintButton game={game} W={W} H={H} fs={fs} ss={ss} />
+          </div>
+
+          {/* Current game stats */}
+          <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'10px' }}>
+            <p style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8, fontWeight:700 }}>This game</p>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+              <span style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)' }}>Score</span>
+              <span style={{ fontSize:'0.82rem', color:'#c9a84c', fontWeight:700 }}>{score}</span>
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+              <span style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)' }}>Moves</span>
+              <span style={{ fontSize:'0.82rem', color:'#c9a84c', fontWeight:700 }}>{moves}</span>
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+              <span style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)' }}>Time</span>
+              <span style={{ fontSize:'0.82rem', color:'#c9a84c', fontWeight:700 }}>{fmt(time)}</span>
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between' }}>
+              <span style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)' }}>Stock left</span>
+              <span style={{ fontSize:'0.82rem', color:'#c9a84c', fontWeight:700 }}>{game.stock.length}</span>
+            </div>
+          </div>
+
+          {/* Cards placed on foundation */}
+          <div style={{ background:'rgba(0,0,0,0.2)', borderRadius:8, padding:'10px' }}>
+            <p style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8, fontWeight:700 }}>Foundation</p>
+            {game.foundations.map((f, fi) => (
+              <div key={fi} style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                <span style={{ fontSize:'0.82rem', color: fi===1||fi===2 ? '#c0392b' : 'rgba(255,255,255,0.8)' }}>{SUITS[fi]}</span>
+                <span style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)' }}>
+                  {f.length === 0 ? '—' : f.length === 13 ? '✅ Complete' : `A → ${f[f.length-1].value}`}
+                </span>
+              </div>
+            ))}
+            <div style={{ marginTop:6, borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:6 }}>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)' }}>Progress</span>
+                <span style={{ fontSize:'0.82rem', color:'#5DCAA5', fontWeight:700 }}>{game.foundations.reduce((s,f)=>s+f.length,0)}/52</span>
+              </div>
+              <div style={{ marginTop:4, height:4, background:'rgba(255,255,255,0.08)', borderRadius:2 }}>
+                <div style={{ height:4, background:'#5DCAA5', borderRadius:2, width:`${(game.foundations.reduce((s,f)=>s+f.length,0)/52)*100}%`, transition:'width 0.3s' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* How to play */}
+          <div style={{ background:'rgba(0,0,0,0.15)', borderRadius:8, padding:'10px' }}>
+            <p style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8, fontWeight:700 }}>How to play</p>
+            <p style={{ fontSize:'0.7rem', color:'rgba(245,240,232,0.4)', lineHeight:1.5 }}>
+              Build 4 foundation piles from A→K by suit.<br/><br/>
+              On tableau, place cards in descending order, alternating red/black.<br/><br/>
+              Only Kings can start an empty column.<br/><br/>
+              <strong style={{ color:'rgba(245,240,232,0.6)' }}>Double-click</strong> to auto-send to foundation.
+            </p>
+          </div>
+
+        </div>
+      )}
+      </div>{/* end board flex */}
 
       {/* Bottom hint */}
       <div style={{ textAlign:'center', padding:'4px', fontSize:'0.62rem', color:'rgba(245,240,232,0.2)', flexShrink:0 }}>
