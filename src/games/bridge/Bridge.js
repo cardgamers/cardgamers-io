@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { usePageMeta } from '../../hooks/usePageMeta'
 import { saveGameResult } from '../../lib/saveGameResult'
 import {
   SUIT_SYMBOLS, SUIT_COLORS, DENOM_SYMBOLS,
@@ -285,6 +286,7 @@ function BidPanel({ auction, onBid, onPass, onDouble, canDouble }) {
 
 // ─── Main Bridge component ────────────────────────────────────────
 export default function Bridge() {
+  usePageMeta('/game/bridge')
   const { profile } = useAuth()
   const [screen, setScreen] = useState('menu')
   const [gameMode, setGameMode] = useState('rubber')

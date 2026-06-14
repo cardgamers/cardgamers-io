@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { saveGameResult } from '../lib/saveGameResult'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const SUITS = ['♠', '♥', '♦', '♣']
 const VALUES = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
@@ -263,6 +264,7 @@ function HintButton({ game }) {
 
 // ─── Main Solitaire ───────────────────────────────────────────────
 export default function Solitaire() {
+  usePageMeta('/game/solitaire')
   const [game, setGame] = useState(() => dealGame())
   const [selected, setSelected] = useState(null)
   const [moves, setMoves] = useState(0)

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const GAME_KEYS = [
   { id: 'bridge',    suit: '♠', name: 'Bridge',     key: 'bridge',    status: 'live',  path: '/game/bridge' },
@@ -12,6 +13,7 @@ const GAME_KEYS = [
 ]
 
 export default function Home() {
+  usePageMeta('/')
   const { t } = useTranslation()
   const [onlineCount, setOnlineCount] = useState(247)
 
