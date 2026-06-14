@@ -594,8 +594,6 @@ export default function Solitaire() {
             )
           })}
         </div>
-      </div>
-
         </div>{/* end tableau scroll */}
 
       {/* Right panel */}
