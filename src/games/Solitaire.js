@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { saveGameResult } from '../lib/saveGameResult'
 
@@ -38,7 +38,12 @@ function dealGame() {
       card.faceUp = row===col
       tableau[col].push(card)
     }
-  return { tableau, stock:deck.slice(idx).map(c=>({...c,faceUp:false})), waste:[], foundations:[[],[],[],[]] }
+  return {
+    tableau,
+    stock: deck.slice(idx).map(c=>({...c,faceUp:false})),
+    waste: [],
+    foundations: [[],[],[],[]]
+  }
 }
 
 function canPlaceOnFoundation(card, foundation, fi) {
@@ -57,57 +62,65 @@ function canPlaceOnTableau(card, column) {
 
 function checkWin(foundations) { return foundations.every(f=>f.length===13) }
 
-// ─── Responsive card sizes ────────────────────────────────────────
-function useCardSize() {
-  const [size, setSize] = useState(() => getSize())
-  function getSize() {
-    const w = window.innerWidth
-    if (w < 400) return { W:42, H:59, fs:9, ss:16, overlap:20 }
-    if (w < 600) return { W:50, H:70, fs:10, ss:18, overlap:22 }
-    if (w < 900) return { W:62, H:87, fs:11, ss:22, overlap:26 }
-    return { W:80, H:112, fs:14, ss:32, overlap:30 }
+// ─── Responsive sizing ────────────────────────────────────────────
+function useLayout() {
+  const [layout, setLayout] = useState(() => calcLayout())
+  function calcLayout() {
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    // Card width based on viewport — 7 columns + 6 gaps must fit
+    const maxW = Math.floor((vw - 32) / 7) - 6
+    const W = Math.min(Math.max(maxW, 38), 90)
+    const H = Math.round(W * 1.4)
+    const fs = Math.max(8, Math.round(W * 0.16))
+    const ss = Math.max(14, Math.round(W * 0.32))
+    const faceDownH = Math.round(H * 0.3)
+    const faceUpOverlap = Math.round(H * 0.28)
+    const gap = Math.max(4, Math.round(vw * 0.006))
+    return { W, H, fs, ss, faceDownH, faceUpOverlap, gap, vw, vh }
   }
   useEffect(() => {
-    const handler = () => setSize(getSize())
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
+    const h = () => setLayout(calcLayout())
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
   }, [])
-  return size
+  return layout
 }
 
-// ─── Playing Card ─────────────────────────────────────────────────
-function PlayingCard({ card, selected, style={}, onClick, W, H, fs, ss }) {
+// ─── Card component ───────────────────────────────────────────────
+function Card({ card, selected, onClick, W, H, fs, ss, style={} }) {
   if (!card) return null
-
   if (!card.faceUp) return (
     <div onClick={onClick} style={{
       width:W, height:H, borderRadius:6, flexShrink:0,
-      background:'linear-gradient(135deg,#1a3a6a,#0f2245)',
-      backgroundImage:'repeating-linear-gradient(45deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 2px,transparent 2px,transparent 10px)',
-      border:'1.5px solid rgba(255,255,255,0.2)',
-      boxShadow:'0 2px 4px rgba(0,0,0,0.4)',
+      background:'linear-gradient(135deg,#1a3a6a 0%,#0f2245 100%)',
+      backgroundImage:'repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0,rgba(255,255,255,0.03) 2px,transparent 2px,transparent 10px)',
+      border:'1.5px solid rgba(255,255,255,0.18)',
+      boxShadow:'0 2px 5px rgba(0,0,0,0.45)',
       cursor:onClick?'pointer':'default', ...style
     }} />
   )
-
   const col = cardColor(card.suit)
   return (
     <div onClick={onClick} style={{
       width:W, height:H, borderRadius:6, flexShrink:0,
-      background:selected?'#fffde7':'#ffffff',
-      border:selected?`2.5px solid #c9a84c`:'1px solid #ccc',
-      boxShadow:selected?'0 0 0 3px rgba(201,168,76,0.4),0 4px 12px rgba(0,0,0,0.3)':'0 2px 6px rgba(0,0,0,0.25)',
-      cursor:onClick?'pointer':'default',
+      background: selected ? '#fffde7' : '#ffffff',
+      border: selected ? '2.5px solid #c9a84c' : '1px solid #d0d0d0',
+      boxShadow: selected
+        ? '0 0 0 2px rgba(201,168,76,0.5), 0 6px 16px rgba(0,0,0,0.35)'
+        : '0 2px 5px rgba(0,0,0,0.2)',
+      cursor: onClick ? 'pointer' : 'default',
       userSelect:'none', position:'relative',
-      transform:selected?'translateY(-10px)':'none',
-      transition:'transform 0.15s', ...style
+      transform: selected ? 'translateY(-8px)' : 'none',
+      transition:'transform 0.12s, box-shadow 0.12s',
+      ...style
     }}>
-      <div style={{ position:'absolute', top:2, left:4, lineHeight:1.1 }}>
+      <div style={{ position:'absolute', top:3, left:4, lineHeight:1.1 }}>
         <div style={{ fontSize:fs, fontWeight:800, color:col, lineHeight:1 }}>{card.value}</div>
         <div style={{ fontSize:fs, color:col, lineHeight:1 }}>{card.suit}</div>
       </div>
-      <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', fontSize:ss, color:col, lineHeight:1 }}>{card.suit}</div>
-      <div style={{ position:'absolute', bottom:2, right:4, transform:'rotate(180deg)', lineHeight:1.1 }}>
+      <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', fontSize:ss, color:col, lineHeight:1, opacity:0.9 }}>{card.suit}</div>
+      <div style={{ position:'absolute', bottom:3, right:4, transform:'rotate(180deg)', lineHeight:1.1 }}>
         <div style={{ fontSize:fs, fontWeight:800, color:col, lineHeight:1 }}>{card.value}</div>
         <div style={{ fontSize:fs, color:col, lineHeight:1 }}>{card.suit}</div>
       </div>
@@ -115,26 +128,52 @@ function PlayingCard({ card, selected, style={}, onClick, W, H, fs, ss }) {
   )
 }
 
-// ─── Empty Slot ───────────────────────────────────────────────────
-function EmptySlot({ label, onClick, W, H }) {
-  const isRedSuit = label==='♥'||label==='♦'
-  const isBlackSuit = label==='♠'||label==='♣'
-  const borderColor = isRedSuit?'rgba(192,57,43,0.6)':isBlackSuit?'rgba(220,220,220,0.5)':'rgba(201,168,76,0.4)'
-  const color = isRedSuit?'rgba(192,57,43,0.7)':isBlackSuit?'rgba(220,220,220,0.6)':'rgba(201,168,76,0.5)'
+// ─── Empty slot ───────────────────────────────────────────────────
+function Slot({ label, onClick, W, H, children }) {
+  const isRed = label==='♥'||label==='♦'
+  const isBlack = label==='♠'||label==='♣'
+  const bc = isRed ? 'rgba(192,57,43,0.5)' : isBlack ? 'rgba(200,200,200,0.4)' : 'rgba(201,168,76,0.35)'
+  const tc = isRed ? 'rgba(192,57,43,0.6)' : isBlack ? 'rgba(200,200,200,0.5)' : 'rgba(201,168,76,0.5)'
   return (
     <div onClick={onClick} style={{
       width:W, height:H, borderRadius:6,
-      border:`2px dashed ${borderColor}`,
-      background:'rgba(255,255,255,0.04)',
+      border:`2px dashed ${bc}`,
+      background:'rgba(255,255,255,0.03)',
       display:'flex', alignItems:'center', justifyContent:'center',
-      color, fontSize:H>80?'1.5rem':'1rem', cursor:onClick?'pointer':'default', flexShrink:0,
-    }}>{label}</div>
+      color:tc, fontSize:H>70?'1.4rem':'1rem',
+      cursor:onClick?'pointer':'default', flexShrink:0, position:'relative',
+    }}>
+      {children || label}
+    </div>
   )
 }
 
-// ─── Main Game ────────────────────────────────────────────────────
+// ─── Confetti ─────────────────────────────────────────────────────
+function Confetti() {
+  const colors = ['#c9a84c','#e74c3c','#2ecc71','#3498db','#9b59b6','#f39c12']
+  return (
+    <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:300, overflow:'hidden' }}>
+      {Array.from({length:60}).map((_,i) => (
+        <div key={i} style={{
+          position:'absolute',
+          left:`${Math.random()*100}%`,
+          top:`-${Math.random()*20+5}%`,
+          width: Math.random()*10+5,
+          height: Math.random()*10+5,
+          background: colors[Math.floor(Math.random()*colors.length)],
+          borderRadius: Math.random()>0.5?'50%':'2px',
+          animation:`fall ${Math.random()*2+2}s linear ${Math.random()*2}s infinite`,
+          opacity: Math.random()*0.8+0.2,
+        }} />
+      ))}
+      <style>{`@keyframes fall { from{transform:translateY(0) rotate(0deg)} to{transform:translateY(110vh) rotate(720deg)} }`}</style>
+    </div>
+  )
+}
+
+// ─── Main Solitaire ───────────────────────────────────────────────
 export default function Solitaire() {
-  const [game, setGame] = useState(()=>dealGame())
+  const [game, setGame] = useState(() => dealGame())
   const [selected, setSelected] = useState(null)
   const [moves, setMoves] = useState(0)
   const [score, setScore] = useState(0)
@@ -142,7 +181,9 @@ export default function Solitaire() {
   const [won, setWon] = useState(false)
   const [history, setHistory] = useState([])
   const [resultSaved, setResultSaved] = useState(false)
-  const { W, H, fs, ss, overlap } = useCardSize()
+  const [lastClickTime, setLastClickTime] = useState({})
+  const layout = useLayout()
+  const { W, H, fs, ss, faceDownH, faceUpOverlap, gap } = layout
 
   useEffect(() => {
     if (!won || resultSaved) return
@@ -152,19 +193,19 @@ export default function Solitaire() {
 
   useEffect(() => {
     if (won) return
-    const t = setInterval(()=>setTime(s=>s+1),1000)
-    return ()=>clearInterval(t)
+    const t = setInterval(() => setTime(s => s+1), 1000)
+    return () => clearInterval(t)
   }, [won])
 
-  const formatTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
+  const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
 
-  function saveHistory() { setHistory(h=>[...h,JSON.parse(JSON.stringify(game))]) }
+  function saveHist() { setHistory(h => [...h, JSON.parse(JSON.stringify(game))]) }
 
   function undo() {
     if (!history.length) return
     setGame(history[history.length-1])
-    setHistory(h=>h.slice(0,-1))
-    setMoves(m=>Math.max(0,m-1))
+    setHistory(h => h.slice(0,-1))
+    setSelected(null)
   }
 
   function newGame() {
@@ -173,12 +214,38 @@ export default function Solitaire() {
     setWon(false); setHistory([]); setResultSaved(false)
   }
 
-  function drawFromStock() {
-    saveHistory()
-    setGame(g=>{
+  // Auto-move to foundation
+  function tryAutoFoundation(card, sourceType, sourceCol, sourceIdx) {
+    for (let fi=0; fi<4; fi++) {
+      if (canPlaceOnFoundation(card, game.foundations[fi], fi)) {
+        saveHist()
+        setGame(g => {
+          const ng = JSON.parse(JSON.stringify(g))
+          if (sourceType==='waste') ng.waste.pop()
+          else if (sourceType==='tableau') {
+            ng.tableau[sourceCol].pop()
+            const c = ng.tableau[sourceCol]
+            if (c.length>0 && !c[c.length-1].faceUp) c[c.length-1].faceUp = true
+          }
+          ng.foundations[fi].push(card)
+          if (checkWin(ng.foundations)) setWon(true)
+          return ng
+        })
+        setScore(s => s+15)
+        setMoves(m => m+1)
+        setSelected(null)
+        return true
+      }
+    }
+    return false
+  }
+
+  function drawStock() {
+    saveHist()
+    setGame(g => {
       const ng = JSON.parse(JSON.stringify(g))
       if (ng.stock.length===0) {
-        ng.stock = ng.waste.reverse().map(c=>({...c,faceUp:false}))
+        ng.stock = [...ng.waste].reverse().map(c => ({...c, faceUp:false}))
         ng.waste = []
       } else {
         const card = ng.stock.pop()
@@ -187,134 +254,161 @@ export default function Solitaire() {
       }
       return ng
     })
-    setMoves(m=>m+1); setSelected(null)
+    setMoves(m => m+1)
+    setSelected(null)
   }
 
-  function handleWasteClick() {
+  function handleWaste() {
     const top = game.waste[game.waste.length-1]
     if (!top) return
-    if (selected?.source.type==='waste') { setSelected(null); return }
-    setSelected({card:top, source:{type:'waste'}, cards:[top]})
-  }
 
-  function handleFoundationClick(fi) {
-    if (!selected) return
-    const card = selected.cards[0]
-    if (selected.cards.length>1) return
-    if (canPlaceOnFoundation(card, game.foundations[fi], fi)) {
-      saveHistory()
-      setGame(g=>{
-        const ng = JSON.parse(JSON.stringify(g))
-        if (selected.source.type==='waste') ng.waste.pop()
-        else if (selected.source.type==='tableau') {
-          ng.tableau[selected.source.col].pop()
-          const col = ng.tableau[selected.source.col]
-          if (col.length>0 && !col[col.length-1].faceUp) col[col.length-1].faceUp=true
-        }
-        ng.foundations[fi].push(card)
-        if (checkWin(ng.foundations)) setWon(true)
-        return ng
-      })
-      setScore(s=>s+10); setMoves(m=>m+1); setSelected(null)
+    const now = Date.now()
+    const key = 'waste'
+    if (now - (lastClickTime[key]||0) < 350) {
+      // Double click — auto to foundation
+      setLastClickTime(l => ({...l, [key]:0}))
+      tryAutoFoundation(top, 'waste', null, null)
+      return
     }
+    setLastClickTime(l => ({...l, [key]:now}))
+
+    if (selected?.source.type==='waste') { setSelected(null); return }
+    setSelected({ card:top, source:{type:'waste'}, cards:[top] })
   }
 
-  function handleTableauClick(colIdx, cardIdx) {
+  function handleFoundation(fi) {
+    if (!selected || selected.cards.length>1) return
+    const card = selected.cards[0]
+    if (!canPlaceOnFoundation(card, game.foundations[fi], fi)) return
+    saveHist()
+    setGame(g => {
+      const ng = JSON.parse(JSON.stringify(g))
+      if (selected.source.type==='waste') ng.waste.pop()
+      else if (selected.source.type==='tableau') {
+        ng.tableau[selected.source.col].pop()
+        const c = ng.tableau[selected.source.col]
+        if (c.length>0 && !c[c.length-1].faceUp) c[c.length-1].faceUp = true
+      }
+      ng.foundations[fi].push(card)
+      if (checkWin(ng.foundations)) setWon(true)
+      return ng
+    })
+    setScore(s => s+15)
+    setMoves(m => m+1)
+    setSelected(null)
+  }
+
+  function handleTableau(colIdx, cardIdx) {
     const col = game.tableau[colIdx]
     const card = col[cardIdx]
 
+    // Flip face-down card
     if (!card.faceUp) {
-      if (cardIdx===col.length-1) {
-        saveHistory()
-        setGame(g=>{
-          const ng=JSON.parse(JSON.stringify(g))
-          ng.tableau[colIdx][cardIdx].faceUp=true
-          return ng
-        })
-        setScore(s=>s+5); setMoves(m=>m+1)
-      }
+      if (cardIdx !== col.length-1) return
+      saveHist()
+      setGame(g => {
+        const ng = JSON.parse(JSON.stringify(g))
+        ng.tableau[colIdx][cardIdx].faceUp = true
+        return ng
+      })
+      setScore(s => s+5)
+      setMoves(m => m+1)
+      setSelected(null)
       return
     }
 
+    const now = Date.now()
+    const key = `${colIdx}-${cardIdx}`
+    const isTopCard = cardIdx === col.length-1
+
+    // Double click on top card — auto to foundation
+    if (isTopCard && now - (lastClickTime[key]||0) < 350) {
+      setLastClickTime(l => ({...l, [key]:0}))
+      tryAutoFoundation(card, 'tableau', colIdx, cardIdx)
+      return
+    }
+    setLastClickTime(l => ({...l, [key]:now}))
+
+    // Move selected cards here
     if (selected) {
-      if (selected.source.type==='tableau'&&selected.source.col===colIdx) { setSelected(null); return }
+      if (selected.source.type==='tableau' && selected.source.col===colIdx && cardIdx>=selected.source.cardIdx) {
+        setSelected(null); return
+      }
       const movingCards = selected.cards
-      if (canPlaceOnTableau(movingCards[0], game.tableau[colIdx])) {
-        saveHistory()
-        setGame(g=>{
-          const ng=JSON.parse(JSON.stringify(g))
-          if (selected.source.type==='waste') ng.waste.pop()
-          else if (selected.source.type==='tableau') {
-            ng.tableau[selected.source.col]=ng.tableau[selected.source.col].slice(0,selected.source.cardIdx)
-            const src=ng.tableau[selected.source.col]
-            if (src.length>0&&!src[src.length-1].faceUp) src[src.length-1].faceUp=true
+      if (canPlaceOnTableau(movingCards[0], col)) {
+        saveHist()
+        setGame(g => {
+          const ng = JSON.parse(JSON.stringify(g))
+          if (selected.source.type==='waste') {
+            ng.waste.pop()
+          } else if (selected.source.type==='tableau') {
+            ng.tableau[selected.source.col] = ng.tableau[selected.source.col].slice(0, selected.source.cardIdx)
+            const src = ng.tableau[selected.source.col]
+            if (src.length>0 && !src[src.length-1].faceUp) src[src.length-1].faceUp = true
           }
           ng.tableau[colIdx].push(...movingCards)
           return ng
         })
-        setScore(s=>s+5); setMoves(m=>m+1); setSelected(null)
+        setScore(s => s+5)
+        setMoves(m => m+1)
+        setSelected(null)
         return
       }
-      setSelected(null); return
+      setSelected(null)
+      return
     }
-    setSelected({card, cards:col.slice(cardIdx), source:{type:'tableau',col:colIdx,cardIdx}})
+
+    // Select this card/stack
+    setSelected({ card, cards:col.slice(cardIdx), source:{type:'tableau', col:colIdx, cardIdx} })
   }
 
-  function handleEmptyTableauClick(colIdx) {
-    if (!selected||selected.cards[0].value!=='K') return
-    saveHistory()
-    setGame(g=>{
-      const ng=JSON.parse(JSON.stringify(g))
-      if (selected.source.type==='waste') ng.waste.pop()
-      else if (selected.source.type==='tableau') {
-        ng.tableau[selected.source.col]=ng.tableau[selected.source.col].slice(0,selected.source.cardIdx)
-        const src=ng.tableau[selected.source.col]
-        if (src.length>0&&!src[src.length-1].faceUp) src[src.length-1].faceUp=true
+  function handleEmptyCol(colIdx) {
+    if (!selected || selected.cards[0].value !== 'K') return
+    saveHist()
+    setGame(g => {
+      const ng = JSON.parse(JSON.stringify(g))
+      if (selected.source.type==='waste') {
+        ng.waste.pop()
+      } else if (selected.source.type==='tableau') {
+        ng.tableau[selected.source.col] = ng.tableau[selected.source.col].slice(0, selected.source.cardIdx)
+        const src = ng.tableau[selected.source.col]
+        if (src.length>0 && !src[src.length-1].faceUp) src[src.length-1].faceUp = true
       }
       ng.tableau[colIdx].push(...selected.cards)
       return ng
     })
-    setMoves(m=>m+1); setSelected(null)
+    setMoves(m => m+1)
+    setSelected(null)
   }
 
-  // Auto-send to foundation on double-tap/click
-  function handleAutoFoundation(card, sourceType, sourceCol) {
-    for (let fi=0;fi<4;fi++) {
-      if (canPlaceOnFoundation(card, game.foundations[fi], fi)) {
-        saveHistory()
-        setGame(g=>{
-          const ng=JSON.parse(JSON.stringify(g))
-          if (sourceType==='waste') ng.waste.pop()
-          else if (sourceType==='tableau') {
-            ng.tableau[sourceCol].pop()
-            const col=ng.tableau[sourceCol]
-            if (col.length>0&&!col[col.length-1].faceUp) col[col.length-1].faceUp=true
-          }
-          ng.foundations[fi].push(card)
-          if (checkWin(ng.foundations)) setWon(true)
-          return ng
-        })
-        setScore(s=>s+10); setMoves(m=>m+1); setSelected(null)
-        return true
-      }
-    }
-    return false
-  }
+  const isSel = (col,idx) => selected?.source.type==='tableau' && selected.source.col===col && idx>=selected.source.cardIdx
+  const wasteSel = selected?.source.type==='waste'
+  const isMobile = layout.vw < 600
 
-  const isSelected = (col,idx) => selected?.source.type==='tableau'&&selected.source.col===col&&idx>=selected.source.cardIdx
-  const wasteSelected = selected?.source.type==='waste'
-  const isMobile = window.innerWidth < 600
+  // Calculate tableau column heights for proper layout
+  function colHeight(col) {
+    if (col.length === 0) return H
+    const faceDown = col.filter(c => !c.faceUp).length
+    const faceUp = col.filter(c => c.faceUp).length
+    return faceDown * faceDownH + faceUp * faceUpOverlap + H
+  }
 
   return (
-    <div style={{ paddingTop:64, height:'100vh', display:'flex', flexDirection:'column', background:'#0f2219', overflow:'hidden' }}>
+    <div style={{ paddingTop:56, height:'100vh', display:'flex', flexDirection:'column', background:'#0d4a2a', overflow:'hidden', userSelect:'none' }}>
+
+      {won && <Confetti />}
 
       {/* Win overlay */}
       {won && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ background:'#234d38', border:'2px solid #c9a84c', borderRadius:20, padding:'2.5rem', textAlign:'center', maxWidth:380, width:'90%' }}>
-            <div style={{ fontSize:'3rem', marginBottom:'0.75rem' }}>🏆</div>
-            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'2rem', color:'#c9a84c', marginBottom:'0.5rem' }}>You Won!</h2>
-            <p style={{ color:'rgba(245,240,232,0.7)', marginBottom:'1.5rem' }}>Score: {score} · Moves: {moves} · Time: {formatTime(time)}</p>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.82)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ background:'linear-gradient(135deg,#1a3d28,#0f2a1a)', border:'2px solid #c9a84c', borderRadius:20, padding:'2.5rem 2rem', textAlign:'center', maxWidth:380, width:'90%', boxShadow:'0 20px 60px rgba(0,0,0,0.6)' }}>
+            <div style={{ fontSize:'3.5rem', marginBottom:'0.75rem' }}>🏆</div>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'2rem', color:'#c9a84c', marginBottom:'0.25rem' }}>You Won!</h2>
+            <p style={{ color:'rgba(245,240,232,0.5)', fontSize:'0.85rem', marginBottom:'1.5rem' }}>
+              Score: <strong style={{ color:'#c9a84c' }}>{score}</strong> &nbsp;·&nbsp;
+              Moves: <strong style={{ color:'#c9a84c' }}>{moves}</strong> &nbsp;·&nbsp;
+              Time: <strong style={{ color:'#c9a84c' }}>{fmt(time)}</strong>
+            </p>
             <div style={{ display:'flex', gap:'1rem', justifyContent:'center' }}>
               <button className="btn-gold" onClick={newGame}>Play Again</button>
               <Link to="/lobby" className="btn-outline">Lobby</Link>
@@ -324,85 +418,105 @@ export default function Solitaire() {
       )}
 
       {/* Header */}
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:`0.5rem ${isMobile?'0.75rem':'1.5rem'}`, background:'rgba(0,0,0,0.3)', borderBottom:'1px solid rgba(201,168,76,0.15)', flexShrink:0 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
-          <Link to="/lobby" style={{ color:'rgba(245,240,232,0.5)', fontSize:'0.8rem', textDecoration:'none' }}>← Back</Link>
-          {!isMobile && <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.2rem', fontWeight:700, color:'#f5f0e8' }}>♣ Solitaire</h1>}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:`0 ${isMobile?'0.6rem':'1.25rem'}`, height:44, background:'rgba(0,0,0,0.35)', borderBottom:'1px solid rgba(201,168,76,0.12)', flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'0.6rem' }}>
+          <Link to="/lobby" style={{ color:'rgba(245,240,232,0.45)', fontSize:'0.8rem', textDecoration:'none' }}>← Back</Link>
+          {!isMobile && <span style={{ fontFamily:"'Playfair Display',serif", color:'#c9a84c', fontWeight:700 }}>♣ Solitaire</span>}
         </div>
-        <div style={{ display:'flex', gap:isMobile?'0.75rem':'1.5rem', alignItems:'center' }}>
-          {[['Score',score],['Moves',moves],['Time',formatTime(time)]].map(([l,v])=>(
+        <div style={{ display:'flex', gap:isMobile?'0.6rem':'1.25rem', alignItems:'center' }}>
+          {[['Score',score],['Moves',moves],['Time',fmt(time)]].map(([l,v]) => (
             <div key={l} style={{ textAlign:'center' }}>
-              <div style={{ fontSize:'0.6rem', color:'rgba(245,240,232,0.5)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{l}</div>
-              <div style={{ fontSize:isMobile?'0.85rem':'1rem', fontWeight:600, color:'#f5f0e8' }}>{v}</div>
+              <div style={{ fontSize:'0.55rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{l}</div>
+              <div style={{ fontSize:isMobile?'0.8rem':'0.95rem', fontWeight:700, color:'#f5f0e8' }}>{v}</div>
             </div>
           ))}
-          <button onClick={undo} className="btn-outline" style={{ padding:isMobile?'0.3rem 0.6rem':'0.35rem 0.8rem', fontSize:'0.75rem' }}>↩</button>
-          <button onClick={newGame} className="btn-gold" style={{ padding:isMobile?'0.3rem 0.6rem':'0.35rem 0.8rem', fontSize:'0.75rem' }}>New</button>
+          <button onClick={undo} disabled={!history.length} style={{ padding:'4px 10px', borderRadius:6, fontSize:'0.75rem', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.2)', color:history.length?'#f5f0e8':'rgba(245,240,232,0.3)', cursor:history.length?'pointer':'not-allowed' }}>↩ Undo</button>
+          <button onClick={newGame} style={{ padding:'4px 10px', borderRadius:6, fontSize:'0.75rem', background:'#c9a84c', border:'none', color:'#1a1a1a', fontWeight:700, cursor:'pointer' }}>New</button>
         </div>
       </div>
 
-      {/* Game board */}
-      <div style={{ flex:1, overflow:'auto', padding:`0.75rem ${isMobile?'0.4rem':'1rem'}` }}>
-        <div>
-          {/* Top row: stock + waste + spacer + foundations */}
-          <div style={{ display:'flex', gap:isMobile?'0.3rem':'0.5rem', marginBottom:isMobile?'0.75rem':'1rem', alignItems:'flex-start' }}>
-            {/* Stock */}
-            <div onClick={drawFromStock} style={{ cursor:'pointer', position:'relative', flexShrink:0 }}>
-              {game.stock.length>0
-                ? <PlayingCard card={{faceUp:false}} W={W} H={H} fs={fs} ss={ss} />
-                : <EmptySlot label="↺" onClick={drawFromStock} W={W} H={H} />
-              }
-              {!isMobile && (
-                <div style={{ position:'absolute', bottom:-16, left:'50%', transform:'translateX(-50%)', fontSize:'0.58rem', color:'rgba(245,240,232,0.35)', whiteSpace:'nowrap' }}>
-                  {game.stock.length>0?'Tap to draw':'Tap to reset'}
-                </div>
-              )}
-            </div>
-            {/* Waste */}
-            <div onClick={handleWasteClick} style={{ cursor:'pointer', flexShrink:0 }}>
-              {game.waste.length>0
-                ? <PlayingCard card={game.waste[game.waste.length-1]} selected={wasteSelected} W={W} H={H} fs={fs} ss={ss} />
-                : <EmptySlot label="" W={W} H={H} />
-              }
-            </div>
-            <div style={{ flex:1 }} />
-            {/* Foundations */}
-            {game.foundations.map((f,fi)=>(
-              <div key={fi} onClick={()=>handleFoundationClick(fi)} style={{ cursor:'pointer', flexShrink:0 }}>
-                {f.length>0
-                  ? <PlayingCard card={f[f.length-1]} W={W} H={H} fs={fs} ss={ss} />
-                  : <EmptySlot label={SUITS[fi]} W={W} H={H} />
-                }
+      {/* Board */}
+      <div style={{ flex:1, overflow:'auto', padding:`${isMobile?'0.5rem':'0.75rem'} ${isMobile?'0.4rem':'0.75rem'}` }}>
+
+        {/* Top row */}
+        <div style={{ display:'flex', gap:gap, marginBottom:isMobile?'0.5rem':'0.75rem', alignItems:'center' }}>
+
+          {/* Stock */}
+          <div onClick={drawStock} style={{ cursor:'pointer', flexShrink:0, position:'relative' }}>
+            {game.stock.length > 0
+              ? <Card card={{faceUp:false}} W={W} H={H} fs={fs} ss={ss} />
+              : <Slot label="↺" onClick={drawStock} W={W} H={H} />
+            }
+            {game.stock.length > 0 && (
+              <div style={{ position:'absolute', bottom:-14, left:'50%', transform:'translateX(-50%)', fontSize:'0.55rem', color:'rgba(245,240,232,0.3)', whiteSpace:'nowrap' }}>
+                {game.stock.length}
               </div>
-            ))}
+            )}
           </div>
 
-          {/* Tableau */}
-          <div style={{ display:'flex', gap:isMobile?'0.3rem':'0.5rem', alignItems:'flex-start', justifyContent:'space-between' }}>
-            {game.tableau.map((col,colIdx)=>(
-              <div key={colIdx} style={{ position:'relative', width:W, flexShrink:0, flex:1, maxWidth:isMobile?56:110 }}>
-                {col.length===0
-                  ? <EmptySlot label="K" onClick={()=>handleEmptyTableauClick(colIdx)} W={W} H={H} />
-                  : col.map((card,cardIdx)=>(
-                    <div key={card.id} style={{
-                      position:cardIdx===0?'relative':'absolute',
-                      top:cardIdx===0?0:cardIdx*overlap,
-                      zIndex:cardIdx,
-                      marginBottom:cardIdx===col.length-1?col.length*overlap+H+10:0,
-                    }} onClick={()=>handleTableauClick(colIdx,cardIdx)}>
-                      <PlayingCard card={card} selected={isSelected(colIdx,cardIdx)} W={W} H={H} fs={fs} ss={ss} />
-                    </div>
-                  ))
-                }
-              </div>
-            ))}
+          {/* Waste — show top 3 fanned */}
+          <div style={{ position:'relative', width: game.waste.length>2 ? W+20 : W, height:H, flexShrink:0 }} onClick={handleWaste}>
+            {game.waste.length === 0
+              ? <Slot label="" W={W} H={H} />
+              : game.waste.slice(-3).map((card, i, arr) => (
+                <div key={card.id} style={{ position:'absolute', left: i * (arr.length > 1 ? 10 : 0), zIndex:i }}>
+                  <Card
+                    card={card}
+                    selected={i===arr.length-1 && wasteSel}
+                    W={W} H={H} fs={fs} ss={ss}
+                  />
+                </div>
+              ))
+            }
           </div>
+
+          <div style={{ flex:1 }} />
+
+          {/* Foundations */}
+          {game.foundations.map((f, fi) => (
+            <div key={fi} onClick={() => handleFoundation(fi)} style={{ cursor:'pointer', flexShrink:0 }}>
+              {f.length > 0
+                ? <Card card={f[f.length-1]} W={W} H={H} fs={fs} ss={ss} />
+                : <Slot label={SUITS[fi]} W={W} H={H} />
+              }
+            </div>
+          ))}
+        </div>
+
+        {/* Tableau */}
+        <div style={{ display:'flex', gap:gap, alignItems:'flex-start' }}>
+          {game.tableau.map((col, colIdx) => {
+            if (col.length === 0) return (
+              <div key={colIdx} style={{ width:W, flexShrink:0, flex:1, maxWidth:W }}>
+                <Slot label="K" onClick={() => handleEmptyCol(colIdx)} W={W} H={H} />
+              </div>
+            )
+            return (
+              <div key={colIdx} style={{ width:W, flexShrink:0, flex:1, maxWidth:W, position:'relative', height: colHeight(col) + 10 }}>
+                {col.map((card, cardIdx) => {
+                  const prevFaceDown = col.slice(0, cardIdx).filter(c => !c.faceUp).length
+                  const prevFaceUp = col.slice(0, cardIdx).filter(c => c.faceUp).length
+                  const top = prevFaceDown * faceDownH + prevFaceUp * faceUpOverlap
+                  return (
+                    <div key={card.id} style={{ position:'absolute', top, left:0, zIndex:cardIdx+1 }}
+                      onClick={() => handleTableau(colIdx, cardIdx)}>
+                      <Card
+                        card={card}
+                        selected={isSel(colIdx, cardIdx)}
+                        W={W} H={H} fs={fs} ss={ss}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })}
         </div>
       </div>
 
       {/* Bottom hint */}
-      <div style={{ textAlign:'center', padding:'0.3rem', fontSize:'0.68rem', color:'rgba(245,240,232,0.2)', flexShrink:0 }}>
-        {isMobile ? 'Tap to select · Tap again to move · Tap deck to draw' : 'Click to select · Click destination to move · Click deck to draw'}
+      <div style={{ textAlign:'center', padding:'4px', fontSize:'0.62rem', color:'rgba(245,240,232,0.2)', flexShrink:0 }}>
+        Click to select · Click destination to move · Double-click to auto-move to foundation
       </div>
     </div>
   )
