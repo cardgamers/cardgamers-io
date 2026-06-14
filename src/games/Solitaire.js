@@ -75,7 +75,7 @@ function useLayout() {
     const fs = Math.max(8, Math.round(W * 0.16))
     const ss = Math.max(14, Math.round(W * 0.32))
     const faceDownH = Math.round(H * 0.18)
-    const faceUpOverlap = Math.round(H * 0.32)
+    const faceUpOverlap = Math.round(H * 0.22)
     const gap = Math.max(4, Math.round(vw * 0.006))
     return { W, H, fs, ss, faceDownH, faceUpOverlap, gap, vw, vh }
   }
@@ -460,12 +460,12 @@ export default function Solitaire() {
             }
           </div>
 
-          {/* Spacer — proportional */}
-          <div style={{ flex:1, minWidth:gap }} />
+          {/* Spacer — 3 column widths to align foundations above cols 4-7 */}
+          <div style={{ flex:1 }} />
 
-          {/* Foundations */}
+          {/* Foundations — 4 slots aligned above right 4 tableau columns */}
           {game.foundations.map((f, fi) => (
-            <div key={fi} onClick={() => handleFoundation(fi)} style={{ cursor:'pointer', flexShrink:0 }}>
+            <div key={fi} onClick={() => handleFoundation(fi)} style={{ cursor:'pointer', flexShrink:0, flex:1, maxWidth:W }}>
               {f.length > 0
                 ? <Card card={f[f.length-1]} W={W} H={H} fs={fs} ss={ss} />
                 : <Slot label={SUITS[fi]} W={W} H={H} />
@@ -475,15 +475,15 @@ export default function Solitaire() {
         </div>
 
         {/* Tableau */}
-        <div style={{ display:'flex', gap:gap, alignItems:'flex-start' }}>
+        <div style={{ display:'flex', gap:gap, alignItems:'flex-start', width:'100%' }}>
           {game.tableau.map((col, colIdx) => {
             if (col.length === 0) return (
-              <div key={colIdx} style={{ width:W, flexShrink:0, flex:1, maxWidth:W+20 }}>
+              <div key={colIdx} style={{ flex:1, maxWidth:W, minWidth:W }}>
                 <Slot label="K" onClick={() => handleEmptyCol(colIdx)} W={W} H={H} />
               </div>
             )
             return (
-              <div key={colIdx} style={{ width:W, flexShrink:0, flex:1, maxWidth:W, position:'relative', height: colHeight(col) + 10 }}>
+              <div key={colIdx} style={{ flex:1, maxWidth:W, minWidth:W, position:'relative', height: colHeight(col) + 10 }}>
                 {col.map((card, cardIdx) => {
                   const prevFaceDown = col.slice(0, cardIdx).filter(c => !c.faceUp).length
                   const prevFaceUp = col.slice(0, cardIdx).filter(c => c.faceUp).length
