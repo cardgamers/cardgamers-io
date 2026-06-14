@@ -272,6 +272,7 @@ export default function Solitaire() {
   const [history, setHistory] = useState([])
   const [resultSaved, setResultSaved] = useState(false)
   const [percentiles, setPercentiles] = useState(null)
+  const [totalWins, setTotalWins] = useState(0)
   const [lastClickTime, setLastClickTime] = useState({})
   const layout = useLayout()
   const { W, H, fs, ss, faceDownH, faceUpOverlap, gap } = layout
@@ -291,6 +292,7 @@ export default function Solitaire() {
           process.env.REACT_APP_SUPABASE_URL,
           process.env.REACT_APP_SUPABASE_ANON_KEY
         )
+        const { data: { user } } = await supabase.auth.getUser()
         const { data } = await supabase
           .from('game_history')
           .select('duration_seconds, moves, score')
@@ -298,7 +300,16 @@ export default function Solitaire() {
           .eq('result', 'win')
           .not('duration_seconds', 'is', null)
 
-        if (data && data.length >= 3) {
+        // Count user's own wins
+        const { data: myWins } = await supabase
+          .from('game_history')
+          .select('id')
+          .eq('game_type', 'solitaire')
+          .eq('result', 'win')
+          .eq('user_id', user.id)
+        setTotalWins(myWins?.length || 1)
+
+        if (data && data.length >= 1 && (myWins?.length || 0) >= 3) {
           // Time percentile — lower is better
           const times = data.map(d => d.duration_seconds).sort((a,b) => a-b)
           const timeRank = times.filter(t => t <= time).length
@@ -349,7 +360,7 @@ export default function Solitaire() {
   function newGame() {
     setGame(dealGame()); setSelected(null)
     setMoves(0); setScore(0); setTime(0)
-    setWon(false); setHistory([]); setResultSaved(false); setPercentiles(null)
+    setWon(false); setHistory([]); setResultSaved(false); setPercentiles(null); setTotalWins(0)
   }
 
   // Auto-move to foundation
@@ -579,9 +590,22 @@ export default function Solitaire() {
               </p>
             )}
             {!percentiles && resultSaved && (
-              <p style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.3)', marginBottom:'1rem' }}>
-                Play more games to unlock percentile rankings!
-              </p>
+              <div style={{ background:'rgba(0,0,0,0.2)', borderRadius:10, padding:'0.75rem 1rem', marginBottom:'1rem', textAlign:'center' }}>
+                <p style={{ fontSize:'0.8rem', color:'rgba(245,240,232,0.6)', marginBottom:4 }}>
+                  🔒 Percentile ranking locked
+                </p>
+                <p style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.35)' }}>
+                  {totalWins >= 2
+                    ? 'Play 1 more game to unlock your ranking!'
+                    : totalWins >= 1
+                    ? 'Play 2 more games to unlock your ranking!'
+                    : 'Play 3 games to unlock your percentile ranking vs all players!'}
+                </p>
+                <div style={{ marginTop:8, height:4, background:'rgba(255,255,255,0.08)', borderRadius:2 }}>
+                  <div style={{ height:4, background:'#c9a84c', borderRadius:2, width:`${Math.min(100,(totalWins/3)*100)}%`, transition:'width 0.5s' }} />
+                </div>
+                <p style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.25)', marginTop:4 }}>{totalWins}/3 wins</p>
+              </div>
             )}
 
             <div style={{ display:'flex', gap:'1rem', justifyContent:'center' }}>
