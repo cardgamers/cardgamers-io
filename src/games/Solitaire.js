@@ -551,12 +551,12 @@ export default function Solitaire() {
             }
           </div>
 
-          {/* Spacer — 3 column widths to align foundations above cols 4-7 */}
-          <div style={{ flex:1 }} />
+          {/* 3 empty spacers to align foundations above cols 4-7 */}
+          {[0,1,2].map(i => <div key={i} style={{ flex:1, maxWidth:W, minWidth:W }} />)}
 
-          {/* Foundations — 4 slots aligned above right 4 tableau columns */}
+          {/* Foundations — above cols 4-7 */}
           {game.foundations.map((f, fi) => (
-            <div key={fi} onClick={() => handleFoundation(fi)} style={{ cursor:'pointer', flexShrink:0, flex:1, maxWidth:W }}>
+            <div key={fi} onClick={() => handleFoundation(fi)} style={{ cursor:'pointer', flex:1, maxWidth:W, minWidth:W }}>
               {f.length > 0
                 ? <Card card={f[f.length-1]} W={W} H={H} fs={fs} ss={ss} />
                 : <Slot label={SUITS[fi]} W={W} H={H} />
