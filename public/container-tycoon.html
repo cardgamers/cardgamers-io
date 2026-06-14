@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Container Tycoon — Global Shipping Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #050f1c;
+  --ocean-mid: #0a1f35;
+  --ocean-light: #0d2a47;
+  --panel-bg: #091828;
+  --panel-border: rgba(0,180,255,0.12);
+  --accent: #00c9ff;
+  --accent2: #00ff9d;
+  --accent3: #ff6b35;
+  --accent4: #ffd23f;
+  --danger: #ff3860;
+  --warn: #ffaa00;
+  --text-primary: #e8f4ff;
+  --text-secondary: #7fb3d3;
+  --text-muted: #3d6b8a;
+  --grid-line: rgba(0,180,255,0.06);
+  --ship-blue: #00c9ff;
+  --ship-green: #00ff9d;
+  --ship-orange: #ff6b35;
+  --font-ui: 'Space Grotesk', sans-serif;
+  --font-data: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--ocean); color: var(--text-primary); font-family: var(--font-ui); }
+
+/* ── LAYOUT ── */
+#app { display: grid; grid-template-rows: 48px 1fr 180px; grid-template-columns: 280px 1fr 300px; height: 100vh; gap: 0; }
+#topbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 0; background: var(--panel-bg); border-bottom: 1px solid var(--panel-border); z-index: 10; }
+#left-panel { grid-row: 2 / 4; background: var(--panel-bg); border-right: 1px solid var(--panel-border); display: flex; flex-direction: column; overflow: hidden; }
+#map-container { grid-row: 2 / 3; position: relative; overflow: hidden; background: var(--ocean); }
+#right-panel { grid-row: 2 / 4; background: var(--panel-bg); border-left: 1px solid var(--panel-border); display: flex; flex-direction: column; overflow: hidden; }
+#bottom-bar { background: var(--panel-bg); border-top: 1px solid var(--panel-border); display: flex; overflow: hidden; }
+
+/* ── TOPBAR ── */
+.tb-logo { padding: 0 20px; font-size: 15px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); border-right: 1px solid var(--panel-border); height: 100%; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.tb-logo span { color: var(--text-secondary); font-weight: 400; font-size: 11px; letter-spacing: 0.05em; }
+.tb-stats { display: flex; flex: 1; overflow: hidden; }
+.tb-stat { display: flex; flex-direction: column; justify-content: center; padding: 0 16px; border-right: 1px solid var(--panel-border); min-width: 0; }
+.tb-stat .lbl { font-size: 9px; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-data); }
+.tb-stat .val { font-size: 13px; font-weight: 600; font-family: var(--font-data); white-space: nowrap; }
+.val.pos { color: var(--accent2); }
+.val.neg { color: var(--danger); }
+.val.accent { color: var(--accent); }
+.val.warn { color: var(--warn); }
+.tb-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px; border-left: 1px solid var(--panel-border); }
+.tb-controls .day-badge { font-family: var(--font-data); font-size: 11px; color: var(--text-secondary); padding: 3px 10px; border: 1px solid var(--panel-border); border-radius: 3px; }
+.icon-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--panel-border); border-radius: 3px; cursor: pointer; color: var(--text-secondary); font-size: 13px; transition: all 0.15s; }
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.icon-btn.active { background: rgba(0,201,255,0.12); border-color: var(--accent); color: var(--accent); }
+.speed-btn { font-family: var(--font-data); font-size: 10px; padding: 0 8px; height: 28px; background: transparent; border: 1px solid var(--panel-border); border-radius: 3px; cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+.speed-btn:hover, .speed-btn.active { border-color: var(--accent4); color: var(--accent4); background: rgba(255,210,63,0.08); }
+
+/* ── LEFT PANEL ── */
+.panel-tabs { display: flex; border-bottom: 1px solid var(--panel-border); flex-shrink: 0; }
+.ptab { flex: 1; padding: 10px 4px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; cursor: pointer; color: var(--text-muted); background: transparent; border: none; border-bottom: 2px solid transparent; transition: all 0.15s; font-family: var(--font-data); }
+.ptab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.panel-body { flex: 1; overflow-y: auto; padding: 10px; scrollbar-width: thin; scrollbar-color: var(--panel-border) transparent; }
+.panel-body::-webkit-scrollbar { width: 4px; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+
+/* ── CARDS ── */
+.card { background: rgba(0,180,255,0.04); border: 1px solid var(--panel-border); border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; }
+.card:hover { border-color: rgba(0,201,255,0.25); }
+.card.selected { border-color: var(--accent); background: rgba(0,201,255,0.07); }
+.card.danger-card { border-color: rgba(255,56,96,0.3); background: rgba(255,56,96,0.05); }
+.card.warn-card { border-color: rgba(255,170,0,0.3); background: rgba(255,170,0,0.05); }
+.card.success-card { border-color: rgba(0,255,157,0.3); background: rgba(0,255,157,0.05); }
+.card-title { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+.card-sub { font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; }
+.card-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--text-secondary); margin-bottom: 3px; }
+.card-row b { color: var(--text-primary); font-family: var(--font-data); }
+.card-row .mono { font-family: var(--font-data); font-size: 10px; }
+
+/* ── BADGES ── */
+.badge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 2px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-family: var(--font-data); }
+.badge-blue { background: rgba(0,201,255,0.15); color: var(--accent); }
+.badge-green { background: rgba(0,255,157,0.15); color: var(--accent2); }
+.badge-orange { background: rgba(255,107,53,0.15); color: var(--accent3); }
+.badge-yellow { background: rgba(255,210,63,0.15); color: var(--accent4); }
+.badge-red { background: rgba(255,56,96,0.15); color: var(--danger); }
+.badge-gray { background: rgba(100,150,180,0.12); color: var(--text-secondary); }
+
+/* ── PROGRESS BARS ── */
+.progress-wrap { position: relative; height: 5px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin: 4px 0; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.fill-blue { background: var(--accent); }
+.fill-green { background: var(--accent2); }
+.fill-orange { background: var(--accent3); }
+.fill-red { background: var(--danger); }
+.fill-yellow { background: var(--accent4); }
+
+/* ── BUTTONS ── */
+.btn { padding: 5px 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; border-radius: 3px; cursor: pointer; transition: all 0.15s; font-family: var(--font-data); border: 1px solid; }
+.btn-primary { background: rgba(0,201,255,0.12); border-color: rgba(0,201,255,0.4); color: var(--accent); }
+.btn-primary:hover { background: rgba(0,201,255,0.22); border-color: var(--accent); }
+.btn-success { background: rgba(0,255,157,0.1); border-color: rgba(0,255,157,0.35); color: var(--accent2); }
+.btn-success:hover { background: rgba(0,255,157,0.18); }
+.btn-danger { background: rgba(255,56,96,0.1); border-color: rgba(255,56,96,0.35); color: var(--danger); }
+.btn-danger:hover { background: rgba(255,56,96,0.18); }
+.btn-warn { background: rgba(255,170,0,0.1); border-color: rgba(255,170,0,0.35); color: var(--warn); }
+.btn-warn:hover { background: rgba(255,170,0,0.18); }
+.btn-ghost { background: transparent; border-color: var(--panel-border); color: var(--text-secondary); }
+.btn-ghost:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-row { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+
+/* ── SECTION HEADERS ── */
+.sec-head { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-data); padding: 8px 0 4px; border-bottom: 1px solid var(--panel-border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+/* ── MAP SVG ── */
+#world-map { width: 100%; height: 100%; cursor: grab; }
+#world-map:active { cursor: grabbing; }
+.port-group { cursor: pointer; }
+.port-dot { transition: r 0.2s; }
+.port-ring { animation: pulseRing 2s ease-out infinite; }
+@keyframes pulseRing { 0% { r: 8; opacity: 0.6; } 100% { r: 18; opacity: 0; } }
+.ship-marker { transition: cx 0.8s linear, cy 0.8s linear; }
+.trade-lane { stroke-dasharray: 6 4; animation: laneDash 3s linear infinite; opacity: 0.15; }
+@keyframes laneDash { to { stroke-dashoffset: -40; } }
+.route-active { stroke-dasharray: 8 4; animation: routeDash 1.5s linear infinite; }
+@keyframes routeDash { to { stroke-dashoffset: -24; } }
+.weather-zone { animation: weatherPulse 4s ease-in-out infinite; }
+@keyframes weatherPulse { 0%,100% { opacity: 0.15; } 50% { opacity: 0.35; } }
+
+/* ── RIGHT PANEL ── */
+.event-feed { flex: 1; overflow-y: auto; padding: 8px 10px; scrollbar-width: thin; scrollbar-color: var(--panel-border) transparent; }
+.event-item { display: flex; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--panel-border); }
+.event-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.event-time { font-size: 9px; color: var(--text-muted); font-family: var(--font-data); white-space: nowrap; }
+.event-text { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+.event-text b { color: var(--text-primary); font-weight: 500; }
+
+/* ── MARKET TICKER ── */
+#market-ticker { height: 28px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--panel-border); display: flex; align-items: center; overflow: hidden; flex-shrink: 0; }
+.ticker-scroll { display: flex; gap: 0; animation: tickerMove 30s linear infinite; white-space: nowrap; }
+@keyframes tickerMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ticker-item { font-family: var(--font-data); font-size: 10px; padding: 0 16px; border-right: 1px solid var(--panel-border); color: var(--text-secondary); display: flex; gap: 6px; align-items: center; }
+.ticker-item .up { color: var(--accent2); }
+.ticker-item .dn { color: var(--danger); }
+
+/* ── BOTTOM BAR ── */
+#bottom-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+.bottom-section { padding: 10px 14px; border-right: 1px solid var(--panel-border); overflow: hidden; }
+.bottom-section:last-child { border-right: none; }
+.b-title { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-data); margin-bottom: 8px; }
+
+/* ── FORMS / INPUTS ── */
+.form-group { margin-bottom: 8px; }
+.form-label { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-data); display: block; margin-bottom: 3px; }
+.form-select, .form-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--panel-border); border-radius: 3px; padding: 5px 8px; font-size: 11px; color: var(--text-primary); font-family: var(--font-ui); appearance: none; }
+.form-select:focus, .form-input:focus { outline: none; border-color: rgba(0,201,255,0.4); }
+.form-select option { background: #091828; }
+.form-row { display: flex; gap: 6px; }
+.form-row .form-group { flex: 1; }
+
+/* ── MODAL ── */
+#modal-overlay { position: fixed; inset: 0; background: rgba(5,15,28,0.85); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+#modal-overlay.open { display: flex; }
+#modal-box { background: var(--panel-bg); border: 1px solid rgba(0,201,255,0.25); border-radius: 6px; padding: 24px; min-width: 380px; max-width: 520px; max-height: 85vh; overflow-y: auto; }
+#modal-box h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+#modal-box .modal-sub { font-size: 11px; color: var(--text-secondary); margin-bottom: 16px; }
+.modal-divider { border: none; border-top: 1px solid var(--panel-border); margin: 14px 0; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+/* ── NOTIFICATION TOASTS ── */
+#toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column-reverse; gap: 8px; pointer-events: none; }
+.toast { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 4px; padding: 10px 14px; font-size: 11px; color: var(--text-primary); max-width: 280px; animation: toastIn 0.3s ease; line-height: 1.4; }
+.toast.toast-success { border-color: rgba(0,255,157,0.4); }
+.toast.toast-warn { border-color: rgba(255,170,0,0.4); }
+.toast.toast-danger { border-color: rgba(255,56,96,0.4); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ── CHART CANVAS ── */
+.mini-chart { width: 100%; height: 60px; }
+
+/* ── SCROLLBAR GLOBAL ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+
+/* ── TOOLTIP ── */
+#map-tooltip { position: absolute; background: rgba(9,24,40,0.95); border: 1px solid rgba(0,201,255,0.25); border-radius: 4px; padding: 8px 12px; font-size: 11px; pointer-events: none; display: none; z-index: 50; min-width: 180px; }
+#map-tooltip .tt-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+#map-tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; color: var(--text-secondary); margin-bottom: 2px; }
+#map-tooltip .tt-row b { color: var(--text-primary); font-family: var(--font-data); }
+
+/* ── OVERLAYS on map ── */
+#map-legend { position: absolute; bottom: 10px; left: 10px; background: rgba(9,24,40,0.85); border: 1px solid var(--panel-border); border-radius: 4px; padding: 8px 12px; font-size: 10px; }
+.legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; color: var(--text-secondary); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+#map-controls { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="tb-logo">
+      ⚓ CONTAINER TYCOON <span>GLOBAL SHIPPING SIM</span>
+    </div>
+    <div class="tb-stats">
+      <div class="tb-stat">
+        <div class="lbl">Cash</div>
+        <div class="val accent" id="stat-cash">$50,000,000</div>
+      </div>
+      <div class="tb-stat">
+        <div class="lbl">Net Worth</div>
+        <div class="val pos" id="stat-networth">$50,000,000</div>
+      </div>
+      <div class="tb-stat">
+        <div class="lbl">Revenue (30d)</div>
+        <div class="val pos" id="stat-rev">$0</div>
+      </div>
+      <div class="tb-stat">
+        <div class="lbl">EBITDA (30d)</div>
+        <div class="val" id="stat-ebitda">$0</div>
+      </div>
+      <div class="tb-stat">
+        <div class="lbl">Fleet Size</div>
+        <div class="val accent" id="stat-fleet">3 ships</div>
+      </div>
+      <div class="tb-stat">
+        <div class="lbl">Active Routes</div>
+        <div class="val" id="stat-routes">0</div>
+      </div>
+      <div class="tb-stat">
+        <div class="lbl">Market Index</div>
+        <div class="val warn" id="stat-market">BIMCO 1,420</div>
+      </div>
+      <div class="tb-stat">
+        <div class="lbl">Fuel ($/MT)</div>
+        <div class="val" id="stat-fuel">$650</div>
+      </div>
+    </div>
+    <div class="tb-controls">
+      <div class="day-badge" id="day-badge">Day 1, Year 1</div>
+      <button class="speed-btn" onclick="G.setSpeed(0.5)" id="sb-half">½x</button>
+      <button class="speed-btn active" onclick="G.setSpeed(1)" id="sb-1">1x</button>
+      <button class="speed-btn" onclick="G.setSpeed(2)" id="sb-2">2x</button>
+      <button class="speed-btn" onclick="G.setSpeed(5)" id="sb-5">5x</button>
+      <button class="speed-btn" onclick="G.setSpeed(10)" id="sb-10">10x</button>
+      <button class="icon-btn" id="pause-btn" onclick="G.togglePause()" title="Pause">⏸</button>
+    </div>
+  </div>
+
+  <!-- LEFT PANEL -->
+  <div id="left-panel">
+    <div class="panel-tabs">
+      <button class="ptab active" onclick="G.leftTab('fleet')" id="ltab-fleet">Fleet</button>
+      <button class="ptab" onclick="G.leftTab('routes')" id="ltab-routes">Routes</button>
+      <button class="ptab" onclick="G.leftTab('contracts')" id="ltab-contracts">Contracts</button>
+      <button class="ptab" onclick="G.leftTab('port')" id="ltab-port">Ports</button>
+    </div>
+    <div class="panel-body" id="left-body"></div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map-container">
+    <svg id="world-map" viewBox="0 0 1200 620" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="portGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#00c9ff" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="#00c9ff" stop-opacity="0"/>
+        </radialGradient>
+        <marker id="arrowBlue" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="rgba(0,201,255,0.6)"/>
+        </marker>
+        <marker id="arrowGreen" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="rgba(0,255,157,0.7)"/>
+        </marker>
+        <marker id="arrowOrange" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,107,53,0.7)"/>
+        </marker>
+      </defs>
+      <!-- Ocean bg -->
+      <rect width="1200" height="620" fill="#050f1c"/>
+      <!-- Grid lines -->
+      <g id="grid-layer" opacity="0.4"></g>
+      <!-- Continents -->
+      <g id="continents-layer"></g>
+      <!-- Trade lanes (background) -->
+      <g id="lanes-layer"></g>
+      <!-- Weather zones -->
+      <g id="weather-layer"></g>
+      <!-- Active routes -->
+      <g id="routes-layer"></g>
+      <!-- Ports -->
+      <g id="ports-layer"></g>
+      <!-- Ships -->
+      <g id="ships-layer"></g>
+      <!-- Canal zones -->
+      <g id="canals-layer"></g>
+    </svg>
+    <div id="map-tooltip"></div>
+    <div id="map-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#00c9ff"></div>Major Port</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#00ff9d"></div>Your Ship (sailing)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffd23f"></div>Your Ship (docked)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff3860"></div>Storm / Risk Zone</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff6b35"></div>Canal (toll)</div>
+    </div>
+    <div id="map-controls">
+      <button class="icon-btn" onclick="G.map.zoom(1.3)" title="Zoom in">+</button>
+      <button class="icon-btn" onclick="G.map.zoom(0.77)" title="Zoom out">−</button>
+      <button class="icon-btn" onclick="G.map.reset()" title="Reset view">⊙</button>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right-panel">
+    <div class="panel-tabs">
+      <button class="ptab active" onclick="G.rightTab('intel')" id="rtab-intel">Intel</button>
+      <button class="ptab" onclick="G.rightTab('market')" id="rtab-market">Market</button>
+      <button class="ptab" onclick="G.rightTab('finance')" id="rtab-finance">Finance</button>
+      <button class="ptab" onclick="G.rightTab('buy')" id="rtab-buy">Buy/Sell</button>
+    </div>
+    <div class="panel-body" id="right-body" style="flex:1"></div>
+    <div id="market-ticker"><div class="ticker-scroll" id="ticker-scroll"></div></div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottom-bar">
+    <div class="bottom-section">
+      <div class="b-title">Selected Ship / Port Detail</div>
+      <div id="detail-panel">
+        <div style="color:var(--text-muted);font-size:11px">Click a ship or port on the map</div>
+      </div>
+    </div>
+    <div class="bottom-section">
+      <div class="b-title">Revenue History (90 days)</div>
+      <canvas class="mini-chart" id="rev-chart"></canvas>
+    </div>
+    <div class="bottom-section">
+      <div class="b-title">Freight Rate Index</div>
+      <canvas class="mini-chart" id="freight-chart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h2 id="modal-title"></h2>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div id="modal-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="G.closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONTAINER TYCOON — GAME ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+const G = (function() {
+
+// ── DATA CONSTANTS ──────────────────────────────────────────────
+
+const PORTS = [
+  { id:'SH', name:'Shanghai', country:'China', x:870, y:220, size:'mega', region:'Asia',
+    supply:{electronics:95,textiles:90,machinery:75,chemicals:60,toys:85,steel:70},
+    demand:{iron_ore:90,coal:85,soybeans:80,oil:60,lng:50},
+    portFee:18000, throughput:47000, congestion:0.65 },
+  { id:'SI', name:'Singapore', country:'Singapore', x:800, y:335, size:'mega', region:'SE Asia',
+    supply:{oil:80,chemicals:70,electronics:50,rubber:85},
+    demand:{electronics:75,machinery:65,coal:55,lng:70,iron_ore:40},
+    portFee:22000, throughput:37000, congestion:0.55 },
+  { id:'RT', name:'Rotterdam', country:'Netherlands', x:490, y:148, size:'mega', region:'Europe',
+    supply:{machinery:90,chemicals:85,food:70,pharmaceuticals:80},
+    demand:{oil:85,coal:70,iron_ore:65,soybeans:60,textiles:55},
+    portFee:25000, throughput:14700, congestion:0.45 },
+  { id:'LA', name:'Los Angeles', country:'USA', x:120, y:235, size:'mega', region:'N. America',
+    supply:{food:80,chemicals:60,machinery:70,electronics:50},
+    demand:{electronics:90,textiles:85,steel:60,toys:75,furniture:70},
+    portFee:20000, throughput:9500, congestion:0.70 },
+  { id:'DX', name:'Dubai (Jebel Ali)', country:'UAE', x:670, y:270, size:'large', region:'Middle East',
+    supply:{oil:90,lng:85,chemicals:50},
+    demand:{food:80,textiles:75,machinery:65,electronics:60,pharmaceuticals:55},
+    portFee:19000, throughput:14000, congestion:0.40 },
+  { id:'NY', name:'New York / NJ', country:'USA', x:230, y:195, size:'large', region:'N. America',
+    supply:{food:65,chemicals:70,machinery:55,pharmaceuticals:60},
+    demand:{oil:50,electronics:70,textiles:60,furniture:65,steel:45},
+    portFee:23000, throughput:9000, congestion:0.60 },
+  { id:'MB', name:'Mumbai JNPT', country:'India', x:700, y:295, size:'large', region:'South Asia',
+    supply:{textiles:90,pharmaceuticals:85,food:70,chemicals:55},
+    demand:{machinery:75,oil:65,coal:70,electronics:55,steel:60},
+    portFee:14000, throughput:5800, congestion:0.75 },
+  { id:'TK', name:'Tokyo / Yokohama', country:'Japan', x:940, y:210, size:'large', region:'Japan',
+    supply:{electronics:95,machinery:95,automobiles:90,chemicals:65},
+    demand:{oil:85,coal:75,iron_ore:80,lng:70,food:60},
+    portFee:28000, throughput:7700, congestion:0.35 },
+  { id:'SZ', name:'Santos', country:'Brazil', x:315, y:415, size:'large', region:'S. America',
+    supply:{soybeans:95,food:85,iron_ore:80,oil:55},
+    demand:{machinery:70,chemicals:60,electronics:55,fertilizers:80},
+    portFee:12000, throughput:4300, congestion:0.55 },
+  { id:'CT', name:'Cape Town / Ngqura', country:'S. Africa', x:510, y:470, size:'medium', region:'Africa',
+    supply:{food:60,coal:70,iron_ore:75,manganese:80},
+    demand:{machinery:65,oil:60,chemicals:55,electronics:50},
+    portFee:9000, throughput:2500, congestion:0.30 },
+  { id:'HK', name:'Hong Kong', country:'China', x:860, y:258, size:'large', region:'Asia',
+    supply:{electronics:85,textiles:70,toys:80},
+    demand:{food:75,oil:55,chemicals:50,machinery:60},
+    portFee:20000, throughput:18000, congestion:0.60 },
+  { id:'BU', name:'Busan', country:'S. Korea', x:908, y:210, size:'large', region:'Asia',
+    supply:{steel:85,electronics:80,automobiles:75,machinery:70},
+    demand:{iron_ore:80,coal:75,oil:65,lng:60,food:55},
+    portFee:17000, throughput:22000, congestion:0.50 },
+  { id:'KL', name:'Klang / Penang', country:'Malaysia', x:785, y:328, size:'medium', region:'SE Asia',
+    supply:{rubber:90,palm_oil:85,electronics:65,textiles:55},
+    demand:{oil:60,machinery:70,chemicals:55,food:65},
+    portFee:11000, throughput:13600, congestion:0.45 },
+  { id:'HB', name:'Hamburg', country:'Germany', x:508, y:140, size:'large', region:'Europe',
+    supply:{machinery:85,chemicals:80,automobiles:70,pharmaceuticals:65},
+    demand:{coal:65,iron_ore:60,soybeans:70,textiles:55,oil:50},
+    portFee:24000, throughput:8900, congestion:0.40 },
+  { id:'GN', name:'Genoa / La Spezia', country:'Italy', x:515, y:180, size:'medium', region:'Europe',
+    supply:{machinery:75,food:65,pharmaceuticals:70,automobiles:60},
+    demand:{textiles:65,oil:55,coal:50,electronics:60},
+    portFee:16000, throughput:2900, congestion:0.35 },
+  { id:'AN', name:'Antwerp', country:'Belgium', x:488, y:150, size:'large', region:'Europe',
+    supply:{chemicals:90,pharmaceuticals:80,machinery:70,food:65},
+    demand:{oil:75,coal:65,iron_ore:55,soybeans:65},
+    portFee:22000, throughput:12000, congestion:0.45 },
+  { id:'JK', name:'Jakarta / Tanjung Priok', country:'Indonesia', x:815, y:370, size:'large', region:'SE Asia',
+    supply:{coal:85,palm_oil:90,rubber:75,lng:70},
+    demand:{machinery:70,textiles:60,steel:55,electronics:65,chemicals:50},
+    portFee:10000, throughput:7600, congestion:0.65 },
+  { id:'CH', name:'Chennai / Kolkata', country:'India', x:730, y:320, size:'medium', region:'South Asia',
+    supply:{textiles:80,food:70,iron_ore:65,chemicals:55},
+    demand:{coal:75,oil:65,machinery:70,electronics:55},
+    portFee:11000, throughput:1800, congestion:0.55 },
+  { id:'HO', name:'Houston', country:'USA', x:175, y:265, size:'large', region:'N. America',
+    supply:{oil:90,lng:85,chemicals:80,food:65},
+    demand:{steel:65,machinery:70,electronics:55,textiles:50},
+    portFee:18000, throughput:2800, congestion:0.50 },
+  { id:'VN', name:'Vancouver', country:'Canada', x:100, y:175, size:'medium', region:'N. America',
+    supply:{coal:80,grain:85,lumber:90,potash:75},
+    demand:{electronics:65,machinery:60,textiles:55,chemicals:50},
+    portFee:19000, throughput:3400, congestion:0.35 },
+];
+
+const CANALS = [
+  { id:'suez', name:'Suez Canal', x:570, y:250, toll_per_teu:200, delay:0.5, risk:0.05,
+    connects:['RT','HB','AN','GN','NY','LA','HO'], label:'SUEZ', color:'#ff6b35' },
+  { id:'panama', name:'Panama Canal', x:215, y:305, toll_per_teu:150, delay:0.3, risk:0.04,
+    connects:['LA','NY','HO','RT','SH','TK'], label:'PANAMA', color:'#ff6b35' },
+  { id:'malacca', name:'Strait of Malacca', x:780, y:340, toll_per_teu:0, delay:0.1, risk:0.08,
+    connects:['SI','HK','SH','TK'], label:'MALACCA', color:'#ffd23f' },
+];
+
+const CARGO_TYPES = {
+  electronics:   { name:'Electronics',     unit:'TEU', baseRate:2800, volatility:0.18, weight:8,  icon:'⚡' },
+  textiles:      { name:'Textiles',        unit:'TEU', baseRate:950,  volatility:0.12, weight:12, icon:'🧵' },
+  machinery:     { name:'Machinery',       unit:'TEU', baseRate:2200, volatility:0.15, weight:20, icon:'⚙️' },
+  chemicals:     { name:'Chemicals',       unit:'TEU', baseRate:1400, volatility:0.20, weight:18, icon:'⚗️' },
+  food:          { name:'Food & Agri',     unit:'TEU', baseRate:750,  volatility:0.22, weight:15, icon:'🌾' },
+  oil:           { name:'Crude Oil',       unit:'MT',  baseRate:420,  volatility:0.30, weight:1,  icon:'🛢️' },
+  lng:           { name:'LNG',             unit:'MT',  baseRate:550,  volatility:0.28, weight:1,  icon:'💨' },
+  coal:          { name:'Coal',            unit:'MT',  baseRate:180,  volatility:0.25, weight:1,  icon:'⛏️' },
+  iron_ore:      { name:'Iron Ore',        unit:'MT',  baseRate:120,  volatility:0.22, weight:1,  icon:'🪨' },
+  soybeans:      { name:'Soybeans',        unit:'MT',  baseRate:280,  volatility:0.32, weight:1,  icon:'🫘' },
+  pharmaceuticals:{ name:'Pharma',         unit:'TEU', baseRate:4500, volatility:0.10, weight:5,  icon:'💊' },
+  automobiles:   { name:'Automobiles',     unit:'units',baseRate:1800, volatility:0.12, weight:15, icon:'🚗' },
+  steel:         { name:'Steel',           unit:'MT',  baseRate:280,  volatility:0.20, weight:1,  icon:'🔩' },
+  rubber:        { name:'Rubber',          unit:'MT',  baseRate:320,  volatility:0.24, weight:1,  icon:'⚫' },
+  toys:          { name:'Toys & Games',    unit:'TEU', baseRate:1100, volatility:0.15, weight:10, icon:'🧸' },
+  furniture:     { name:'Furniture',       unit:'TEU', baseRate:900,  volatility:0.13, weight:14, icon:'🪑' },
+  palm_oil:      { name:'Palm Oil',        unit:'MT',  baseRate:290,  volatility:0.26, weight:1,  icon:'🌴' },
+  coal:          { name:'Coal',            unit:'MT',  baseRate:180,  volatility:0.25, weight:1,  icon:'⛏️' },
+  fertilizers:   { name:'Fertilizers',     unit:'MT',  baseRate:350,  volatility:0.20, weight:1,  icon:'🌱' },
+  grain:         { name:'Grain',           unit:'MT',  baseRate:240,  volatility:0.28, weight:1,  icon:'🌾' },
+  lumber:        { name:'Lumber',          unit:'MT',  baseRate:260,  volatility:0.18, weight:1,  icon:'🪵' },
+  potash:        { name:'Potash',          unit:'MT',  baseRate:310,  volatility:0.15, weight:1,  icon:'💜' },
+  manganese:     { name:'Manganese',       unit:'MT',  baseRate:190,  volatility:0.18, weight:1,  icon:'⬛' },
+};
+
+const SHIP_CLASSES = [
+  { id:'feeder',      name:'Feeder',              teu:500,   dwt:8000,   speed:15, fuelMT:28,  crew:15, range:'regional',   cost:18000000,  annualMaint:800000,  hull:'Coastal feeder — fast regional routes, low draft clearance' },
+  { id:'handysize',   name:'Handysize Bulker',     teu:0,     dwt:35000,  speed:14, fuelMT:35,  crew:22, range:'global',     cost:28000000,  annualMaint:1100000, hull:'Dry bulk — coal, grain, iron ore. Self-loading gantry.' },
+  { id:'panamax',     name:'Panamax Container',    teu:4500,  dwt:65000,  speed:16, fuelMT:80,  crew:25, range:'global',     cost:65000000,  annualMaint:2200000, hull:'Max Panamax beam 32.3m — fits Panama Canal locks' },
+  { id:'aframax',     name:'Aframax Tanker',       teu:0,     dwt:110000, speed:13, fuelMT:55,  crew:28, range:'global',     cost:55000000,  annualMaint:1900000, hull:'Oil tanker — Suez fits, size-restricted some ports' },
+  { id:'postpanamax', name:'Post-Panamax',         teu:8500,  dwt:120000, speed:17, fuelMT:140, crew:28, range:'global',     cost:120000000, annualMaint:3500000, hull:'Cannot transit Panama. Ultra-long haul Asia-Europe.' },
+  { id:'vlcc',        name:'VLCC',                 teu:0,     dwt:300000, speed:12, fuelMT:90,  crew:32, range:'global',     cost:90000000,  annualMaint:2800000, hull:'Very Large Crude Carrier — mega oil tanker. Deep draft only.' },
+  { id:'ulcv',        name:'ULCV (Megaship)',       teu:24000, dwt:220000, speed:18, fuelMT:250, crew:30, range:'mega-trade', cost:250000000, annualMaint:7000000, hull:'Ultra Large Container Vessel. Top-5 ports only. Slot machine.' },
+];
+
+const WORLD_EVENTS = [
+  { id:'storm',        name:'Typhoon in S. China Sea',  type:'weather',  region:['SH','HK','BU','TK'],  durationDays:7,  effect:{speedMult:0.5,  lossProbability:0.02},  probability:0.003 },
+  { id:'storm2',       name:'North Atlantic Storm',      type:'weather',  region:['RT','HB','AN','NY'],   durationDays:5,  effect:{speedMult:0.6},                          probability:0.003 },
+  { id:'suez_block',   name:'Suez Canal Blockage',       type:'canal',    region:['suez'],               durationDays:14, effect:{canalClosed:'suez'},                       probability:0.001 },
+  { id:'panama_dry',   name:'Panama Low Water Level',    type:'canal',    region:['panama'],             durationDays:21, effect:{canalClosed:'panama', delayAdd:3},           probability:0.002 },
+  { id:'fuel_spike',   name:'OPEC Supply Cut — Oil +25%',type:'market',  region:['global'],             durationDays:30, effect:{fuelMult:1.25},                            probability:0.004 },
+  { id:'fuel_crash',   name:'Oil Glut — Fuel Prices −20%',type:'market', region:['global'],             durationDays:25, effect:{fuelMult:0.80},                            probability:0.003 },
+  { id:'trade_war',    name:'US–China Trade Tariffs +20%',type:'trade',   region:['SH','HK','LA','NY'],  durationDays:60, effect:{ratesMult:0.85, cargoLoss:['electronics','textiles']}, probability:0.002 },
+  { id:'piracy',       name:'Piracy Alert — Gulf of Aden',type:'piracy', region:['DX','MB','CT'],       durationDays:20, effect:{speedMult:0.9,  insuranceMult:1.5},        probability:0.004 },
+  { id:'port_strike',  name:'Longshoremen Strike — LA',  type:'strike',  region:['LA','NY'],            durationDays:10, effect:{portDelayAdd:5, portClosed:'LA'},           probability:0.003 },
+  { id:'boom',         name:'E-commerce Surge — Rates +15%',type:'boom', region:['global'],             durationDays:45, effect:{ratesMult:1.15},                           probability:0.003 },
+  { id:'recession',    name:'Global Demand Slump −10%',  type:'recession',region:['global'],            durationDays:90, effect:{ratesMult:0.90},                           probability:0.002 },
+  { id:'lng_demand',   name:'EU Gas Crisis — LNG +40%',  type:'market',  region:['RT','HB','AN'],       durationDays:60, effect:{cargoBoost:['lng'],  ratesMult_cargo:1.4},  probability:0.003 },
+  { id:'earthquake',   name:'Port Equipment Damage',      type:'disaster',region:['TK','SH'],            durationDays:15, effect:{portDelayAdd:3},                           probability:0.002 },
+];
+
+const UPGRADE_TREE = {
+  hull: [
+    { id:'hull_1', name:'Anti-fouling Coating', cost:2000000,  effect:'fuelSave8',  prereq:null,          desc:'Reduces hull drag. −8% fuel consumption fleet-wide.' },
+    { id:'hull_2', name:'Bulbous Bow Retrofit',  cost:5000000,  effect:'fuelSave5',  prereq:'hull_1',      desc:'Hydrodynamic bow improvement. Additional −5% fuel.' },
+    { id:'hull_3', name:'Air Lubrication System',cost:12000000, effect:'fuelSave10', prereq:'hull_2',      desc:'Micro-bubble layer reduces friction. −10% fuel.' },
+  ],
+  engine: [
+    { id:'eng_1',  name:'Engine Tuning',          cost:1500000,  effect:'speed1',     prereq:null,          desc:'+1 knot all ships. Optimized fuel injection.' },
+    { id:'eng_2',  name:'Waste Heat Recovery',    cost:4000000,  effect:'fuelSave6',  prereq:'eng_1',       desc:'Recaptures exhaust heat. −6% fuel, +3% speed.' },
+    { id:'eng_3',  name:'LNG Dual-Fuel',           cost:18000000, effect:'fuelSwitch', prereq:'eng_2',       desc:'Switch to LNG fuel. 30% lower fuel cost per voyage.' },
+  ],
+  ops: [
+    { id:'ops_1',  name:'Port Priority Slots',    cost:3000000,  effect:'portFee20',  prereq:null,          desc:'Long-term port agreements. −20% port fees globally.' },
+    { id:'ops_2',  name:'AI Route Optimizer',      cost:6000000,  effect:'routeOpt15', prereq:'ops_1',       desc:'Dynamic routing engine. +15% route efficiency.' },
+    { id:'ops_3',  name:'Digital Twin Fleet',      cost:15000000, effect:'maintSave25',prereq:'ops_2',       desc:'Predictive maintenance AI. −25% maintenance costs.' },
+  ],
+  cargo: [
+    { id:'crg_1',  name:'Reefer Containers',       cost:4000000,  effect:'addReefer',  prereq:null,          desc:'Refrigerated containers. Unlock pharma/food premium.' },
+    { id:'crg_2',  name:'Hazmat Certification',    cost:2500000,  effect:'addHazmat',  prereq:null,          desc:'Certified for chemicals, fertilizers. +12% margins.' },
+    { id:'crg_3',  name:'Tank Container Fleet',    cost:8000000,  effect:'addTanker',  prereq:'crg_2',       desc:'ISO tank containers for bulk liquids. New cargo types.' },
+  ],
+};
+
+// ── GAME STATE ──────────────────────────────────────────────────
+
+let state = {
+  cash: 50000000,
+  day: 1,
+  year: 1,
+  paused: false,
+  speed: 1,
+  tick: 0,
+  totalRevenue: 0,
+  totalCosts: 0,
+  rev30: [],      // rolling 30-day revenue
+  revHistory: [], // 90-day chart
+  freightHistory:[],
+  activeEvents: [],
+  fuelPrice: 650,  // $/MT
+  bimcoIndex: 1420,
+  globalRatesMult: 1.0,
+  fuelMult: 1.0,
+  fuelMode: 'hfo', // 'hfo' | 'lng'
+  portFeeDiscount: 0,
+  routeEfficiencyBonus: 0,
+  unlockedCargo: ['electronics','textiles','machinery','chemicals','food','coal','iron_ore','soybeans','grain','lumber'],
+  appliedUpgrades: [],
+  contracts: [],
+  notifications: [],
+  selectedEntity: null, // { type:'ship'|'port', id }
+  leftTab: 'fleet',
+  rightTab: 'intel',
+  ships: [],
+  routes: [], // active route assignments
+  portOwned: [],  // port investments
+  cargoHistory: [],
+  mapZoom: 1,
+  mapPanX: 0,
+  mapPanY: 0,
+};
+
+// Starting fleet
+state.ships = [
+  { id:'s1', name:'Pacific Meridian', classId:'feeder',   portId:'SH', status:'idle', cargo:[], route:null, progress:0, fuelLevel:1, hullCondition:1, crewMorale:0.9, daysAtSea:0, totalRevenue:0, insurance:true, flagState:'Panama', imo:'IMO9234567' },
+  { id:'s2', name:'Euro Atlantic',    classId:'panamax',  portId:'RT', status:'idle', cargo:[], route:null, progress:0, fuelLevel:1, hullCondition:1, crewMorale:0.9, daysAtSea:0, totalRevenue:0, insurance:true, flagState:'Marshall Islands', imo:'IMO9345678' },
+  { id:'s3', name:'Gulf Sovereign',   classId:'aframax',  portId:'DX', status:'idle', cargo:[], route:null, progress:0, fuelLevel:1, hullCondition:0.95, crewMorale:0.85, daysAtSea:0, totalRevenue:0, insurance:true, flagState:'Liberia', imo:'IMO9456789' },
+];
+
+// ── PRICES / MARKET ─────────────────────────────────────────────
+
+let cargoRates = {};
+function initRates() {
+  Object.keys(CARGO_TYPES).forEach(k => {
+    cargoRates[k] = CARGO_TYPES[k].baseRate * (0.85 + Math.random() * 0.3);
+  });
+}
+initRates();
+
+function fluctuateRates() {
+  Object.keys(CARGO_TYPES).forEach(k => {
+    const v = CARGO_TYPES[k].volatility;
+    const drift = (Math.random() - 0.49) * v * 0.5;
+    cargoRates[k] *= (1 + drift);
+    const base = CARGO_TYPES[k].baseRate;
+    cargoRates[k] = Math.max(base * 0.4, Math.min(base * 2.8, cargoRates[k]));
+    cargoRates[k] *= state.globalRatesMult;
+  });
+  // Fuel price
+  state.fuelPrice *= (1 + (Math.random() - 0.49) * 0.04);
+  state.fuelPrice = Math.max(350, Math.min(1200, state.fuelPrice));
+  state.fuelPrice *= state.fuelMult;
+  // BIMCO index
+  state.bimcoIndex *= (1 + (Math.random() - 0.49) * 0.02);
+  state.bimcoIndex = Math.max(800, Math.min(2500, state.bimcoIndex));
+}
+
+// ── CONTRACT GENERATION ─────────────────────────────────────────
+
+let contractIdCounter = 1;
+function generateContracts() {
+  const max = 12;
+  const open = state.contracts.filter(c => c.status === 'open');
+  if (open.length >= max) return;
+  const count = Math.floor(Math.random() * 3) + 1;
+  for (let i = 0; i < count; i++) {
+    const fromPort = PORTS[Math.floor(Math.random() * PORTS.length)];
+    const candidates = PORTS.filter(p => p.id !== fromPort.id);
+    const toPort = candidates[Math.floor(Math.random() * candidates.length)];
+    const supplyKeys = Object.keys(fromPort.supply || {});
+    if (!supplyKeys.length) continue;
+    const cargo = supplyKeys[Math.floor(Math.random() * supplyKeys.length)];
+    if (!state.unlockedCargo.includes(cargo)) continue;
+    const shipClass = SHIP_CLASSES[Math.floor(Math.random() * SHIP_CLASSES.length)];
+    const qty = Math.floor(Math.random() * 800 + 200);
+    const d = portDist(fromPort, toPort);
+    const baseRate = cargoRates[cargo] || CARGO_TYPES[cargo]?.baseRate || 500;
+    const value = Math.round(qty * baseRate * (0.9 + Math.random() * 0.4) * (d / 400) * 0.15);
+    const urgency = ['standard', 'urgent', 'priority'][Math.floor(Math.random() * 3)];
+    const bonusMult = urgency === 'urgent' ? 1.2 : urgency === 'priority' ? 1.45 : 1.0;
+    const deadline = state.day + Math.floor(d / 10) + 20 + Math.floor(Math.random() * 30);
+    state.contracts.push({
+      id: 'C' + (contractIdCounter++),
+      from: fromPort.id, to: toPort.id,
+      cargo, qty, value: Math.round(value * bonusMult),
+      deadline, urgency, status: 'open',
+      penalty: Math.round(value * 0.15),
+      requiredClass: null,
+      createdDay: state.day,
+    });
+  }
+}
+
+// ── ROUTE / SHIP ENGINE ─────────────────────────────────────────
+
+function portById(id) { return PORTS.find(p => p.id === id); }
+function shipById(id)  { return state.ships.find(s => s.id === id); }
+function shipClass(id) { return SHIP_CLASSES.find(c => c.id === id); }
+
+function portDist(a, b) {
+  const dx = a.x - b.x, dy = a.y - b.y;
+  return Math.round(Math.sqrt(dx*dx + dy*dy) * 12);
+}
+
+function nauticalDaysForRoute(fromId, toId, sc) {
+  const from = portById(fromId), to = portById(toId);
+  const dist = portDist(from, to);
+  const speedKnots = sc.speed + (state.routeEfficiencyBonus || 0);
+  const daysBase = dist / (speedKnots * 24);
+  return Math.round(daysBase * 10) / 10;
+}
+
+function calcFuelCost(days, sc) {
+  const fuelRate = state.fuelMode === 'lng' ? state.fuelPrice * 0.7 : state.fuelPrice;
+  const fuelMult = state.appliedUpgrades.reduce((m, u) => {
+    if (u.effect === 'fuelSave8') return m * 0.92;
+    if (u.effect === 'fuelSave5') return m * 0.95;
+    if (u.effect === 'fuelSave10') return m * 0.90;
+    if (u.effect === 'fuelSave6') return m * 0.94;
+    return m;
+  }, 1);
+  return Math.round(days * sc.fuelMT * fuelRate * fuelMult);
+}
+
+function calcPortFee(portId, sc) {
+  const port = portById(portId);
+  const discount = state.portFeeDiscount || 0;
+  const cong = port.congestion || 0.5;
+  return Math.round(port.portFee * (1 + cong * 0.3) * (1 - discount));
+}
+
+function routeProfit(fromId, toId, cargoType, qty, sc) {
+  const from = portById(fromId), to = portById(toId);
+  const days = nauticalDaysForRoute(fromId, toId, sc);
+  const fuelCost = calcFuelCost(days, sc);
+  const portFees = calcPortFee(fromId, sc) + calcPortFee(toId, sc);
+  const crewCost = Math.round(days * sc.crew * 380);
+  const rate = cargoRates[cargoType] || CARGO_TYPES[cargoType]?.baseRate || 500;
+  const revenue = Math.round(qty * rate * (portDist(from,to)/400) * 0.15);
+  const totalCost = fuelCost + portFees + crewCost;
+  return { revenue, fuelCost, portFees, crewCost, totalCost, profit: revenue - totalCost, days, dist: portDist(from,to) };
+}
+
+// ── TICK ENGINE ─────────────────────────────────────────────────
+
+function tickGame() {
+  if (state.paused) return;
+  state.tick++;
+  // Every 10 ticks = 1 game day
+  const ticksPerDay = 10;
+  if (state.tick % ticksPerDay === 0) {
+    state.day++;
+    if (state.day > 365) { state.day = 1; state.year++; }
+    onDayTick();
+  }
+  // Every tick: move ships
+  tickShips();
+  // Update UI
+  updateTopbar();
+  drawMap();
+}
+
+function onDayTick() {
+  // Revenue tracking
+  const todayRev = state.rev30.length ? state.rev30[state.rev30.length - 1] || 0 : 0;
+  state.revHistory.push({ day: state.day, year: state.year, val: state.totalRevenue });
+  if (state.revHistory.length > 90) state.revHistory.shift();
+  state.freightHistory.push(Math.round(state.bimcoIndex));
+  if (state.freightHistory.length > 90) state.freightHistory.shift();
+
+  // Daily costs: maintenance, crew at port
+  state.ships.forEach(s => {
+    const sc = shipClass(s.classId);
+    const dailyMaint = sc.annualMaint / 365;
+    state.cash -= dailyMaint;
+    state.totalCosts += dailyMaint;
+    // Degrade hull slowly
+    if (s.status === 'sailing') {
+      s.hullCondition = Math.max(0.5, s.hullCondition - 0.0002);
+      s.daysAtSea++;
+    }
+    // Crew morale
+    if (s.daysAtSea > 120) s.crewMorale = Math.max(0.5, s.crewMorale - 0.002);
+  });
+
+  // Fluctuate markets every 3 days
+  if (state.day % 3 === 0) fluctuateRates();
+  // Contracts every 5 days
+  if (state.day % 5 === 0) generateContracts();
+  // Remove expired contracts
+  state.contracts.forEach(c => {
+    if (c.status === 'open' && c.deadline <= state.day) {
+      c.status = 'expired';
+      addEvent(`Contract expired: ${portById(c.from)?.name} → ${portById(c.to)?.name}`, 'warn');
+    }
+  });
+  state.contracts = state.contracts.filter(c => c.status !== 'expired' || state.day - c.deadline < 5);
+
+  // World events
+  trySpawnEvent();
+  tickActiveEvents();
+
+  // Port congestion drift
+  PORTS.forEach(p => {
+    p.congestion = Math.max(0.1, Math.min(0.95, p.congestion + (Math.random() - 0.5) * 0.02));
+  });
+
+  // Check bankruptcy
+  if (state.cash < -10000000 && state.ships.length === 0) {
+    toast('💀 BANKRUPT — Your shipping empire has collapsed.', 'danger');
+  }
+
+  // Revenue rolling window
+  state.rev30.push(0);
+  if (state.rev30.length > 30) state.rev30.shift();
+}
+
+function tickShips() {
+  const ticksPerDay = 10;
+  state.ships.forEach(ship => {
+    if (ship.status !== 'sailing' || !ship.route) return;
+    const sc = shipClass(ship.classId);
+    const from = portById(ship.route.from), to = portById(ship.route.to);
+    const totalDays = nauticalDaysForRoute(ship.route.from, ship.route.to, sc);
+    // Speed affected by weather events
+    let speedMult = 1;
+    state.activeEvents.forEach(ev => {
+      if (ev.effect.speedMult && (ev.region.includes(ship.route.to) || ev.region.includes(ship.route.from))) {
+        speedMult = Math.min(speedMult, ev.effect.speedMult);
+      }
+    });
+    const progressPerTick = speedMult / (totalDays * ticksPerDay);
+    ship.progress = Math.min(1, ship.progress + progressPerTick);
+
+    if (ship.progress >= 1) {
+      // Arrived!
+      arriveShip(ship);
+    }
+  });
+}
+
+function arriveShip(ship) {
+  const route = ship.route;
+  const sc = shipClass(ship.classId);
+  const days = nauticalDaysForRoute(route.from, route.to, sc);
+  const portFee = calcPortFee(route.to, sc);
+  const fuelCost = calcFuelCost(days, sc);
+
+  state.cash -= portFee;
+  state.totalCosts += portFee;
+  state.cash -= fuelCost;
+  state.totalCosts += fuelCost;
+
+  let revenue = 0;
+  ship.cargo.forEach(cargo => {
+    const earned = cargo.contractValue || cargo.marketValue || 0;
+    revenue += earned;
+    state.cash += earned;
+    state.totalRevenue += earned;
+    if (state.rev30.length) state.rev30[state.rev30.length - 1] += earned;
+    ship.totalRevenue += earned;
+    addEvent(`<b>${ship.name}</b> delivered ${cargo.qty} ${cargo.unit || 'units'} of <b>${CARGO_TYPES[cargo.type]?.name || cargo.type}</b> to ${portById(route.to)?.name} — <b style="color:#00ff9d">+$${fmtN(earned)}</b>`, 'success');
+  });
+
+  // Complete any contracts
+  state.contracts.forEach(c => {
+    if (c.status === 'assigned' && c.assignedShip === ship.id) {
+      c.status = 'completed';
+      addEvent(`Contract fulfilled: ${portById(c.from)?.name} → ${portById(c.to)?.name}`, 'info');
+    }
+  });
+
+  ship.status = 'docked';
+  ship.portId = route.to;
+  ship.route = null;
+  ship.progress = 0;
+  ship.cargo = [];
+  ship.fuelLevel = 1;
+  ship.daysAtSea = 0;
+
+  toast(`${ship.name} arrived at ${portById(route.to)?.name}. Revenue: $${fmtN(revenue)}`, revenue > 0 ? 'success' : 'warn');
+}
+
+// ── WORLD EVENTS ─────────────────────────────────────────────────
+
+function trySpawnEvent() {
+  WORLD_EVENTS.forEach(evDef => {
+    if (Math.random() < evDef.probability) {
+      const alreadyActive = state.activeEvents.find(e => e.id === evDef.id);
+      if (!alreadyActive) {
+        const ev = { ...evDef, startDay: state.day, endDay: state.day + evDef.durationDays };
+        state.activeEvents.push(ev);
+        applyEventEffect(ev, true);
+        addEvent(`🚨 <b>EVENT:</b> ${ev.name}`, 'danger');
+        toast(`⚠️ ${ev.name}`, 'warn');
+      }
+    }
+  });
+}
+
+function tickActiveEvents() {
+  state.activeEvents = state.activeEvents.filter(ev => {
+    if (ev.endDay <= state.day) {
+      applyEventEffect(ev, false);
+      addEvent(`✅ Event resolved: <b>${ev.name}</b>`, 'info');
+      return false;
+    }
+    return true;
+  });
+}
+
+function applyEventEffect(ev, apply) {
+  const m = apply ? 1 : -1;
+  if (ev.effect.fuelMult) state.fuelMult = apply ? ev.effect.fuelMult : 1.0;
+  if (ev.effect.ratesMult) state.globalRatesMult = apply ? ev.effect.ratesMult : 1.0;
+}
+
+// ── SHIP ACTIONS ─────────────────────────────────────────────────
+
+function dispatchShip(shipId, toPortId, cargoArr, contractId) {
+  const ship = shipById(shipId);
+  if (!ship) return;
+  if (ship.status === 'sailing') { toast('Ship is already at sea.', 'warn'); return; }
+  ship.route = { from: ship.portId, to: toPortId };
+  ship.progress = 0;
+  ship.status = 'sailing';
+  ship.cargo = cargoArr || [];
+  if (contractId) {
+    const c = state.contracts.find(x => x.id === contractId);
+    if (c) { c.status = 'assigned'; c.assignedShip = shipId; }
+  }
+  const sc = shipClass(ship.classId);
+  const days = nauticalDaysForRoute(ship.portId, toPortId, sc);
+  addEvent(`<b>${ship.name}</b> departed <b>${portById(ship.portId)?.name}</b> → <b>${portById(toPortId)?.name}</b> (ETA ${Math.ceil(days)} days)`, 'info');
+  toast(`${ship.name} departed — ETA ${Math.ceil(days)} days`, 'info');
+  ship.portId = toPortId; // will be "heading to"
+  closeModal();
+  renderAll();
+}
+
+function sellShip(shipId) {
+  const ship = shipById(shipId);
+  if (!ship) return;
+  if (ship.status === 'sailing') { toast('Cannot sell a ship at sea.', 'warn'); return; }
+  const sc = shipClass(ship.classId);
+  const ageDiscount = Math.max(0.4, 1 - ship.daysAtSea / 18000);
+  const salePrice = Math.round(sc.cost * ageDiscount * 0.65);
+  state.cash += salePrice;
+  state.ships = state.ships.filter(s => s.id !== ship.id);
+  addEvent(`Sold <b>${ship.name}</b> for <b>$${fmtN(salePrice)}</b>`, 'info');
+  toast(`Sold ${ship.name} for $${fmtN(salePrice)}`, 'success');
+  closeModal();
+  renderAll();
+}
+
+function buyShip(classId, portId, name) {
+  const sc = SHIP_CLASSES.find(c => c.id === classId);
+  if (!sc) return;
+  if (state.cash < sc.cost) { toast('Insufficient funds.', 'danger'); return; }
+  state.cash -= sc.cost;
+  const id = 'S' + Date.now();
+  state.ships.push({
+    id, name: name || sc.name + ' ' + (state.ships.length + 1),
+    classId, portId: portId || 'RT',
+    status: 'idle', cargo: [], route: null, progress: 0,
+    fuelLevel: 1, hullCondition: 1, crewMorale: 1.0,
+    daysAtSea: 0, totalRevenue: 0, insurance: true,
+    flagState: 'Panama', imo: 'IMO' + Math.floor(Math.random() * 9000000 + 1000000),
+  });
+  addEvent(`<b>Fleet expansion:</b> ${name || sc.name} acquired at ${portById(portId)?.name || portId}`, 'success');
+  toast(`${name || sc.name} added to fleet!`, 'success');
+  closeModal();
+  renderAll();
+}
+
+// ── UPGRADES ────────────────────────────────────────────────────
+
+function purchaseUpgrade(upgradeId) {
+  for (const cat of Object.values(UPGRADE_TREE)) {
+    const u = cat.find(x => x.id === upgradeId);
+    if (u) {
+      if (state.cash < u.cost) { toast('Insufficient funds.', 'danger'); return; }
+      if (state.appliedUpgrades.find(x => x.id === upgradeId)) { toast('Already applied.', 'warn'); return; }
+      state.cash -= u.cost;
+      state.appliedUpgrades.push(u);
+      applyUpgradeEffect(u);
+      addEvent(`Upgrade applied: <b>${u.name}</b>`, 'success');
+      toast(`${u.name} activated!`, 'success');
+      renderAll();
+      return;
+    }
+  }
+}
+
+function applyUpgradeEffect(u) {
+  if (u.effect === 'portFee20') state.portFeeDiscount = 0.20;
+  if (u.effect === 'routeOpt15') state.routeEfficiencyBonus = 1.5;
+  if (u.effect === 'fuelSwitch') state.fuelMode = 'lng';
+  if (u.effect === 'addReefer') { if (!state.unlockedCargo.includes('pharmaceuticals')) state.unlockedCargo.push('pharmaceuticals'); }
+  if (u.effect === 'addHazmat') { ['fertilizers'].forEach(c => { if (!state.unlockedCargo.includes(c)) state.unlockedCargo.push(c); }); }
+  if (u.effect === 'addTanker') { ['palm_oil','lng'].forEach(c => { if (!state.unlockedCargo.includes(c)) state.unlockedCargo.push(c); }); }
+}
+
+// ── UI RENDERING ─────────────────────────────────────────────────
+
+function fmt(n)  { return '$' + fmtN(n); }
+function fmtN(n) { return Math.round(n).toLocaleString(); }
+function fmtK(n) { return n >= 1e6 ? '$' + (n/1e6).toFixed(1) + 'M' : n >= 1e3 ? '$' + (n/1e3).toFixed(0) + 'K' : '$' + Math.round(n); }
+
+function updateTopbar() {
+  const rev30total = state.revHistory.slice(-30).reduce((a,v) => a + (v.val || 0), 0);
+  const cost30 = state.totalCosts;
+  const netWorth = state.cash + state.ships.reduce((a, s) => {
+    const sc = shipClass(s.classId);
+    return a + (sc ? sc.cost * 0.6 : 0);
+  }, 0);
+  const ebitda30 = state.rev30.reduce((a,b)=>a+b,0) - (cost30 / Math.max(1, state.day) * 30);
+
+  document.getElementById('stat-cash').textContent = fmtK(state.cash);
+  document.getElementById('stat-cash').className = 'val ' + (state.cash > 0 ? 'accent' : 'neg');
+  document.getElementById('stat-networth').textContent = fmtK(netWorth);
+  document.getElementById('stat-networth').className = 'val ' + (netWorth > 50000000 ? 'pos' : 'neg');
+  document.getElementById('stat-rev').textContent = fmtK(state.rev30.reduce((a,b)=>a+b,0));
+  document.getElementById('stat-ebitda').textContent = fmtK(ebitda30);
+  document.getElementById('stat-ebitda').className = 'val ' + (ebitda30 >= 0 ? 'pos' : 'neg');
+  document.getElementById('stat-fleet').textContent = state.ships.length + ' ships';
+  document.getElementById('stat-routes').textContent = state.ships.filter(s=>s.status==='sailing').length + ' active';
+  document.getElementById('stat-market').textContent = 'BIMCO ' + Math.round(state.bimcoIndex);
+  document.getElementById('stat-fuel').textContent = '$' + Math.round(state.fuelPrice) + '/MT';
+  document.getElementById('day-badge').textContent = `Day ${state.day}, Year ${state.year}`;
+}
+
+// ── LEFT PANEL RENDERS ───────────────────────────────────────────
+
+const _leftTab = (name) => {
+  state.leftTab = name;
+  document.querySelectorAll('.ptab[id^="ltab"]').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById('ltab-' + name);
+  if (el) el.classList.add('active');
+  renderLeftPanel();
+};
+
+function renderLeftPanel() {
+  const body = document.getElementById('left-body');
+  if (!body) return;
+  if (state.leftTab === 'fleet') body.innerHTML = renderFleetPanel();
+  else if (state.leftTab === 'routes') body.innerHTML = renderRoutesPanel();
+  else if (state.leftTab === 'contracts') body.innerHTML = renderContractsPanel();
+  else if (state.leftTab === 'port') body.innerHTML = renderPortPanel();
+  bindLeftPanelEvents();
+}
+
+function renderFleetPanel() {
+  let h = `<div class="sec-head">Your Fleet <span>${state.ships.length} vessels</span></div>`;
+  if (!state.ships.length) return h + `<div style="color:var(--text-muted);font-size:11px;text-align:center;padding:20px">No ships. Buy from the Market tab.</div>`;
+  state.ships.forEach(s => {
+    const sc = shipClass(s.classId);
+    if (!sc) return;
+    const statusBadge = s.status === 'sailing' ? '<span class="badge badge-green">⛵ SAILING</span>' :
+                        s.status === 'docked'  ? '<span class="badge badge-blue">🔵 DOCKED</span>' :
+                                                  '<span class="badge badge-gray">⬛ IDLE</span>';
+    const hullPct = Math.round(s.hullCondition * 100);
+    const hullColor = hullPct > 75 ? 'fill-green' : hullPct > 50 ? 'fill-yellow' : 'fill-red';
+    const portName = portById(s.portId)?.name || s.portId;
+    const eta = (s.status === 'sailing' && s.route) ? (() => {
+      const days = nauticalDaysForRoute(s.route.from, s.route.to, sc);
+      return `ETA ${Math.ceil(days * (1 - s.progress))}d`;
+    })() : '';
+    const isSelected = state.selectedEntity?.type === 'ship' && state.selectedEntity?.id === s.id;
+    h += `<div class="card ${isSelected ? 'selected' : ''}" data-ship="${s.id}" onclick="G.selectShip('${s.id}')">
+      <div class="card-title">${s.name} ${statusBadge}</div>
+      <div class="card-sub">${sc.name} · ${sc.teu ? sc.teu + ' TEU' : sc.dwt.toLocaleString() + ' DWT'} · ${s.flagState}</div>
+      <div class="card-row"><span>Location</span><b>${portName} ${eta}</b></div>
+      <div class="card-row"><span>Hull</span><b>${hullPct}%</b></div>
+      <div class="progress-wrap"><div class="progress-fill ${hullColor}" style="width:${hullPct}%"></div></div>
+      <div class="card-row"><span>Morale</span><b>${Math.round(s.crewMorale*100)}%</b></div>
+      <div class="card-row"><span>Earned</span><b class="mono">${fmtK(s.totalRevenue)}</b></div>
+      ${s.status === 'sailing' && s.route ? `<div class="card-row"><span>Route</span><b>${portById(s.route?.from)?.name?.split(' ')[0] || '?'} → ${portById(s.portId)?.name?.split(' ')[0] || '?'}</b></div>
+      <div class="progress-wrap"><div class="progress-fill fill-blue" style="width:${Math.round(s.progress*100)}%"></div></div>` : ''}
+      <div class="btn-row">
+        ${s.status !== 'sailing' ? `<button class="btn btn-primary btn-dispatch" data-ship="${s.id}">Dispatch</button>` : ''}
+        ${s.status !== 'sailing' ? `<button class="btn btn-ghost btn-sell" data-ship="${s.id}">Sell Ship</button>` : ''}
+        ${s.status === 'sailing' ? `<button class="btn btn-warn btn-recall" data-ship="${s.id}">Details</button>` : ''}
+      </div>
+    </div>`;
+  });
+  return h;
+}
+
+function renderRoutesPanel() {
+  let h = `<div class="sec-head">Active Voyages <span>${state.ships.filter(s=>s.status==='sailing').length}</span></div>`;
+  const sailing = state.ships.filter(s => s.status === 'sailing');
+  if (!sailing.length) return h + `<div style="color:var(--text-muted);font-size:11px;padding:10px">No ships at sea. Dispatch from Fleet tab.</div>`;
+  sailing.forEach(s => {
+    const sc = shipClass(s.classId);
+    const totalDays = nauticalDaysForRoute(s.route.from, s.route.to, sc);
+    const remainDays = Math.ceil(totalDays * (1 - s.progress));
+    const progressPct = Math.round(s.progress * 100);
+    const cargo = s.cargo.map(c => `${c.qty} ${CARGO_TYPES[c.type]?.unit||''} ${CARGO_TYPES[c.type]?.name||c.type}`).join(', ');
+    h += `<div class="card success-card">
+      <div class="card-title">${s.name}</div>
+      <div class="card-sub">${portById(s.route.from)?.name} → ${portById(s.portId)?.name}</div>
+      <div class="card-row"><span>Progress</span><b>${progressPct}%</b></div>
+      <div class="progress-wrap"><div class="progress-fill fill-green" style="width:${progressPct}%"></div></div>
+      <div class="card-row"><span>ETA</span><b>${remainDays} days</b></div>
+      <div class="card-row"><span>Cargo</span><b>${cargo || 'Ballast'}</b></div>
+      <div class="card-row"><span>Expected Revenue</span><b class="mono" style="color:var(--accent2)">${fmtK(s.cargo.reduce((a,c)=>a+(c.contractValue||c.marketValue||0),0))}</b></div>
+    </div>`;
+  });
+  return h;
+}
+
+function renderContractsPanel() {
+  const open = state.contracts.filter(c => c.status === 'open');
+  const assigned = state.contracts.filter(c => c.status === 'assigned');
+  let h = `<div class="sec-head">Open Contracts <span>${open.length}</span></div>`;
+  if (!open.length) h += `<div style="color:var(--text-muted);font-size:11px;padding:4px 0 10px">No open contracts. Check back soon.</div>`;
+  open.sort((a,b) => a.deadline - b.deadline).forEach(c => {
+    const daysLeft = c.deadline - state.day;
+    const urgClass = daysLeft < 10 ? 'danger-card' : daysLeft < 25 ? 'warn-card' : '';
+    const urgBadge = c.urgency === 'priority' ? '<span class="badge badge-orange">PRIORITY</span>' :
+                     c.urgency === 'urgent'   ? '<span class="badge badge-yellow">URGENT</span>' :
+                                                 '<span class="badge badge-gray">STANDARD</span>';
+    const ct = CARGO_TYPES[c.cargo];
+    h += `<div class="card ${urgClass}">
+      <div class="card-title">${portById(c.from)?.name?.split(' ')[0]} → ${portById(c.to)?.name?.split(' ')[0]} ${urgBadge}</div>
+      <div class="card-sub">${ct?.icon||''} ${ct?.name||c.cargo} · ${c.qty} ${ct?.unit||'units'}</div>
+      <div class="card-row"><span>Value</span><b class="mono" style="color:var(--accent2)">${fmt(c.value)}</b></div>
+      <div class="card-row"><span>Penalty</span><b class="mono" style="color:var(--danger)">${fmt(c.penalty)}</b></div>
+      <div class="card-row"><span>Deadline</span><b>${daysLeft}d remaining</b></div>
+      <div class="btn-row"><button class="btn btn-success btn-contract" data-cid="${c.id}">Accept Contract</button></div>
+    </div>`;
+  });
+  if (assigned.length) {
+    h += `<div class="sec-head" style="margin-top:8px">In Transit <span>${assigned.length}</span></div>`;
+    assigned.forEach(c => {
+      const ship = state.ships.find(s => s.id === c.assignedShip);
+      h += `<div class="card">
+        <div class="card-title">${portById(c.from)?.name?.split(' ')[0]} → ${portById(c.to)?.name?.split(' ')[0]}</div>
+        <div class="card-sub">On ${ship?.name || 'Unknown'}</div>
+        <div class="card-row"><span>Value</span><b>${fmt(c.value)}</b></div>
+      </div>`;
+    });
+  }
+  return h;
+}
+
+function renderPortPanel() {
+  let h = `<div class="sec-head">World Ports <span>${PORTS.length}</span></div>`;
+  PORTS.forEach(p => {
+    const congPct = Math.round(p.congestion * 100);
+    const congColor = congPct > 70 ? 'fill-red' : congPct > 45 ? 'fill-yellow' : 'fill-green';
+    const myShips = state.ships.filter(s => s.portId === p.id && s.status !== 'sailing').length;
+    h += `<div class="card" onclick="G.selectPort('${p.id}')" style="cursor:pointer">
+      <div class="card-title">${p.name} <span class="badge badge-gray">${p.region}</span></div>
+      <div class="card-sub">${p.country} · ${p.throughput.toLocaleString()} TEU/yr</div>
+      <div class="card-row"><span>Congestion</span><b>${congPct}%</b></div>
+      <div class="progress-wrap"><div class="progress-fill ${congColor}" style="width:${congPct}%"></div></div>
+      <div class="card-row"><span>Port Fee</span><b>${fmtK(calcPortFee(p.id, {fuelMT:80}))}</b></div>
+      <div class="card-row"><span>My Ships</span><b>${myShips}</b></div>
+    </div>`;
+  });
+  return h;
+}
+
+// ── RIGHT PANEL RENDERS ─────────────────────────────────────────
+
+const _rightTab = (name) => {
+  state.rightTab = name;
+  document.querySelectorAll('.ptab[id^="rtab"]').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById('rtab-' + name);
+  if (el) el.classList.add('active');
+  renderRightPanel();
+};
+
+function renderRightPanel() {
+  const body = document.getElementById('right-body');
+  if (!body) return;
+  if (state.rightTab === 'intel') body.innerHTML = renderIntelPanel();
+  else if (state.rightTab === 'market') body.innerHTML = renderMarketPanel();
+  else if (state.rightTab === 'finance') body.innerHTML = renderFinancePanel();
+  else if (state.rightTab === 'buy') body.innerHTML = renderBuyPanel();
+  bindRightPanelEvents();
+}
+
+function renderIntelPanel() {
+  let h = `<div class="sec-head">Active World Events <span>${state.activeEvents.length}</span></div>`;
+  if (!state.activeEvents.length) {
+    h += `<div style="color:var(--text-muted);font-size:11px;padding:4px">No active disruptions. Markets calm.</div>`;
+  } else {
+    state.activeEvents.forEach(ev => {
+      const daysLeft = ev.endDay - state.day;
+      const typeColor = ev.type === 'weather' ? 'badge-blue' : ev.type === 'market' ? 'badge-yellow' : ev.type === 'piracy' ? 'badge-red' : 'badge-orange';
+      h += `<div class="card danger-card">
+        <div class="card-title">${ev.name} <span class="badge ${typeColor}">${ev.type}</span></div>
+        <div class="card-row"><span>Ends in</span><b>${daysLeft} days</b></div>
+        <div class="card-row"><span>Affects</span><b>${ev.region.map(r => portById(r)?.name || r).join(', ')}</b></div>
+      </div>`;
+    });
+  }
+  h += `<div class="sec-head" style="margin-top:8px">Canal Status</div>`;
+  CANALS.forEach(cn => {
+    const blocked = state.activeEvents.some(ev => ev.effect?.canalClosed === cn.id);
+    h += `<div class="card ${blocked ? 'danger-card' : ''}">
+      <div class="card-title">${cn.name} <span class="badge ${blocked ? 'badge-red' : 'badge-green'}">${blocked ? 'CLOSED' : 'OPEN'}</span></div>
+      <div class="card-row"><span>Toll</span><b>$${cn.toll_per_teu}/TEU</b></div>
+      <div class="card-row"><span>Avg delay</span><b>${cn.delay} days</b></div>
+      <div class="card-row"><span>Piracy risk</span><b>${Math.round(cn.risk*100)}%</b></div>
+    </div>`;
+  });
+  h += `<div class="sec-head" style="margin-top:8px">Market Conditions</div>`;
+  h += `<div class="card"><div class="card-row"><span>Fuel Price</span><b>$${Math.round(state.fuelPrice)}/MT ${state.fuelMode==='lng'?'🟢 LNG':''}</b></div>
+    <div class="card-row"><span>BIMCO Index</span><b>${Math.round(state.bimcoIndex)}</b></div>
+    <div class="card-row"><span>Rate Mult</span><b>${(state.globalRatesMult*100).toFixed(0)}%</b></div></div>`;
+  return h;
+}
+
+function renderMarketPanel() {
+  let h = `<div class="sec-head">Cargo Freight Rates <span>Live</span></div>`;
+  const keys = state.unlockedCargo.filter(k => CARGO_TYPES[k]);
+  keys.forEach(k => {
+    const ct = CARGO_TYPES[k];
+    const cur = cargoRates[k] || ct.baseRate;
+    const base = ct.baseRate;
+    const delta = ((cur - base) / base * 100).toFixed(1);
+    const isUp = cur >= base;
+    h += `<div class="card-row" style="padding:4px 0;border-bottom:1px solid var(--panel-border)">
+      <span style="font-size:11px">${ct.icon} ${ct.name}</span>
+      <span style="font-family:var(--font-data);font-size:11px;color:${isUp?'var(--accent2)':'var(--danger)'}">${isUp?'▲':'▼'} $${Math.round(cur)}/${ct.unit} <span style="font-size:9px;color:var(--text-muted)">(${isUp?'+':''}${delta}%)</span></span>
+    </div>`;
+  });
+  const locked = Object.keys(CARGO_TYPES).filter(k => !state.unlockedCargo.includes(k));
+  if (locked.length) {
+    h += `<div class="sec-head" style="margin-top:8px">Locked (Upgrade Required)</div>`;
+    locked.forEach(k => {
+      const ct = CARGO_TYPES[k];
+      h += `<div class="card-row" style="padding:4px 0;opacity:0.35">
+        <span style="font-size:11px">🔒 ${ct.name}</span>
+        <span style="font-size:10px;color:var(--text-muted)">Upgrade needed</span>
+      </div>`;
+    });
+  }
+  return h;
+}
+
+function renderFinancePanel() {
+  const profit = state.totalRevenue - state.totalCosts;
+  const margin = state.totalRevenue > 0 ? (profit/state.totalRevenue*100).toFixed(1) : '0.0';
+  const rev30 = state.rev30.reduce((a,b)=>a+b,0);
+  const netWorth = state.cash + state.ships.reduce((a,s) => {
+    const sc = shipClass(s.classId);
+    return a + (sc ? sc.cost * 0.6 : 0);
+  }, 0);
+  let h = `<div class="sec-head">P&L Statement</div>
+  <div class="card">
+    <div class="card-row"><span>Cash on Hand</span><b class="mono" style="color:var(--accent)">${fmtK(state.cash)}</b></div>
+    <div class="card-row"><span>Fleet Book Value</span><b class="mono">${fmtK(netWorth - state.cash)}</b></div>
+    <div class="card-row"><span>Net Worth</span><b class="mono" style="color:var(--accent2)">${fmtK(netWorth)}</b></div>
+  </div>
+  <div class="card">
+    <div class="card-row"><span>Cumulative Revenue</span><b class="mono" style="color:var(--accent2)">${fmtK(state.totalRevenue)}</b></div>
+    <div class="card-row"><span>Cumulative Costs</span><b class="mono" style="color:var(--danger)">${fmtK(state.totalCosts)}</b></div>
+    <div class="card-row"><span>Net Profit</span><b class="mono" style="color:${profit>=0?'var(--accent2)':'var(--danger)'}">${fmtK(profit)}</b></div>
+    <div class="card-row"><span>Margin</span><b>${margin}%</b></div>
+  </div>
+  <div class="card">
+    <div class="card-row"><span>30-Day Revenue</span><b class="mono" style="color:var(--accent2)">${fmtK(rev30)}</b></div>
+    <div class="card-row"><span>Daily Avg Revenue</span><b class="mono">${fmtK(rev30/30)}</b></div>
+  </div>
+  <div class="sec-head" style="margin-top:8px">Fleet P&L</div>`;
+  state.ships.forEach(s => {
+    const sc = shipClass(s.classId);
+    h += `<div class="card">
+      <div class="card-title">${s.name}</div>
+      <div class="card-row"><span>Revenue</span><b class="mono" style="color:var(--accent2)">${fmtK(s.totalRevenue)}</b></div>
+      <div class="card-row"><span>Hull Cond</span><b>${Math.round(s.hullCondition*100)}%</b></div>
+    </div>`;
+  });
+  return h;
+}
+
+function renderBuyPanel() {
+  let h = `<div class="sec-head">Acquire Vessels <span>Cash: ${fmtK(state.cash)}</span></div>`;
+  SHIP_CLASSES.forEach(sc => {
+    const canAfford = state.cash >= sc.cost;
+    h += `<div class="card">
+      <div class="card-title">${sc.name} <span class="badge ${canAfford ? 'badge-green' : 'badge-gray'}">${fmtK(sc.cost)}</span></div>
+      <div class="card-sub">${sc.hull}</div>
+      <div class="card-row"><span>${sc.teu ? 'Capacity' : 'DWT'}</span><b>${sc.teu ? sc.teu.toLocaleString()+' TEU' : sc.dwt.toLocaleString()+'t'}</b></div>
+      <div class="card-row"><span>Speed</span><b>${sc.speed} knots</b></div>
+      <div class="card-row"><span>Fuel Burn</span><b>${sc.fuelMT} MT/day</b></div>
+      <div class="card-row"><span>Annual Maint</span><b>${fmtK(sc.annualMaint)}</b></div>
+      <div class="btn-row"><button class="btn ${canAfford?'btn-primary':'btn-ghost'} btn-buy-ship" data-class="${sc.id}" ${canAfford?'':' disabled'}>Acquire</button></div>
+    </div>`;
+  });
+  h += `<div class="sec-head" style="margin-top:8px">Fleet Technology Upgrades</div>`;
+  for (const [cat, upgrades] of Object.entries(UPGRADE_TREE)) {
+    h += `<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin:8px 0 4px">${cat}</div>`;
+    upgrades.forEach(u => {
+      const applied = !!state.appliedUpgrades.find(x => x.id === u.id);
+      const prereqOk = !u.prereq || !!state.appliedUpgrades.find(x => x.id === u.prereq);
+      const canBuy = !applied && prereqOk && state.cash >= u.cost;
+      h += `<div class="card ${applied ? 'success-card' : ''}">
+        <div class="card-title">${u.name} ${applied ? '<span class="badge badge-green">ACTIVE</span>' : ''}</div>
+        <div class="card-sub">${u.desc}</div>
+        <div class="card-row"><span>Cost</span><b>${fmtK(u.cost)}</b></div>
+        ${!applied ? `<div class="btn-row"><button class="btn ${canBuy?'btn-success':'btn-ghost'} btn-upgrade" data-uid="${u.id}" ${canBuy?'':'disabled'}>${prereqOk?'Purchase':'Prereq needed'}</button></div>` : ''}
+      </div>`;
+    });
+  }
+  return h;
+}
+
+// ── BIND EVENTS ─────────────────────────────────────────────────
+
+function bindLeftPanelEvents() {
+  document.querySelectorAll('.btn-dispatch').forEach(b => {
+    b.onclick = (e) => { e.stopPropagation(); openDispatchModal(b.dataset.ship); };
+  });
+  document.querySelectorAll('.btn-sell').forEach(b => {
+    b.onclick = (e) => { e.stopPropagation(); openSellModal(b.dataset.ship); };
+  });
+  document.querySelectorAll('.btn-recall').forEach(b => {
+    b.onclick = (e) => { e.stopPropagation(); }; // Future: show detail
+  });
+  document.querySelectorAll('.btn-contract').forEach(b => {
+    b.onclick = (e) => { e.stopPropagation(); openContractModal(b.dataset.cid); };
+  });
+}
+
+function bindRightPanelEvents() {
+  document.querySelectorAll('.btn-buy-ship').forEach(b => {
+    b.onclick = () => openBuyShipModal(b.dataset.class);
+  });
+  document.querySelectorAll('.btn-upgrade').forEach(b => {
+    b.onclick = () => purchaseUpgrade(b.dataset.uid);
+  });
+}
+
+// ── MODAL SYSTEM ─────────────────────────────────────────────────
+
+function openModal(title, sub, content, confirmFn, confirmLabel) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-sub').textContent = sub || '';
+  document.getElementById('modal-content').innerHTML = content;
+  const btn = document.getElementById('modal-confirm');
+  btn.textContent = confirmLabel || 'Confirm';
+  btn.onclick = confirmFn;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+const closeModal = () => document.getElementById('modal-overlay').classList.remove('open');
+
+function openDispatchModal(shipId) {
+  const ship = shipById(shipId);
+  const sc = shipClass(ship.classId);
+  const currentPort = portById(ship.portId);
+
+  const portOptions = PORTS.filter(p => p.id !== ship.portId)
+    .map(p => `<option value="${p.id}">${p.name}, ${p.country}</option>`).join('');
+  const cargoOptions = state.unlockedCargo.filter(k => currentPort?.supply?.[k] || CARGO_TYPES[k])
+    .map(k => `<option value="${k}">${CARGO_TYPES[k]?.icon} ${CARGO_TYPES[k]?.name || k} — $${Math.round(cargoRates[k]||0)}/${CARGO_TYPES[k]?.unit}</option>`).join('');
+
+  const content = `
+    <div class="form-group"><label class="form-label">From</label>
+      <div style="font-size:12px;color:var(--text-primary);padding:5px 0">${currentPort?.name}</div></div>
+    <div class="form-group"><label class="form-label">Destination Port</label>
+      <select class="form-select" id="dest-port">${portOptions}</select></div>
+    <div class="form-group"><label class="form-label">Cargo Type</label>
+      <select class="form-select" id="cargo-type"><option value="">— Ballast (empty) —</option>${cargoOptions}</select></div>
+    <div class="form-group"><label class="form-label">Quantity</label>
+      <input class="form-input" type="number" id="cargo-qty" value="200" min="50" max="${sc.teu||Math.floor(sc.dwt/15)}"></div>
+    <div id="route-preview" style="margin-top:12px;padding:10px;background:rgba(0,0,0,0.2);border-radius:4px;font-size:11px"></div>`;
+
+  openModal(`Dispatch: ${ship.name}`, `${sc.name} · From ${currentPort?.name}`, content, () => {
+    const destId = document.getElementById('dest-port')?.value;
+    const cargoType = document.getElementById('cargo-type')?.value;
+    const qty = parseInt(document.getElementById('cargo-qty')?.value) || 0;
+    if (!destId) return;
+    const cargoArr = cargoType && qty > 0 ? [{
+      type: cargoType,
+      qty,
+      unit: CARGO_TYPES[cargoType]?.unit || 'units',
+      marketValue: Math.round(qty * (cargoRates[cargoType]||500) * (portDist(currentPort, portById(destId))/400) * 0.15),
+    }] : [];
+    dispatchShip(shipId, destId, cargoArr);
+  }, 'Dispatch Ship');
+
+  // Live preview update
+  setTimeout(() => {
+    const destSel = document.getElementById('dest-port');
+    const cargoSel = document.getElementById('cargo-type');
+    const qtyInp = document.getElementById('cargo-qty');
+    const updatePreview = () => {
+      const dId = destSel?.value;
+      const ct = cargoSel?.value;
+      const qty = parseInt(qtyInp?.value) || 0;
+      if (!dId) return;
+      const days = nauticalDaysForRoute(ship.portId, dId, sc);
+      const fuel = calcFuelCost(days, sc);
+      const portFees = calcPortFee(ship.portId, sc) + calcPortFee(dId, sc);
+      const crew = Math.round(days * sc.crew * 380);
+      const rev = ct ? Math.round(qty * (cargoRates[ct]||500) * (portDist(currentPort, portById(dId))/400) * 0.15) : 0;
+      const profit = rev - fuel - portFees - crew;
+      document.getElementById('route-preview').innerHTML = `
+        <div class="card-row"><span>Distance</span><b>${portDist(currentPort, portById(dId)||currentPort).toLocaleString()} nm</b></div>
+        <div class="card-row"><span>Est. Transit</span><b>${days.toFixed(1)} days</b></div>
+        <div class="card-row"><span>Fuel Cost</span><b style="color:var(--danger)">${fmtK(fuel)}</b></div>
+        <div class="card-row"><span>Port Fees</span><b style="color:var(--danger)">${fmtK(portFees)}</b></div>
+        <div class="card-row"><span>Crew Cost</span><b style="color:var(--danger)">${fmtK(crew)}</b></div>
+        <div class="card-row"><span>Expected Revenue</span><b style="color:var(--accent2)">${fmtK(rev)}</b></div>
+        <hr class="modal-divider">
+        <div class="card-row"><span>Est. Profit</span><b style="color:${profit>=0?'var(--accent2)':'var(--danger)'}; font-size:13px">${fmtK(profit)}</b></div>`;
+    };
+    destSel?.addEventListener('change', updatePreview);
+    cargoSel?.addEventListener('change', updatePreview);
+    qtyInp?.addEventListener('input', updatePreview);
+    updatePreview();
+  }, 50);
+}
+
+function openSellModal(shipId) {
+  const ship = shipById(shipId);
+  const sc = shipClass(ship.classId);
+  const ageDiscount = Math.max(0.4, 1 - ship.daysAtSea / 18000);
+  const salePrice = Math.round(sc.cost * ageDiscount * 0.65);
+  openModal(`Sell Ship: ${ship.name}`, 'This action is irreversible.',
+    `<div class="card warn-card">
+      <div class="card-row"><span>Class</span><b>${sc.name}</b></div>
+      <div class="card-row"><span>Hull Condition</span><b>${Math.round(ship.hullCondition*100)}%</b></div>
+      <div class="card-row"><span>Original Cost</span><b>${fmtK(sc.cost)}</b></div>
+      <div class="card-row"><span>Sale Price</span><b style="color:var(--accent2);font-size:14px">${fmtK(salePrice)}</b></div>
+    </div>`,
+    () => sellShip(shipId), 'Sell Ship');
+}
+
+function openContractModal(cid) {
+  const c = state.contracts.find(x => x.id === cid);
+  if (!c) return;
+  const ct = CARGO_TYPES[c.cargo];
+  const from = portById(c.from), to = portById(c.to);
+  const idleShips = state.ships.filter(s => s.status !== 'sailing' && s.portId === c.from);
+  const anyShips = state.ships.filter(s => s.status !== 'sailing');
+  const shipOpts = anyShips.map(s => `<option value="${s.id}" ${s.portId !== c.from ? '(reposition)' : ''}>${s.name} — ${portById(s.portId)?.name}${s.portId !== c.from ? ' [REPOSITION]' : ''}</option>`).join('');
+
+  openModal(`Contract: ${from?.name} → ${to?.name}`,
+    `${ct?.icon} ${ct?.name} · ${c.qty} ${ct?.unit} · ${c.urgency.toUpperCase()}`,
+    `<div class="card">
+      <div class="card-row"><span>Cargo</span><b>${ct?.name} (${c.cargo})</b></div>
+      <div class="card-row"><span>Quantity</span><b>${c.qty} ${ct?.unit}</b></div>
+      <div class="card-row"><span>Contract Value</span><b style="color:var(--accent2);font-size:14px">${fmt(c.value)}</b></div>
+      <div class="card-row"><span>Late Penalty</span><b style="color:var(--danger)">${fmt(c.penalty)}</b></div>
+      <div class="card-row"><span>Deadline</span><b>Day ${c.deadline} (${c.deadline - state.day}d remaining)</b></div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label class="form-label">Assign Ship</label>
+      <select class="form-select" id="contract-ship">${shipOpts || '<option>No ships available</option>'}</select></div>`,
+    () => {
+      const shipId = document.getElementById('contract-ship')?.value;
+      if (!shipId) return;
+      const s = shipById(shipId);
+      const cargo = [{ type: c.cargo, qty: c.qty, unit: ct?.unit, contractValue: c.value }];
+      dispatchShip(shipId, c.to, cargo, c.id);
+    }, 'Accept & Dispatch');
+}
+
+function openBuyShipModal(classId) {
+  const sc = SHIP_CLASSES.find(c => c.id === classId);
+  const portOpts = PORTS.map(p => `<option value="${p.id}">${p.name}, ${p.country}</option>`).join('');
+  openModal(`Acquire: ${sc.name}`, sc.hull,
+    `<div class="card">
+      <div class="card-row"><span>Price</span><b style="color:var(--accent);font-size:14px">${fmtK(sc.cost)}</b></div>
+      <div class="card-row"><span>Your Cash</span><b>${fmtK(state.cash)}</b></div>
+      <div class="card-row"><span>After Purchase</span><b style="color:${state.cash-sc.cost>=0?'var(--accent2)':'var(--danger)'}">${fmtK(state.cash - sc.cost)}</b></div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label class="form-label">Vessel Name</label>
+      <input class="form-input" id="ship-name" placeholder="${sc.name} ${state.ships.length+1}" value="${sc.name} ${state.ships.length+1}"></div>
+    <div class="form-group"><label class="form-label">Delivery Port</label>
+      <select class="form-select" id="ship-port">${portOpts}</select></div>`,
+    () => {
+      const name = document.getElementById('ship-name')?.value || sc.name;
+      const portId = document.getElementById('ship-port')?.value || 'RT';
+      buyShip(classId, portId, name);
+    }, `Purchase for ${fmtK(sc.cost)}`);
+}
+
+// ── DETAIL PANEL ─────────────────────────────────────────────────
+
+function renderDetailPanel(entity) {
+  const p = document.getElementById('detail-panel');
+  if (!p) return;
+  if (!entity) { p.innerHTML = `<div style="color:var(--text-muted);font-size:11px">Click a ship or port on the map</div>`; return; }
+  if (entity.type === 'ship') {
+    const s = shipById(entity.id);
+    if (!s) return;
+    const sc = shipClass(s.classId);
+    const portName = portById(s.portId)?.name || s.portId;
+    p.innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div><div class="card-row"><span>Ship</span><b>${s.name}</b></div>
+           <div class="card-row"><span>IMO</span><b>${s.imo}</b></div>
+           <div class="card-row"><span>Class</span><b>${sc.name}</b></div>
+           <div class="card-row"><span>Flag</span><b>${s.flagState}</b></div></div>
+      <div><div class="card-row"><span>Status</span><b>${s.status.toUpperCase()}</b></div>
+           <div class="card-row"><span>Location</span><b>${portName}</b></div>
+           <div class="card-row"><span>Hull</span><b>${Math.round(s.hullCondition*100)}%</b></div>
+           <div class="card-row"><span>Morale</span><b>${Math.round(s.crewMorale*100)}%</b></div></div>
+      <div><div class="card-row"><span>Days at Sea</span><b>${s.daysAtSea}</b></div>
+           <div class="card-row"><span>Total Earned</span><b style="color:var(--accent2)">${fmtK(s.totalRevenue)}</b></div>
+           ${s.status==='sailing'&&s.route?`<div class="card-row"><span>Cargo</span><b>${s.cargo.map(c=>c.qty+' '+c.type).join(', ')||'Ballast'}</b></div>
+           <div class="card-row"><span>Progress</span><b>${Math.round(s.progress*100)}%</b></div>`:''}</div>
+    </div>`;
+  } else if (entity.type === 'port') {
+    const port = portById(entity.id);
+    if (!port) return;
+    const myShips = state.ships.filter(s => s.portId === port.id && s.status !== 'sailing');
+    const supplyStr = Object.entries(port.supply||{}).map(([k,v])=>`${CARGO_TYPES[k]?.name||k}(${v})`).join(', ');
+    const demandStr = Object.entries(port.demand||{}).map(([k,v])=>`${CARGO_TYPES[k]?.name||k}(${v})`).join(', ');
+    p.innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div><div class="card-row"><span>Port</span><b>${port.name}</b></div>
+           <div class="card-row"><span>Country</span><b>${port.country}</b></div>
+           <div class="card-row"><span>Region</span><b>${port.region}</b></div>
+           <div class="card-row"><span>Throughput</span><b>${port.throughput.toLocaleString()} TEU/yr</b></div></div>
+      <div><div class="card-row"><span>Congestion</span><b>${Math.round(port.congestion*100)}%</b></div>
+           <div class="card-row"><span>Port Fee</span><b>${fmtK(calcPortFee(port.id,{fuelMT:80}))}</b></div>
+           <div class="card-row"><span>My Ships Here</span><b>${myShips.length}</b></div></div>
+      <div><div class="card-row"><span>Exports</span><b style="font-size:9px">${supplyStr||'—'}</b></div>
+           <div class="card-row"><span>Imports</span><b style="font-size:9px">${demandStr||'—'}</b></div></div>
+    </div>`;
+  }
+}
+
+// ── CHART RENDERING ─────────────────────────────────────────────
+
+function drawMiniChart(canvasId, data, color, fillColor) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !data.length) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.offsetWidth || 200, h = canvas.offsetHeight || 60;
+  canvas.width = w; canvas.height = h;
+  ctx.clearRect(0,0,w,h);
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = max - min || 1;
+  const pts = data.map((v,i) => [i/(data.length-1)*w, h - ((v-min)/range)*(h-8)-4]);
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], h);
+  pts.forEach(([x,y]) => ctx.lineTo(x,y));
+  ctx.lineTo(pts[pts.length-1][0], h);
+  ctx.closePath();
+  ctx.fillStyle = fillColor || 'rgba(0,201,255,0.08)';
+  ctx.fill();
+  ctx.beginPath();
+  pts.forEach(([x,y],i) => i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+  ctx.strokeStyle = color || '#00c9ff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function drawCharts() {
+  const revData = state.revHistory.map(r => r.val || 0);
+  if (revData.length > 1) {
+    const deltas = revData.map((v,i) => i===0 ? 0 : v - revData[i-1]);
+    drawMiniChart('rev-chart', deltas.slice(-90), '#00ff9d', 'rgba(0,255,157,0.08)');
+  }
+  if (state.freightHistory.length > 1) {
+    drawMiniChart('freight-chart', state.freightHistory, '#ffd23f', 'rgba(255,210,63,0.08)');
+  }
+}
+
+// ── MAP RENDERING ────────────────────────────────────────────────
+
+const mapState = { zoom: 1, panX: 0, panY: 0, dragging: false, lastX: 0, lastY: 0 };
+
+function drawMap() {
+  drawContinents();
+  drawGrid();
+  drawCanals();
+  drawTradeLanes();
+  drawWeather();
+  drawActiveRoutes();
+  drawPorts();
+  drawShips();
+  applyMapTransform();
+}
+
+function applyMapTransform() {
+  const layers = ['continents-layer','grid-layer','lanes-layer','weather-layer','routes-layer','ports-layer','ships-layer','canals-layer'];
+  const transform = `translate(${mapState.panX}, ${mapState.panY}) scale(${mapState.zoom})`;
+  layers.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('transform', transform);
+  });
+}
+
+function drawGrid() {
+  const g = document.getElementById('grid-layer');
+  if (g.children.length > 0) return; // drawn once
+  let h = '';
+  for (let x = 0; x <= 1200; x += 120) h += `<line x1="${x}" y1="0" x2="${x}" y2="620" stroke="rgba(0,180,255,0.05)" stroke-width="0.5"/>`;
+  for (let y = 0; y <= 620; y += 62) h += `<line x1="0" y1="${y}" x2="1200" y2="${y}" stroke="rgba(0,180,255,0.05)" stroke-width="0.5"/>`;
+  g.innerHTML = h;
+}
+
+function drawContinents() {
+  const g = document.getElementById('continents-layer');
+  if (g.children.length > 0) return; // drawn once
+  g.innerHTML = `
+  <!-- North America -->
+  <path d="M80,60 L230,55 L260,80 L285,100 L280,150 L295,175 L285,210 L265,230 L245,270 L230,300 L220,330 L195,370 L180,360 L185,320 L200,285 L215,255 L210,220 L195,195 L175,190 L160,200 L140,210 L120,235 L100,225 L75,205 L60,175 L55,140 L65,105 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- South America -->
+  <path d="M225,315 L265,310 L290,340 L310,360 L320,400 L325,435 L315,460 L300,475 L280,470 L260,450 L245,420 L235,390 L230,360 L225,335 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- Europe -->
+  <path d="M435,55 L530,50 L560,65 L570,90 L560,115 L545,130 L530,140 L510,155 L490,165 L475,175 L460,170 L445,155 L440,135 L435,110 L430,85 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- Africa -->
+  <path d="M455,175 L510,165 L545,170 L570,190 L580,225 L575,265 L570,305 L555,345 L540,375 L520,400 L510,430 L505,460 L495,475 L480,470 L470,450 L460,415 L450,375 L445,340 L448,300 L445,265 L440,235 L440,205 L448,188 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- Middle East -->
+  <path d="M580,175 L650,170 L680,185 L690,210 L680,240 L660,255 L635,260 L610,250 L590,235 L575,215 L575,195 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- South Asia -->
+  <path d="M680,175 L760,165 L790,175 L810,200 L805,230 L795,255 L780,270 L755,280 L730,285 L710,275 L695,255 L685,235 L678,210 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- SE Asia -->
+  <path d="M795,250 L840,245 L875,250 L895,265 L895,295 L880,315 L860,325 L835,330 L815,320 L800,305 L795,285 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- East Asia / China -->
+  <path d="M780,120 L920,100 L960,120 L975,150 L970,190 L955,215 L935,235 L910,245 L885,250 L860,248 L840,240 L815,230 L800,210 L790,185 L782,160 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- Japan -->
+  <path d="M940,155 L975,150 L985,170 L980,195 L960,205 L940,200 L932,185 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- Australia (hint) -->
+  <path d="M870,430 L980,415 L1020,440 L1010,490 L970,510 L920,505 L880,485 L865,460 Z" fill="#0d2840" stroke="rgba(0,180,255,0.15)" stroke-width="0.5"/>
+  <!-- Greenland -->
+  <path d="M235,30 L310,25 L335,45 L320,70 L290,80 L255,75 L230,55 Z" fill="#0a1e35" stroke="rgba(0,180,255,0.1)" stroke-width="0.5"/>
+  `;
+}
+
+function drawCanals() {
+  const g = document.getElementById('canals-layer');
+  let h = '';
+  CANALS.forEach(cn => {
+    const blocked = state.activeEvents.some(ev => ev.effect?.canalClosed === cn.id);
+    const col = blocked ? '#ff3860' : '#ff6b35';
+    h += `<circle cx="${cn.x}" cy="${cn.y}" r="5" fill="${col}" opacity="0.8"/>
+    <text x="${cn.x+8}" y="${cn.y+4}" font-size="7" fill="${col}" opacity="0.9" font-family="monospace">${cn.label}${blocked?' ⛔':''}</text>`;
+  });
+  g.innerHTML = h;
+}
+
+function drawTradeLanes() {
+  const g = document.getElementById('lanes-layer');
+  if (g.children.length > 0) return; // static
+  const lanes = [
+    ['SH','SI'],['SI','DX'],['DX','RT'],['RT','NY'],['NY','LA'],['LA','SH'],
+    ['SH','TK'],['TK','LA'],['RT','HB'],['RT','AN'],['MB','DX'],['SI','HK'],
+    ['SH','BU'],['BU','TK'],['SZ','RT'],['CT','DX'],['JK','SI'],['HK','LA'],
+  ];
+  let h = '';
+  lanes.forEach(([a,b]) => {
+    const pa = portById(a), pb = portById(b);
+    if (!pa || !pb) return;
+    h += `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="rgba(0,180,255,0.12)" stroke-width="1" class="trade-lane"/>`;
+  });
+  g.innerHTML = h;
+}
+
+function drawWeather() {
+  const g = document.getElementById('weather-layer');
+  let h = '';
+  state.activeEvents.filter(ev => ev.type === 'weather').forEach(ev => {
+    ev.region.forEach(rid => {
+      const p = portById(rid);
+      if (!p) return;
+      h += `<circle cx="${p.x}" cy="${p.y}" r="40" fill="rgba(255,56,96,0.08)" stroke="rgba(255,56,96,0.25)" stroke-width="1" class="weather-zone"/>`;
+    });
+  });
+  g.innerHTML = h;
+}
+
+function drawActiveRoutes() {
+  const g = document.getElementById('routes-layer');
+  let h = '';
+  state.ships.filter(s => s.status === 'sailing' && s.route).forEach(s => {
+    const from = portById(s.route.from), to = portById(s.portId);
+    if (!from || !to) return;
+    const col = s.cargo.length > 0 ? '#00ff9d' : '#7fb3d3';
+    h += `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${col}" stroke-width="1.5" stroke-opacity="0.5" class="route-active" marker-end="url(#arrowGreen)"/>`;
+  });
+  g.innerHTML = h;
+}
+
+function drawPorts() {
+  const g = document.getElementById('ports-layer');
+  let h = '';
+  PORTS.forEach(p => {
+    const myShipCount = state.ships.filter(s => s.portId === p.id && s.status !== 'sailing').length;
+    const isSelected = state.selectedEntity?.type === 'port' && state.selectedEntity?.id === p.id;
+    const r = p.size === 'mega' ? 7 : p.size === 'large' ? 5 : 4;
+    const congColor = p.congestion > 0.7 ? '#ff6b35' : p.congestion > 0.45 ? '#ffd23f' : '#00c9ff';
+    h += `<g class="port-group" onclick="G.selectPort('${p.id}')" title="${p.name}">
+      ${isSelected ? `<circle cx="${p.x}" cy="${p.y}" r="${r+8}" fill="url(#portGlow)" class="port-ring"/>` : ''}
+      <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${congColor}" opacity="0.9" filter="url(#glow)"/>
+      ${myShipCount > 0 ? `<circle cx="${p.x}" cy="${p.y}" r="${r+4}" fill="none" stroke="#ffd23f" stroke-width="1" opacity="0.6"/>` : ''}
+      <text x="${p.x + r + 3}" y="${p.y + 3}" font-size="${p.size==='mega'?8:7}" fill="rgba(180,220,255,0.85)" font-family="monospace">${p.name.split(' ')[0]}</text>
+    </g>`;
+  });
+  g.innerHTML = h;
+}
+
+function drawShips() {
+  const g = document.getElementById('ships-layer');
+  let h = '';
+  state.ships.forEach(s => {
+    let sx, sy;
+    if (s.status === 'sailing' && s.route) {
+      const from = portById(s.route.from), to = portById(s.portId);
+      if (from && to) {
+        sx = from.x + (to.x - from.x) * s.progress;
+        sy = from.y + (to.y - from.y) * s.progress;
+      } else { sx = portById(s.portId)?.x || 0; sy = portById(s.portId)?.y || 0; }
+    } else {
+      const pt = portById(s.portId);
+      sx = (pt?.x || 0) + (Math.random() - 0.5) * 6;
+      sy = (pt?.y || 0) + (Math.random() - 0.5) * 6;
+    }
+    const isSelected = state.selectedEntity?.type === 'ship' && state.selectedEntity?.id === s.id;
+    const col = s.status === 'sailing' ? '#00ff9d' : '#ffd23f';
+    const sc = shipClass(s.classId);
+    const shipSymbol = s.status === 'sailing' ? '▶' : '⬡';
+    h += `<g class="ship-marker" onclick="G.selectShip('${s.id}')" style="cursor:pointer">
+      ${isSelected ? `<circle cx="${sx}" cy="${sy}" r="12" fill="none" stroke="${col}" stroke-width="1" opacity="0.5"/>` : ''}
+      <circle cx="${sx}" cy="${sy}" r="5" fill="${col}" filter="url(#glow)" opacity="0.95"/>
+      <text x="${sx+7}" y="${sy-3}" font-size="7" fill="rgba(200,230,255,0.7)" font-family="monospace">${s.name.split(' ').pop()}</text>
+    </g>`;
+  });
+  g.innerHTML = h;
+}
+
+// ── MAP INTERACTIONS ─────────────────────────────────────────────
+
+function initMapInteractions() {
+  const svg = document.getElementById('world-map');
+  let dragging = false, startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+  svg.addEventListener('mousedown', e => {
+    dragging = true; startX = e.clientX; startY = e.clientY;
+    startPanX = mapState.panX; startPanY = mapState.panY;
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    mapState.panX = startPanX + (e.clientX - startX);
+    mapState.panY = startPanY + (e.clientY - startY);
+    applyMapTransform();
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    mapState.zoom = Math.max(0.5, Math.min(4, mapState.zoom * factor));
+    applyMapTransform();
+  }, { passive: false });
+  // Port tooltip
+  svg.addEventListener('mousemove', e => {
+    const target = e.target.closest('.port-group');
+    const tt = document.getElementById('map-tooltip');
+    if (target && tt) {
+      const portId = target.getAttribute('onclick')?.match(/'([A-Z]+)'/)?.[1];
+      if (portId) {
+        const p = portById(portId);
+        const myShips = state.ships.filter(s => s.portId === portId && s.status !== 'sailing').length;
+        tt.style.display = 'block';
+        tt.style.left = (e.offsetX + 15) + 'px';
+        tt.style.top = (e.offsetY - 10) + 'px';
+        tt.innerHTML = `<div class="tt-title">${p.name}</div>
+          <div class="tt-row"><span>Country</span><b>${p.country}</b></div>
+          <div class="tt-row"><span>Congestion</span><b>${Math.round(p.congestion*100)}%</b></div>
+          <div class="tt-row"><span>Port Fee</span><b>${fmtK(calcPortFee(portId,{fuelMT:80}))}</b></div>
+          <div class="tt-row"><span>My Ships</span><b>${myShips}</b></div>`;
+      }
+    } else if (tt) { tt.style.display = 'none'; }
+  });
+}
+
+const map = {
+  zoom: (f) => { mapState.zoom = Math.max(0.5, Math.min(4, mapState.zoom * f)); applyMapTransform(); },
+  reset: () => { mapState.zoom = 1; mapState.panX = 0; mapState.panY = 0; applyMapTransform(); },
+};
+
+// ── SELECTION ────────────────────────────────────────────────────
+
+function selectShip(id) {
+  state.selectedEntity = { type: 'ship', id };
+  renderDetailPanel(state.selectedEntity);
+  renderLeftPanel();
+  drawShips(); drawPorts();
+}
+
+function selectPort(id) {
+  state.selectedEntity = { type: 'port', id };
+  renderDetailPanel(state.selectedEntity);
+  renderLeftPanel();
+  drawPorts(); drawShips();
+}
+
+// ── EVENT FEED ───────────────────────────────────────────────────
+
+const eventColors = { info:'#00c9ff', success:'#00ff9d', warn:'#ffd23f', danger:'#ff3860' };
+const events = [];
+
+function addEvent(msg, type) {
+  events.unshift({ msg, type, time: `D${state.day}Y${state.year}` });
+  if (events.length > 80) events.pop();
+  const feed = document.getElementById('right-body');
+  if (state.rightTab === 'intel' && feed) {
+    renderRightPanel();
+  }
+  const evFeed = document.getElementById('event-feed-container');
+  if (evFeed) {
+    const item = document.createElement('div');
+    item.className = 'event-item';
+    item.innerHTML = `<div class="event-dot" style="background:${eventColors[type]||'#7fb3d3'}"></div>
+      <div><div class="event-time">${`D${state.day}Y${state.year}`}</div>
+      <div class="event-text">${msg}</div></div>`;
+    evFeed.insertBefore(item, evFeed.firstChild);
+    if (evFeed.children.length > 30) evFeed.removeChild(evFeed.lastChild);
+  }
+}
+
+// ── TICKER ───────────────────────────────────────────────────────
+
+function updateTicker() {
+  const items = Object.keys(CARGO_TYPES).slice(0,12).map(k => {
+    const ct = CARGO_TYPES[k];
+    const cur = cargoRates[k] || ct.baseRate;
+    const delta = ((cur - ct.baseRate)/ct.baseRate*100).toFixed(1);
+    const cls = +delta >= 0 ? 'up' : 'dn';
+    return `<div class="ticker-item">${ct.icon} ${ct.name} <span class="${cls}">$${Math.round(cur)} ${+delta>=0?'▲':'▼'}${Math.abs(delta)}%</span></div>`;
+  });
+  const doubled = items.concat(items).join('');
+  const ts = document.getElementById('ticker-scroll');
+  if (ts) ts.innerHTML = doubled;
+}
+
+// ── TOASTS ───────────────────────────────────────────────────────
+
+function toast(msg, type) {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const t = document.createElement('div');
+  t.className = `toast toast-${type||'info'}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.5s'; setTimeout(()=>t.remove(), 500); }, 4000);
+}
+
+// ── SPEED CONTROL ────────────────────────────────────────────────
+
+let _interval = null;
+let _speed = 1;
+
+function startLoop() {
+  if (_interval) clearInterval(_interval);
+  const ms = Math.round(100 / _speed);
+  _interval = setInterval(() => {
+    tickGame();
+    if (state.tick % 50 === 0) { drawCharts(); updateTicker(); }
+    if (state.tick % 20 === 0 && state.leftTab) renderLeftPanel();
+    if (state.tick % 25 === 0 && state.rightTab) renderRightPanel();
+  }, ms);
+}
+
+function setSpeed(s) {
+  _speed = s;
+  state.speed = s;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  const ids = { 0.5:'sb-half', 1:'sb-1', 2:'sb-2', 5:'sb-5', 10:'sb-10' };
+  const el = document.getElementById(ids[s]);
+  if (el) el.classList.add('active');
+  startLoop();
+}
+
+function togglePause() {
+  state.paused = !state.paused;
+  const btn = document.getElementById('pause-btn');
+  if (btn) btn.textContent = state.paused ? '▶' : '⏸';
+}
+
+// ── RENDER ALL ───────────────────────────────────────────────────
+
+function renderAll() {
+  renderLeftPanel();
+  renderRightPanel();
+  renderDetailPanel(state.selectedEntity);
+  drawMap();
+  drawCharts();
+  updateTopbar();
+  updateTicker();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+
+function init() {
+  generateContracts();
+  generateContracts();
+  initMapInteractions();
+  drawContinents();
+  drawGrid();
+  drawTradeLanes();
+  renderAll();
+  startLoop();
+  addEvent('Welcome to <b>Container Tycoon</b>. Your fleet of 3 ships awaits orders.', 'info');
+  addEvent('<b>Pacific Meridian</b> (Feeder) ready at Shanghai.', 'info');
+  addEvent('<b>Euro Atlantic</b> (Panamax) ready at Rotterdam.', 'info');
+  addEvent('<b>Gulf Sovereign</b> (Aframax Tanker) ready at Dubai.', 'info');
+  toast('🌊 Container Tycoon loaded. Dispatch your fleet to begin trading!', 'success');
+}
+
+// Public API
+return {
+  leftTab: _leftTab,
+  rightTab: _rightTab,
+  selectShip, selectPort,
+  openDispatchModal, openSellModal, openContractModal, openBuyShipModal,
+  purchaseUpgrade, closeModal,
+  setSpeed, togglePause,
+  map, init,
+  // Expose state for debugging
+  get state() { return state; },
+  get ports() { return PORTS; },
+};
+
+})(); // end G
+
+// Boot on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  G.init();
+});
+</script>
+</body>
+</html>

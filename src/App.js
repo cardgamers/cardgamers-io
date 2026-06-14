@@ -14,12 +14,13 @@ import Solitaire from './games/Solitaire'
 import Rummy from './games/Rummy'
 import Bridge from './games/bridge/Bridge'
 import TeenPatti from './games/TeenPatti'
-import Spades from './games/Spades';
+import Spades from './games/Spades'
 import ComingSoon from './pages/ComingSoon'
-import Contact from './pages/Contact';
-import About from './pages/About';
-import Games from './pages/Games';
-import Tournaments from './pages/Tournaments';
+import Contact from './pages/Contact'
+import About from './pages/About'
+import Games from './pages/Games'
+import Tournaments from './pages/Tournaments'
+import ContainerTycoon from './pages/ContainerTycoon'
 import './index.css'
 
 function ProtectedRoute({ children }) {
@@ -51,17 +52,18 @@ function AppRoutes() {
         <Route path="/game/rummy" element={<ProtectedRoute><Rummy /></ProtectedRoute>} />
         <Route path="/game/bridge" element={<ProtectedRoute><Bridge /></ProtectedRoute>} />
         <Route path="/game/teen-patti" element={<ProtectedRoute><TeenPatti /></ProtectedRoute>} />
+        <Route path="/game/spades" element={<ProtectedRoute><Spades /></ProtectedRoute>} />
+        <Route path="/game/container-tycoon" element={<ProtectedRoute><ContainerTycoon /></ProtectedRoute>} />
         <Route path="/game/:gameId" element={<ProtectedRoute><ComingSoon /></ProtectedRoute>} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/how-to-play" element={<HowToPlay />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/about" element={<About />} />
-<Route path="/games" element={<Games />} />
-<Route path="/tournaments" element={<Tournaments />} />
-<Route path="/blog" element={<ComingSoon />} />
-<Route path="/contact" element={<Contact />} />
-<Route path="/game/spades" element={<ProtectedRoute><Spades /></ProtectedRoute>} />
+        <Route path="/games" element={<Games />} />
+        <Route path="/tournaments" element={<Tournaments />} />
+        <Route path="/blog" element={<ComingSoon />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>

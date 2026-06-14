@@ -2,12 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const games = [
-  { name: 'Spades',     desc: 'Bid, bluff and take tricks. Play solo against bots.',         path: '/game/spades',     emoji: 'S' },
-  { name: 'Solitaire',  desc: 'Classic single-player card game. Simple and relaxing.',       path: '/game/solitaire',  emoji: 'K' },
-  { name: 'Rummy',      desc: 'Form sets and sequences. Play live against real opponents.',  path: '/game/rummy',      emoji: 'R' },
-  { name: 'Bridge',     desc: 'Rubber and Duplicate formats. Bot opponents available.',      path: '/game/bridge',     emoji: 'B' },
-  { name: 'Teen Patti', desc: 'Three variants — Classic, AK47 and Muflis.',                 path: '/game/teen-patti', emoji: 'T' },
+  { name: 'Container Tycoon', desc: 'Build a global shipping empire. Buy ships, open trade routes, dominate the seas.', path: '/game/container-tycoon', emoji: '🚢' },
+  { name: 'Spades',           desc: 'Bid, bluff and take tricks. Play solo against bots.',                              path: '/game/spades',           emoji: '♠' },
+  { name: 'Solitaire',        desc: 'Classic single-player card game. Simple and relaxing.',                            path: '/game/solitaire',        emoji: '🃏' },
+  { name: 'Rummy',            desc: 'Form sets and sequences. Play live against real opponents.',                        path: '/game/rummy',            emoji: '♥' },
+  { name: 'Bridge',           desc: 'Rubber and Duplicate formats. Bot opponents available.',                            path: '/game/bridge',           emoji: '♦' },
+  { name: 'Teen Patti',       desc: 'Three variants — Classic, AK47 and Muflis.',                                       path: '/game/teen-patti',       emoji: '♣' },
 ];
+
 export default function Games() {
   const s = {
     page:  { minHeight: '100vh', background: 'var(--felt-dark)', color: 'var(--cream)', padding: '6rem 1.5rem 4rem', display: 'flex', justifyContent: 'center' },
