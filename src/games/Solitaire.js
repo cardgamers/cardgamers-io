@@ -74,8 +74,8 @@ function useLayout() {
     const H = Math.round(W * 1.4)
     const fs = Math.max(8, Math.round(W * 0.16))
     const ss = Math.max(14, Math.round(W * 0.32))
-    const faceDownH = Math.round(H * 0.3)
-    const faceUpOverlap = Math.round(H * 0.28)
+    const faceDownH = Math.round(H * 0.18)
+    const faceUpOverlap = Math.round(H * 0.32)
     const gap = Math.max(4, Math.round(vw * 0.006))
     return { W, H, fs, ss, faceDownH, faceUpOverlap, gap, vw, vh }
   }
@@ -439,7 +439,7 @@ export default function Solitaire() {
       <div style={{ flex:1, overflow:'auto', padding:`${isMobile?'0.5rem':'0.75rem'} ${isMobile?'0.4rem':'0.75rem'}` }}>
 
         {/* Top row */}
-        <div style={{ display:'flex', gap:gap, marginBottom:isMobile?'0.5rem':'0.75rem', alignItems:'center' }}>
+        <div style={{ display:'flex', gap:gap, marginBottom:isMobile?'0.5rem':'0.75rem', alignItems:'center', width:'100%' }}>
 
           {/* Stock */}
           <div onClick={drawStock} style={{ cursor:'pointer', flexShrink:0, position:'relative' }}>
@@ -447,30 +447,21 @@ export default function Solitaire() {
               ? <Card card={{faceUp:false}} W={W} H={H} fs={fs} ss={ss} />
               : <Slot label="↺" onClick={drawStock} W={W} H={H} />
             }
-            {game.stock.length > 0 && (
-              <div style={{ position:'absolute', bottom:-14, left:'50%', transform:'translateX(-50%)', fontSize:'0.55rem', color:'rgba(245,240,232,0.3)', whiteSpace:'nowrap' }}>
-                {game.stock.length}
-              </div>
-            )}
+            <div style={{ position:'absolute', bottom:-14, left:'50%', transform:'translateX(-50%)', fontSize:'0.55rem', color:'rgba(245,240,232,0.3)', whiteSpace:'nowrap' }}>
+              {game.stock.length > 0 ? game.stock.length : 'Reset'}
+            </div>
           </div>
 
-          {/* Waste — show top 3 fanned */}
-          <div style={{ position:'relative', width: game.waste.length>2 ? W+20 : W, height:H, flexShrink:0 }} onClick={handleWaste}>
+          {/* Waste — show top card clearly */}
+          <div style={{ position:'relative', width:W, height:H, flexShrink:0 }} onClick={handleWaste}>
             {game.waste.length === 0
               ? <Slot label="" W={W} H={H} />
-              : game.waste.slice(-3).map((card, i, arr) => (
-                <div key={card.id} style={{ position:'absolute', left: i * (arr.length > 1 ? 10 : 0), zIndex:i }}>
-                  <Card
-                    card={card}
-                    selected={i===arr.length-1 && wasteSel}
-                    W={W} H={H} fs={fs} ss={ss}
-                  />
-                </div>
-              ))
+              : <Card card={game.waste[game.waste.length-1]} selected={wasteSel} W={W} H={H} fs={fs} ss={ss} />
             }
           </div>
 
-          <div style={{ flex:1 }} />
+          {/* Spacer — proportional */}
+          <div style={{ flex:1, minWidth:gap }} />
 
           {/* Foundations */}
           {game.foundations.map((f, fi) => (
@@ -487,7 +478,7 @@ export default function Solitaire() {
         <div style={{ display:'flex', gap:gap, alignItems:'flex-start' }}>
           {game.tableau.map((col, colIdx) => {
             if (col.length === 0) return (
-              <div key={colIdx} style={{ width:W, flexShrink:0, flex:1, maxWidth:W }}>
+              <div key={colIdx} style={{ width:W, flexShrink:0, flex:1, maxWidth:W+20 }}>
                 <Slot label="K" onClick={() => handleEmptyCol(colIdx)} W={W} H={H} />
               </div>
             )
