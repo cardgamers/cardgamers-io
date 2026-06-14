@@ -527,7 +527,7 @@ export default function Solitaire() {
 
       {/* Board */}
       <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
-      <div style={{ flex:1, overflow:'auto', padding:`${isMobile?'0.5rem':'0.75rem'} ${isMobile?'0.4rem':'0.75rem'}` }}>
+        <div style={{ flex:1, overflow:'auto', padding:`${isMobile?'0.5rem':'0.75rem'} ${isMobile?'0.4rem':'0.75rem'}` }}>
 
         {/* Top row */}
         <div style={{ display:'flex', gap:gap, marginBottom:isMobile?'0.5rem':'0.75rem', alignItems:'center', width:'100%' }}>
@@ -596,19 +596,15 @@ export default function Solitaire() {
         </div>
       </div>
 
-      </div>{/* end tableau scroll */}
+        </div>{/* end tableau scroll */}
 
-      {/* Right panel — hint + stats */}
+      {/* Right panel */}
       {!isMobile && (
         <div style={{ width:200, background:'rgba(0,0,0,0.3)', borderLeft:'1px solid rgba(201,168,76,0.1)', padding:'1rem 0.85rem', display:'flex', flexDirection:'column', gap:12, flexShrink:0, overflowY:'auto' }}>
-          
-          {/* Hint button */}
           <div>
             <p style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8, fontWeight:700 }}>Hint</p>
-            <HintButton game={game} W={W} H={H} fs={fs} ss={ss} />
+            <HintButton game={game} />
           </div>
-
-          {/* Current game stats */}
           <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'10px' }}>
             <p style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8, fontWeight:700 }}>This game</p>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
@@ -628,47 +624,34 @@ export default function Solitaire() {
               <span style={{ fontSize:'0.82rem', color:'#c9a84c', fontWeight:700 }}>{game.stock.length}</span>
             </div>
           </div>
-
-          {/* Cards placed on foundation */}
           <div style={{ background:'rgba(0,0,0,0.2)', borderRadius:8, padding:'10px' }}>
             <p style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8, fontWeight:700 }}>Foundation</p>
             {game.foundations.map((f, fi) => (
               <div key={fi} style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
                 <span style={{ fontSize:'0.82rem', color: fi===1||fi===2 ? '#c0392b' : 'rgba(255,255,255,0.8)' }}>{SUITS[fi]}</span>
                 <span style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)' }}>
-                  {f.length === 0 ? '—' : f.length === 13 ? '✅ Complete' : `A → ${f[f.length-1].value}`}
+                  {f.length === 0 ? '—' : f.length === 13 ? '✅' : 'A → ' + f[f.length-1].value}
                 </span>
               </div>
             ))}
             <div style={{ marginTop:6, borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:6 }}>
-              <div style={{ display:'flex', justifyContent:'space-between' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
                 <span style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)' }}>Progress</span>
                 <span style={{ fontSize:'0.82rem', color:'#5DCAA5', fontWeight:700 }}>{game.foundations.reduce((s,f)=>s+f.length,0)}/52</span>
               </div>
-              <div style={{ marginTop:4, height:4, background:'rgba(255,255,255,0.08)', borderRadius:2 }}>
-                <div style={{ height:4, background:'#5DCAA5', borderRadius:2, width:`${(game.foundations.reduce((s,f)=>s+f.length,0)/52)*100}%`, transition:'width 0.3s' }} />
+              <div style={{ height:4, background:'rgba(255,255,255,0.08)', borderRadius:2 }}>
+                <div style={{ height:4, background:'#5DCAA5', borderRadius:2, width:(game.foundations.reduce((s,f)=>s+f.length,0)/52*100)+'%', transition:'width 0.3s' }} />
               </div>
             </div>
           </div>
-
-          {/* How to play */}
           <div style={{ background:'rgba(0,0,0,0.15)', borderRadius:8, padding:'10px' }}>
             <p style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8, fontWeight:700 }}>How to play</p>
             <p style={{ fontSize:'0.7rem', color:'rgba(245,240,232,0.4)', lineHeight:1.5 }}>
-              Build 4 foundation piles from A→K by suit.<br/><br/>
-              On tableau, place cards in descending order, alternating red/black.<br/><br/>
-              Only Kings can start an empty column.<br/><br/>
-              <strong style={{ color:'rgba(245,240,232,0.6)' }}>Double-click</strong> to auto-send to foundation.
+              Build 4 piles from A to K by suit. Place cards in descending order, alternating red and black. Only Kings can start empty columns. Double-click to auto-send to foundation.
             </p>
           </div>
-
         </div>
       )}
-      </div>{/* end board flex */}
-
-      {/* Bottom hint */}
-      <div style={{ textAlign:'center', padding:'4px', fontSize:'0.62rem', color:'rgba(245,240,232,0.2)', flexShrink:0 }}>
-        Click to select · Click destination to move · Double-click to auto-move to foundation
       </div>
     </div>
   )
