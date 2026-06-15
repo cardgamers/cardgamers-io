@@ -23,6 +23,7 @@ import Tournaments from './pages/Tournaments'
 import ContainerTycoon from './pages/ContainerTycoon'
 import './index.css'
 
+// Only used for routes that truly require a real account (multiplayer)
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return (
@@ -46,19 +47,26 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/lobby" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
-        <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
-        <Route path="/game/solitaire" element={<ProtectedRoute><Solitaire /></ProtectedRoute>} />
+
+        {/* Open to guests — no login required */}
+        <Route path="/lobby" element={<Lobby />} />
+        <Route path="/game/solitaire" element={<Solitaire />} />
+        <Route path="/game/bridge" element={<Bridge />} />
+        <Route path="/game/teen-patti" element={<TeenPatti />} />
+        <Route path="/game/spades" element={<Spades />} />
+        <Route path="/game/container-tycoon" element={<ContainerTycoon />} />
+
+        {/* Multiplayer — requires real account */}
         <Route path="/game/rummy" element={<ProtectedRoute><Rummy /></ProtectedRoute>} />
-        <Route path="/game/bridge" element={<ProtectedRoute><Bridge /></ProtectedRoute>} />
-        <Route path="/game/teen-patti" element={<ProtectedRoute><TeenPatti /></ProtectedRoute>} />
-        <Route path="/game/spades" element={<ProtectedRoute><Spades /></ProtectedRoute>} />
-        <Route path="/game/container-tycoon" element={<ProtectedRoute><ContainerTycoon /></ProtectedRoute>} />
-        <Route path="/game/:gameId" element={<ProtectedRoute><ComingSoon /></ProtectedRoute>} />
+
+        {/* Account-only pages */}
+        <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+        <Route path="/game/:gameId" element={<ComingSoon />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/how-to-play" element={<HowToPlay />} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/about" element={<About />} />
         <Route path="/games" element={<Games />} />
         <Route path="/tournaments" element={<Tournaments />} />

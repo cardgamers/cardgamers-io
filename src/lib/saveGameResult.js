@@ -1,19 +1,11 @@
 import { supabase } from './supabase'
 
-/**
- * Save a game result to game_history and update leaderboard + profile
- * @param {string} gameType - 'solitaire' | 'bridge' | 'rummy' | 'teen_patti'
- * @param {boolean} playerWon
- * @param {number} score
- * @param {number} ratingChange
- * @param {object} metadata - optional extra data { moves, duration_seconds, ... }
- */
 export async function saveGameResult(gameType, playerWon, score = 0, ratingChange = 0, metadata = {}) {
   try {
     const { data: { user } } = await supabase.auth.getUser()
+    // Guests have no Supabase user — skip silently
     if (!user) return
 
-    // Save game history — now includes moves and duration_seconds as proper columns
     await supabase.from('game_history').insert({
       user_id: user.id,
       game_type: gameType,
@@ -25,7 +17,6 @@ export async function saveGameResult(gameType, playerWon, score = 0, ratingChang
       metadata: metadata,
     })
 
-    // Get current profile
     const { data: prof } = await supabase
       .from('profiles')
       .select('games_played, games_won, rating, username, plan')
@@ -38,14 +29,12 @@ export async function saveGameResult(gameType, playerWon, score = 0, ratingChang
     const newPlayed = (prof.games_played || 0) + 1
     const newWon = (prof.games_won || 0) + (playerWon ? 1 : 0)
 
-    // Update profile
     await supabase.from('profiles').update({
       games_played: newPlayed,
       games_won: newWon,
       rating: newRating,
     }).eq('id', user.id)
 
-    // Get current leaderboard row
     const { data: lb } = await supabase
       .from('leaderboard')
       .select('*')
