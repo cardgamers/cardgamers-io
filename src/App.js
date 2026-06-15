@@ -22,9 +22,11 @@ import Games from './pages/Games'
 import Tournaments from './pages/Tournaments'
 import ContainerTycoon from './pages/ContainerTycoon'
 import BridgeGuide from './pages/BridgeGuide'
+import LearnSolitaire from './pages/LearnSolitaire'
+import LearnRummy from './pages/LearnRummy'
+import LearnSpades from './pages/LearnSpades'
 import './index.css'
 
-// Only used for routes that truly require a real account (multiplayer)
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return (
@@ -64,8 +66,11 @@ function AppRoutes() {
         <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-        {/* Learn / SEO content */}
+        {/* Learn / How-to guides */}
         <Route path="/learn/bridge" element={<BridgeGuide />} />
+        <Route path="/learn/solitaire" element={<LearnSolitaire />} />
+        <Route path="/learn/rummy" element={<LearnRummy />} />
+        <Route path="/learn/spades" element={<LearnSpades />} />
 
         {/* Info pages */}
         <Route path="/game/:gameId" element={<ComingSoon />} />

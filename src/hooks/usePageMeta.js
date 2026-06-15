@@ -1,6 +1,4 @@
 // src/hooks/usePageMeta.js
-// Updates page title + meta description dynamically per route
-
 import { useEffect } from 'react'
 
 const PAGE_META = {
@@ -31,6 +29,18 @@ const PAGE_META = {
   '/learn/bridge': {
     title: 'How to Play Bridge — Complete Beginner\'s Guide | CardGamers.io',
     description: 'Learn Bridge from scratch. 11 chapters covering bidding, card play, scoring, conventions and strategy. The clearest Bridge guide for beginners online.',
+  },
+  '/learn/solitaire': {
+    title: 'How to Play Solitaire — Visual Step-by-Step Guide | CardGamers.io',
+    description: 'Learn Klondike Solitaire with interactive visual examples. Setup, moving cards, the Foundation, Stock pile and winning strategy — all clearly explained.',
+  },
+  '/learn/rummy': {
+    title: 'How to Play Rummy — Visual Guide with Examples | CardGamers.io',
+    description: 'Learn Gin Rummy with visual card examples. Sets, runs, knocking, strategy — everything a beginner needs to start winning at Rummy.',
+  },
+  '/learn/spades': {
+    title: 'How to Play Spades — Visual Guide with Examples | CardGamers.io',
+    description: 'Learn Spades with visual trick examples. Trump rules, bidding, scoring, Nil bids and strategy — the complete beginner\'s guide to Spades.',
   },
   '/how-to-play': {
     title: 'How to Play Card Games — Bridge, Rummy, Spades & Solitaire | CardGamers.io',
@@ -86,12 +96,12 @@ export function usePageMeta(path) {
       if (el) el.setAttribute(attr, value)
     }
 
-    setMeta('meta[name="description"]',         'content', meta.description)
-    setMeta('meta[property="og:title"]',         'content', meta.title)
-    setMeta('meta[property="og:description"]',   'content', meta.description)
-    setMeta('meta[property="og:url"]',           'content', `https://www.cardgamers.io${path}`)
-    setMeta('meta[name="twitter:title"]',        'content', meta.title)
-    setMeta('meta[name="twitter:description"]',  'content', meta.description)
+    setMeta('meta[name="description"]',        'content', meta.description)
+    setMeta('meta[property="og:title"]',        'content', meta.title)
+    setMeta('meta[property="og:description"]',  'content', meta.description)
+    setMeta('meta[property="og:url"]',          'content', `https://www.cardgamers.io${path}`)
+    setMeta('meta[name="twitter:title"]',       'content', meta.title)
+    setMeta('meta[name="twitter:description"]', 'content', meta.description)
 
     return () => { document.title = DEFAULT_META.title }
   }, [path])
