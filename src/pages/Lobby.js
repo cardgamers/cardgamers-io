@@ -5,7 +5,6 @@ const GAMES = [
   { id: 'solitaire', suit: '♣', name: 'Solitaire', desc: 'Klondike Solitaire. Perfect solo play.', players: '1 player', status: 'live', color: '#5DCAA5', path: '/game/solitaire' },
   { id: 'bridge', suit: '♠', name: 'Bridge', desc: 'The flagship. 4-player contract bridge with full bidding.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/bridge' },
   { id: 'rummy', suit: '♥', name: 'Rummy', desc: 'Gin Rummy against real opponents. Sign in to play.', players: '2–4 players', status: 'live', color: '#c0392b', path: '/game/rummy', requiresAuth: true },
-  { id: 'teen-patti', suit: '🪔', name: 'Teen Patti', desc: 'The royal Indian card game. Classic, Muflis and AK47 variants.', players: '2–4 players', status: 'live', color: '#FFD700', path: '/game/teen-patti' },
   { id: 'spades', suit: '♠', name: 'Spades', desc: 'Partnership bidding and trick-taking.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/spades' },
   { id: 'poker', suit: '♦', name: 'Poker', desc: "Texas Hold'em — coming soon!", players: '2–9 players', status: 'soon', color: '#85B7EB', path: '#' },
 ]
@@ -95,7 +94,6 @@ export default function Lobby() {
                   cursor: isDisabled ? 'not-allowed' : 'pointer',
                   transition: 'transform 0.15s, border-color 0.15s',
                   display: 'block',
-                  position: 'relative',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
@@ -128,7 +126,7 @@ export default function Lobby() {
           </div>
         )}
 
-        {/* Sign-up CTA for guests at bottom */}
+        {/* Sign-up CTA for guests */}
         {isGuest && (
           <div style={{ marginTop: '2.5rem', background: 'linear-gradient(135deg, rgba(93,202,165,0.1), rgba(93,202,165,0.04))', border: '1px solid rgba(93,202,165,0.25)', borderRadius: 14, padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>

@@ -4,12 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 const GAME_KEYS = [
-  { id: 'bridge',    suit: '♠', name: 'Bridge',     key: 'bridge',    status: 'live',  path: '/game/bridge' },
-  { id: 'rummy',     suit: '♥', name: 'Rummy',      key: 'rummy',     status: 'live',  path: '/game/rummy' },
-  { id: 'teen-patti',suit: '🪔', name: 'Teen Patti', key: 'teenPatti', status: 'live',  path: '/game/teen-patti' },
-  { id: 'solitaire', suit: '♣', name: 'Solitaire',  key: 'solitaire', status: 'live',  path: '/game/solitaire' },
-  { id: 'spades',    suit: '♠', name: 'Spades',     key: 'spades',    status: 'live',  path: '/game/spades' },
-  { id: 'poker',     suit: '♦', name: 'Poker',      key: 'poker',     status: 'soon',  path: '#' },
+  { id: 'bridge',    suit: '♠', name: 'Bridge',    key: 'bridge',    status: 'live', path: '/game/bridge' },
+  { id: 'rummy',     suit: '♥', name: 'Rummy',     key: 'rummy',     status: 'live', path: '/game/rummy' },
+  { id: 'spades',    suit: '♠', name: 'Spades',    key: 'spades',    status: 'live', path: '/game/spades' },
+  { id: 'solitaire', suit: '♣', name: 'Solitaire', key: 'solitaire', status: 'live', path: '/game/solitaire' },
+  { id: 'poker',     suit: '♦', name: 'Poker',     key: 'poker',     status: 'soon', path: '#' },
 ]
 
 export default function Home() {
@@ -57,7 +56,7 @@ export default function Home() {
           </h1>
           <p style={s.heroSub}>{t('home.heroSub')}</p>
           <div style={s.heroActions}>
-            <Link to="/signup" className="btn-gold" style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}>
+            <Link to="/lobby" className="btn-gold" style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}>
               {t('home.startPlaying')}
             </Link>
             <a href="#games" className="btn-outline" style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}>
@@ -66,7 +65,7 @@ export default function Home() {
           </div>
           <div style={s.heroStats}>
             {[
-              ['6', t('home.stats.games')],
+              ['5', t('home.stats.games')],
               [t('home.stats.liveLabel'), t('home.stats.opponents')],
               [t('home.stats.freeLabel'), t('home.stats.free')],
               [t('home.stats.noLabel'), t('home.stats.download')],
@@ -140,7 +139,7 @@ export default function Home() {
           </p>
           <div style={s.pricingGrid}>
             {[
-              { name: 'Free',  price: '$0',  planKey: 'free',  featured: false, link: '/signup' },
+              { name: 'Free',  price: '$0',  planKey: 'free',  featured: false, link: '/lobby' },
               { name: 'Plus',  price: '$6',  planKey: 'plus',  featured: true,  link: '/upgrade' },
               { name: 'Club',  price: '$30', planKey: 'club',  featured: false, link: '/signup' },
             ].map(plan => {
