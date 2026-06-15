@@ -1,45 +1,60 @@
 // src/hooks/usePageMeta.js
 // Updates page title + meta description dynamically per route
-// This helps Google index each game page with the right keywords
 
 import { useEffect } from 'react'
 
 const PAGE_META = {
   '/': {
-    title: 'CardGamers.io — Play Bridge, Rummy, Solitaire & Card Games Online Free',
-    description: 'Play Bridge, Rummy, Teen Patti, Spades and Solitaire online free. No download needed. Real opponents, bot practice, live tournaments.',
+    title: 'CardGamers.io — Play Bridge, Rummy, Spades & Solitaire Online Free',
+    description: 'Play Bridge, Rummy, Spades and Solitaire online free. No download needed. Real opponents, smart bots, live leaderboards. The best free card games platform.',
   },
-  '/game/solitaire': {
-    title: 'Free Solitaire Online — No Download | CardGamers.io',
-    description: 'Play Klondike Solitaire free online. No download, no ads. Track your score, moves and time. Hint system included. Works on mobile and desktop.',
+  '/lobby': {
+    title: 'Game Lobby — Choose Your Card Game | CardGamers.io',
+    description: 'Pick a card game and start playing instantly. Bridge, Rummy, Spades and Solitaire — free to play, no download, no sign-up required.',
   },
   '/game/bridge': {
     title: 'Play Bridge Online Free — Rubber & Duplicate Bridge | CardGamers.io',
-    description: 'Play Bridge online free against smart bots. Rubber and Duplicate formats. Standard American bidding. No download needed. Practice anytime.',
+    description: 'Play Bridge online free against smart bots. Rubber and Duplicate formats, Standard American bidding, dummy hand revealed. No download needed.',
   },
   '/game/rummy': {
-    title: 'Play Rummy Online Free — Multiplayer Card Game | CardGamers.io',
-    description: 'Play Gin Rummy online free against real opponents. Form sets and sequences. No download needed. Works on mobile and desktop.',
-  },
-  '/game/teen-patti': {
-    title: 'Play Teen Patti Online Free — Classic, AK47 & Muflis | CardGamers.io',
-    description: 'Play Teen Patti online free. Three variants — Classic, AK47 and Muflis. No download needed. India\'s favourite card game in your browser.',
+    title: 'Play Rummy Online Free — Multiplayer Gin Rummy | CardGamers.io',
+    description: 'Play Gin Rummy online free against real opponents. Form sets and runs, track your rating, climb the leaderboard. No download needed.',
   },
   '/game/spades': {
-    title: 'Play Spades Online Free — Card Game with Bots | CardGamers.io',
-    description: 'Play Spades online free against bots. Bid, bluff and take tricks. No download needed. Works on mobile and desktop.',
+    title: 'Play Spades Online Free — Classic Trick-Taking Card Game | CardGamers.io',
+    description: 'Play Spades online free. Bid your tricks, play your hand, beat the bots. Classic partnership Spades with full scoring. No download needed.',
+  },
+  '/game/solitaire': {
+    title: 'Play Solitaire Online Free — Klondike Solitaire | CardGamers.io',
+    description: 'Play Klondike Solitaire free online. No ads, no download. Track your moves, time and win streak. Hint system included. Works on mobile and desktop.',
+  },
+  '/learn/bridge': {
+    title: 'How to Play Bridge — Complete Beginner\'s Guide | CardGamers.io',
+    description: 'Learn Bridge from scratch. 11 chapters covering bidding, card play, scoring, conventions and strategy. The clearest Bridge guide for beginners online.',
+  },
+  '/how-to-play': {
+    title: 'How to Play Card Games — Bridge, Rummy, Spades & Solitaire | CardGamers.io',
+    description: 'Step-by-step guides for every card game on CardGamers.io. Learn Bridge, Rummy, Spades and Solitaire rules and strategy from scratch.',
+  },
+  '/leaderboard': {
+    title: 'Leaderboard — Top Card Game Players | CardGamers.io',
+    description: 'See the top ranked players on CardGamers.io. Global rankings for Bridge, Rummy, Spades and Solitaire. Updated in real time.',
+  },
+  '/upgrade': {
+    title: 'Upgrade to Plus — Ad-Free Card Games | CardGamers.io',
+    description: 'Go ad-free, unlock hard bots, full game history and private club rooms. CardGamers.io Plus from $6/month.',
   },
   '/about': {
-    title: 'About CardGamers.io — Free Online Card Games',
-    description: 'CardGamers.io is a free browser-based card game platform. Play Bridge, Rummy, Teen Patti, Spades and Solitaire from any device, no download needed.',
+    title: 'About CardGamers.io — Free Online Card Games Platform',
+    description: 'CardGamers.io is a free browser-based card game platform. Play Bridge, Rummy, Spades and Solitaire from any device. No download, no sign-up needed to try.',
   },
   '/games': {
     title: 'All Card Games — CardGamers.io',
-    description: 'Browse all card games on CardGamers.io. Bridge, Rummy, Teen Patti, Spades, Solitaire and more. Free to play, no download needed.',
+    description: 'Browse all card games on CardGamers.io. Bridge, Rummy, Spades, Solitaire and more. Free to play, no download needed.',
   },
-  '/leaderboard': {
-    title: 'Leaderboard — CardGamers.io',
-    description: 'See the top card game players on CardGamers.io. Rankings for Bridge, Rummy, Teen Patti, Spades and Solitaire.',
+  '/tournaments': {
+    title: 'Card Game Tournaments — CardGamers.io',
+    description: 'Compete in Bridge, Rummy and Spades tournaments on CardGamers.io. Test your skills against the best players.',
   },
   '/contact': {
     title: 'Contact Us — CardGamers.io',
@@ -57,40 +72,27 @@ const PAGE_META = {
 
 const DEFAULT_META = {
   title: 'CardGamers.io — Play Card Games Online Free',
-  description: 'Play Bridge, Rummy, Teen Patti, Spades and Solitaire online free. No download needed.',
+  description: 'Play Bridge, Rummy, Spades and Solitaire online free. No download needed. Smart bots, real opponents, live leaderboards.',
 }
 
 export function usePageMeta(path) {
   useEffect(() => {
     const meta = PAGE_META[path] || DEFAULT_META
 
-    // Update title
     document.title = meta.title
 
-    // Update description
-    let desc = document.querySelector('meta[name="description"]')
-    if (desc) desc.setAttribute('content', meta.description)
-
-    // Update OG tags
-    let ogTitle = document.querySelector('meta[property="og:title"]')
-    if (ogTitle) ogTitle.setAttribute('content', meta.title)
-
-    let ogDesc = document.querySelector('meta[property="og:description"]')
-    if (ogDesc) ogDesc.setAttribute('content', meta.description)
-
-    let ogUrl = document.querySelector('meta[property="og:url"]')
-    if (ogUrl) ogUrl.setAttribute('content', `https://www.cardgamers.io${path}`)
-
-    // Update Twitter
-    let twTitle = document.querySelector('meta[name="twitter:title"]')
-    if (twTitle) twTitle.setAttribute('content', meta.title)
-
-    let twDesc = document.querySelector('meta[name="twitter:description"]')
-    if (twDesc) twDesc.setAttribute('content', meta.description)
-
-    // Restore default on unmount
-    return () => {
-      document.title = DEFAULT_META.title
+    const setMeta = (selector, attr, value) => {
+      const el = document.querySelector(selector)
+      if (el) el.setAttribute(attr, value)
     }
+
+    setMeta('meta[name="description"]',         'content', meta.description)
+    setMeta('meta[property="og:title"]',         'content', meta.title)
+    setMeta('meta[property="og:description"]',   'content', meta.description)
+    setMeta('meta[property="og:url"]',           'content', `https://www.cardgamers.io${path}`)
+    setMeta('meta[name="twitter:title"]',        'content', meta.title)
+    setMeta('meta[name="twitter:description"]',  'content', meta.description)
+
+    return () => { document.title = DEFAULT_META.title }
   }, [path])
 }

@@ -21,6 +21,7 @@ import About from './pages/About'
 import Games from './pages/Games'
 import Tournaments from './pages/Tournaments'
 import ContainerTycoon from './pages/ContainerTycoon'
+import BridgeGuide from './pages/BridgeGuide'
 import './index.css'
 
 // Only used for routes that truly require a real account (multiplayer)
@@ -63,6 +64,10 @@ function AppRoutes() {
         <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
+        {/* Learn / SEO content */}
+        <Route path="/learn/bridge" element={<BridgeGuide />} />
+
+        {/* Info pages */}
         <Route path="/game/:gameId" element={<ComingSoon />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
