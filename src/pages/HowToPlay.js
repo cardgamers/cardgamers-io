@@ -9,39 +9,19 @@ const GAMES = {
     intro: 'Contract Bridge is widely considered the greatest card game ever invented. It combines skill, strategy, memory, and partnership in a way no other game can match.',
     deepLink: '/learn/bridge',
     deepLinkLabel: 'Read the full 11-chapter Bridge guide →',
+    deepLinkDesc: 'Our complete guide covers bidding systems, card play, scoring, conventions and strategy across 11 chapters.',
+    deepLinkBanner: '♠ Want to really learn Bridge?',
+    interactiveLink: '/learn/bridge',
+    interactiveLinkLabel: 'Visual step-by-step Bridge guide →',
     sections: [
-      {
-        title: 'The Basics',
-        content: 'Bridge is played by 4 players in two partnerships — North/South vs East/West. A standard 52-card deck is used. The goal is to win "tricks" and fulfil a contract you bid for during the auction.'
-      },
-      {
-        title: 'The Deal',
-        content: 'Each player receives 13 cards. Cards are ranked A K Q J 10 9 8 7 6 5 4 3 2 (Ace highest). Suits rank Spades > Hearts > Diamonds > Clubs for bidding purposes.'
-      },
-      {
-        title: 'The Auction (Bidding)',
-        content: 'Before play begins, players bid to win the contract. A bid states how many tricks above 6 your partnership will win, and in which suit (or No Trump). For example, "2 Hearts" means your side will win at least 8 tricks with Hearts as trumps. Bidding goes clockwise. You can bid higher, double, or pass. Three consecutive passes ends the auction.'
-      },
-      {
-        title: 'Point Count (HCP)',
-        content: 'Ace = 4 points, King = 3, Queen = 2, Jack = 1. Count your High Card Points (HCP) to judge your hand strength. 12+ HCP is usually enough to open the bidding. 26 combined HCP with partner typically makes game.'
-      },
-      {
-        title: 'Standard American Opening Bids',
-        content: '1NT = 15-17 HCP balanced hand. 1♠/1♥ = 5+ cards in the major, 12-21 HCP. 1♣/1♦ = 3+ cards in the minor, 12-21 HCP. 2♣ = Very strong hand, 22+ HCP. 2♥/2♠/2♦ = Weak two, 6-10 HCP with 6-card suit.'
-      },
-      {
-        title: 'The Play',
-        content: "The player to the left of the declarer makes the opening lead. Declarer's partner (the Dummy) then lays their cards face up on the table. Declarer plays both their own hand and the Dummy. Play goes clockwise. You must follow suit if possible. If you can't follow suit, you may trump or discard."
-      },
-      {
-        title: 'Winning Tricks',
-        content: 'The highest card of the suit led wins the trick, unless a trump card is played. The winner of each trick leads to the next. After all 13 tricks, count how many your side won.'
-      },
-      {
-        title: 'Scoring',
-        content: 'If declarer makes their contract, they score points. Major suit tricks (♥♠) score 30 points each. Minor suit tricks (♣♦) score 20 each. No Trump: 40 for first trick, 30 each after. 100+ points in one hand = Game. Failing the contract gives defenders penalty points.'
-      },
+      { title: 'The Basics', content: 'Bridge is played by 4 players in two partnerships — North/South vs East/West. A standard 52-card deck is used. The goal is to win "tricks" and fulfil a contract you bid for during the auction.' },
+      { title: 'The Deal', content: 'Each player receives 13 cards. Cards are ranked A K Q J 10 9 8 7 6 5 4 3 2 (Ace highest). Suits rank Spades > Hearts > Diamonds > Clubs for bidding purposes.' },
+      { title: 'The Auction (Bidding)', content: 'Before play begins, players bid to win the contract. A bid states how many tricks above 6 your partnership will win, and in which suit (or No Trump). For example, "2 Hearts" means your side will win at least 8 tricks with Hearts as trumps. Bidding goes clockwise. You can bid higher, double, or pass. Three consecutive passes ends the auction.' },
+      { title: 'Point Count (HCP)', content: 'Ace = 4 points, King = 3, Queen = 2, Jack = 1. Count your High Card Points (HCP) to judge your hand strength. 12+ HCP is usually enough to open the bidding. 26 combined HCP with partner typically makes game.' },
+      { title: 'Standard American Opening Bids', content: '1NT = 15-17 HCP balanced hand. 1♠/1♥ = 5+ cards in the major, 12-21 HCP. 1♣/1♦ = 3+ cards in the minor, 12-21 HCP. 2♣ = Very strong hand, 22+ HCP. 2♥/2♠/2♦ = Weak two, 6-10 HCP with 6-card suit.' },
+      { title: 'The Play', content: "The player to the left of the declarer makes the opening lead. Declarer's partner (the Dummy) then lays their cards face up on the table. Declarer plays both their own hand and the Dummy. Play goes clockwise. You must follow suit if possible. If you can't follow suit, you may trump or discard." },
+      { title: 'Winning Tricks', content: 'The highest card of the suit led wins the trick, unless a trump card is played. The winner of each trick leads to the next. After all 13 tricks, count how many your side won.' },
+      { title: 'Scoring', content: 'If declarer makes their contract, they score points. Major suit tricks (♥♠) score 30 points each. Minor suit tricks (♣♦) score 20 each. No Trump: 40 for first trick, 30 each after. 100+ points in one hand = Game. Failing the contract gives defenders penalty points.' },
     ],
     tips: [
       'Count your HCP before bidding — 12 is the minimum to open',
@@ -56,6 +36,8 @@ const GAMES = {
     title: 'How to Play Rummy',
     icon: '♥',
     intro: 'Rummy is one of the most popular card games in the world, loved for its combination of luck and strategy. The goal is simple: form your cards into valid sets and runs before your opponent.',
+    interactiveLink: '/learn/rummy',
+    interactiveLinkLabel: 'Visual step-by-step Rummy guide →',
     sections: [
       { title: 'The Basics', content: 'Rummy is played with a standard 52-card deck. In a 2-player game, each player gets 10 cards. The remaining cards form the draw pile with one card face-up as the discard pile.' },
       { title: 'Melds — Sets and Runs', content: 'Sets (also called Groups): Three or four cards of the same rank but different suits. Example: 7♠ 7♥ 7♦. Runs (also called Sequences): Three or more consecutive cards of the same suit. Example: 4♥ 5♥ 6♥ 7♥.' },
@@ -77,10 +59,12 @@ const GAMES = {
     title: 'How to Play Spades',
     icon: '♠',
     intro: 'Spades is a classic trick-taking partnership game where every hand is a delicate balance between bold bidding and careful card play. Easy to learn, endlessly strategic.',
+    interactiveLink: '/learn/spades',
+    interactiveLinkLabel: 'Visual step-by-step Spades guide →',
     sections: [
       { title: 'The Basics', content: 'Spades is played by 4 players in two partnerships — North/South vs East/West. A standard 52-card deck is used. Spades (♠) are always the trump suit — they beat every other suit.' },
       { title: 'The Deal', content: 'The dealer shuffles and deals all 52 cards, 13 to each player. Sort your hand by suit. Before any card is played, each player bids how many tricks they expect to win this hand.' },
-      { title: 'Bidding', content: 'Starting with the player to the dealer\'s left, each player bids a number from 0 to 13. Your bid is a promise — you and your partner\'s bids are added together to form your team\'s contract. Bidding "Nil" (zero tricks) is a special high-risk, high-reward bid.' },
+      { title: 'Bidding', content: "Starting with the player to the dealer's left, each player bids a number from 0 to 13. Your bid is a promise — you and your partner's bids are added together to form your team's contract. Bidding \"Nil\" (zero tricks) is a special high-risk, high-reward bid." },
       { title: 'The Play', content: 'The player to the dealer\'s left leads any card except a Spade (you cannot lead Spades until they have been "broken" — played on a trick where someone couldn\'t follow suit). Play goes clockwise. You must follow suit if possible. If you can\'t follow suit, play any card including a Spade.' },
       { title: 'Winning Tricks', content: 'The highest card of the suit led wins the trick — unless a Spade is played, in which case the highest Spade wins. The winner of each trick leads to the next.' },
       { title: 'Scoring', content: 'If your partnership makes your bid, you score 10 points per trick bid, plus 1 point for each overtrick (bags). If you fall short of your bid, you lose 10 points per trick bid. Nil bid made = +100 points. Nil bid failed = -100 points. Accumulating 10 bags costs you 100 points.' },
@@ -98,6 +82,8 @@ const GAMES = {
     title: 'How to Play Solitaire',
     icon: '♣',
     intro: 'Klondike Solitaire is the classic one-player card game that has entertained people for generations. The goal is to build four foundation piles, one per suit, from Ace to King.',
+    interactiveLink: '/learn/solitaire',
+    interactiveLinkLabel: 'Visual step-by-step Solitaire guide →',
     sections: [
       { title: 'The Setup', content: '28 cards are dealt into 7 tableau columns. Column 1 has 1 card (face up), column 2 has 2 cards (1 face down, 1 face up), and so on. The remaining 24 cards form the stock pile.' },
       { title: 'The Foundation', content: 'The four foundation slots (top right) need to be built up by suit from Ace to King: A 2 3 4 5 6 7 8 9 10 J Q K. You win when all 52 cards are in the foundations.' },
@@ -156,10 +142,23 @@ export default function HowToPlay() {
               <span style={{ fontSize: '2.5rem' }}>{game.icon}</span>
               <h2 className="display-title" style={{ fontSize: '1.6rem' }}>{game.title}</h2>
             </div>
-            <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, fontSize: '0.95rem' }}>{game.intro}</p>
+            <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, fontSize: '0.95rem', marginBottom: '1rem' }}>{game.intro}</p>
+
+            {/* Interactive guide link — shown on all games */}
+            {game.interactiveLink && (
+              <Link to={game.interactiveLink} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                fontSize: '0.85rem', color: 'var(--gold)', fontWeight: 600,
+                background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)',
+                borderRadius: 8, padding: '0.45rem 1rem', textDecoration: 'none',
+                transition: 'background 0.15s',
+              }}>
+                🎴 {game.interactiveLinkLabel}
+              </Link>
+            )}
           </div>
 
-          {/* Deep-dive banner — Bridge only */}
+          {/* Deep-dive banner — Bridge only (full 11-chapter guide) */}
           {game.deepLink && (
             <Link to={game.deepLink} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -170,10 +169,10 @@ export default function HowToPlay() {
             }}>
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--gold)', fontSize: '0.9rem', marginBottom: 3 }}>
-                  ♠ Want to really learn Bridge?
+                  {game.deepLinkBanner}
                 </div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                  Our complete guide covers bidding systems, card play, scoring, conventions and strategy across 11 chapters.
+                  {game.deepLinkDesc}
                 </div>
               </div>
               <span style={{ color: 'var(--gold)', fontWeight: 600, fontSize: '0.85rem', flexShrink: 0 }}>
@@ -211,10 +210,10 @@ export default function HowToPlay() {
             <Link to={`/game/${activeGame}`} className="btn-gold" style={{ fontSize: '1rem', padding: '0.85rem 2rem', display: 'inline-flex' }}>
               {game.icon} Play {game.title.replace('How to Play ', '')} Now →
             </Link>
-            {game.deepLink && (
+            {game.interactiveLink && (
               <div style={{ marginTop: '0.75rem' }}>
-                <Link to={game.deepLink} style={{ fontSize: '0.82rem', color: 'var(--gold)' }}>
-                  Or read the full Bridge guide first →
+                <Link to={game.interactiveLink} style={{ fontSize: '0.82rem', color: 'var(--gold)' }}>
+                  Or try the visual guide first →
                 </Link>
               </div>
             )}
