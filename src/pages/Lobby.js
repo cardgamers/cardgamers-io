@@ -6,7 +6,7 @@ const GAMES = [
   { id: 'bridge', suit: '♠', name: 'Bridge', desc: 'The flagship. 4-player contract bridge with full bidding.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/bridge' },
   { id: 'rummy', suit: '♥', name: 'Rummy', desc: 'Gin Rummy against real opponents. Sign in to play.', players: '2–4 players', status: 'live', color: '#c0392b', path: '/game/rummy', requiresAuth: true },
   { id: 'spades', suit: '♠', name: 'Spades', desc: 'Partnership bidding and trick-taking.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/spades' },
-  { id: 'poker', suit: '♦', name: 'Poker', desc: "Texas Hold'em — coming soon!", players: '2–9 players', status: 'soon', color: '#85B7EB', path: '#' },
+
 ]
 
 export default function Lobby() {

@@ -8,7 +8,6 @@ const GAME_KEYS = [
   { id: 'rummy',     suit: '♥', name: 'Rummy',     key: 'rummy',     status: 'live', path: '/game/rummy' },
   { id: 'spades',    suit: '♠', name: 'Spades',    key: 'spades',    status: 'live', path: '/game/spades' },
   { id: 'solitaire', suit: '♣', name: 'Solitaire', key: 'solitaire', status: 'live', path: '/game/solitaire' },
-  { id: 'poker',     suit: '♦', name: 'Poker',     key: 'poker',     status: 'soon', path: '#' },
 ]
 
 export default function Home() {
@@ -65,7 +64,7 @@ export default function Home() {
           </div>
           <div style={s.heroStats}>
             {[
-              ['5', t('home.stats.games')],
+              ['4', t('home.stats.games')],
               [t('home.stats.liveLabel'), t('home.stats.opponents')],
               [t('home.stats.freeLabel'), t('home.stats.free')],
               [t('home.stats.noLabel'), t('home.stats.download')],
