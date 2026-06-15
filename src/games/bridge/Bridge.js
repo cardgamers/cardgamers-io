@@ -675,7 +675,13 @@ export default function Bridge() {
               NS: {game.initialHCP?.NS ?? '?'} HCP &nbsp;·&nbsp; EW: {game.initialHCP?.EW ?? '?'} HCP
             </p>
             <div style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--gold)', margin:'0.75rem 0' }}>
-              {game.scoring.made ? `NS +${game.scoring.declarerScore}` : `EW +${game.scoring.defenderScore}`} pts
+              {(() => {
+                const declSide = (game.contract.declarer==='N'||game.contract.declarer==='S') ? 'NS' : 'EW'
+                const defSide = declSide === 'NS' ? 'EW' : 'NS'
+                return game.scoring.made
+                  ? `${declSide} +${game.scoring.declarerScore}`
+                  : `${defSide} +${game.scoring.defenderScore}`
+              })()} pts
             </div>
             <div style={{ display:'flex', gap:'0.75rem', justifyContent:'center' }}>
               <button className="btn-gold" onClick={startGame}>Next Hand</button>
