@@ -11,6 +11,17 @@ import {
   calculateDuplicateScore, createBridgeGame, getLegalCards
 } from './BridgeEngine'
 
+// ─── Mobile detection hook ────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 600)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 600)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
 // ─── Suit colour helper ───────────────────────────────────────────
 function suitColor(denom) {
   if (denom === 'H' || denom === 'D') return '#e74c3c'
@@ -18,7 +29,7 @@ function suitColor(denom) {
   return '#ffffff'
 }
 
-// ─── Full card (used in trick area and last trick overlay) ────────
+// ─── Full card ────────────────────────────────────────────────────
 function BCard({ card, selected, legal, onClick, w=80, h=112, faceDown }) {
   const notLegal = legal === false
   if (faceDown) return (
@@ -30,7 +41,7 @@ function BCard({ card, selected, legal, onClick, w=80, h=112, faceDown }) {
   if (!card) return null
   const col = SUIT_COLORS[card.suit]
   const fs = Math.max(10, Math.round(w * 0.17))
-  const ss = Math.max(16, Math.round(w * 0.32))
+  const ss = Math.max(14, Math.round(w * 0.30))
   return (
     <div onClick={!notLegal && onClick ? onClick : undefined} style={{
       width:w, height:h, borderRadius:8, flexShrink:0,
@@ -39,16 +50,16 @@ function BCard({ card, selected, legal, onClick, w=80, h=112, faceDown }) {
       boxShadow: selected ? '0 0 0 3px rgba(201,168,76,0.6),0 8px 20px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.35)',
       cursor: !notLegal && onClick ? 'pointer' : 'default',
       userSelect: 'none', position: 'relative',
-      transform: selected ? 'translateY(-18px)' : 'none',
+      transform: selected ? 'translateY(-12px)' : 'none',
       transition: 'transform 0.15s, box-shadow 0.15s',
       opacity: notLegal ? 0.3 : 1,
     }}>
-      <div style={{ position:'absolute', top:4, left:5, lineHeight:1.1 }}>
+      <div style={{ position:'absolute', top:3, left:4, lineHeight:1.1 }}>
         <div style={{ fontSize:fs, fontWeight:800, color:col, lineHeight:1 }}>{card.value}</div>
         <div style={{ fontSize:fs, color:col, lineHeight:1 }}>{SUIT_SYMBOLS[card.suit]}</div>
       </div>
       <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', fontSize:ss, color:col, lineHeight:1 }}>{SUIT_SYMBOLS[card.suit]}</div>
-      <div style={{ position:'absolute', bottom:4, right:5, transform:'rotate(180deg)', lineHeight:1.1 }}>
+      <div style={{ position:'absolute', bottom:3, right:4, transform:'rotate(180deg)', lineHeight:1.1 }}>
         <div style={{ fontSize:fs, fontWeight:800, color:col, lineHeight:1 }}>{card.value}</div>
         <div style={{ fontSize:fs, color:col, lineHeight:1 }}>{SUIT_SYMBOLS[card.suit]}</div>
       </div>
@@ -56,7 +67,7 @@ function BCard({ card, selected, legal, onClick, w=80, h=112, faceDown }) {
   )
 }
 
-// ─── BBO-style fanned hand — cards overlapping, rank+suit visible ─
+// ─── Fanned hand ──────────────────────────────────────────────────
 function FannedHand({ cards, legalCards, selectedCard, onCardClick, faceDown, vertical=false, cardW=72, cardH=100, overlap=22 }) {
   const n = cards.length
   if (n === 0) return null
@@ -84,7 +95,6 @@ function FannedHand({ cards, legalCards, selectedCard, onCardClick, faceDown, ve
     )
   }
 
-  // Face up fanned
   const totalW = cardW + (n-1)*overlap
   return (
     <div style={{ position:'relative', height:cardH+20, width:totalW, flexShrink:0 }}>
@@ -107,14 +117,37 @@ function FannedHand({ cards, legalCards, selectedCard, onCardClick, faceDown, ve
   )
 }
 
-// ─── Dummy hand — sorted by suit, face up ─────────────────────────
-function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=true }) {
+// ─── Dummy hand ───────────────────────────────────────────────────
+function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=true, isMobile=false }) {
   if (!hand) return null
   const trump = contract?.denomination === 'NT' ? null : contract?.denomination
   const legal = canPlay ? getLegalCards(hand, currentTrick, trump) : null
 
+  // Mobile: compact horizontal layout — suit symbol + cards in a row, all suits stacked
+  if (isMobile) {
+    return (
+      <div style={{ display:'flex', flexDirection:'column', gap:3 }}>
+        {['S','H','D','C'].map(suit => {
+          const cards = hand.filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
+          if (!cards.length) return null
+          const col = SUIT_COLORS[suit] === '#1a1a2e' ? 'rgba(255,255,255,0.8)' : SUIT_COLORS[suit]
+          return (
+            <div key={suit} style={{ display:'flex', alignItems:'center', gap:3 }}>
+              <span style={{ fontSize:'0.85rem', color:col, fontWeight:700, width:14, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+              <FannedHand
+                cards={cards}
+                legalCards={legal}
+                onCardClick={c => canPlay && onPlay(c)}
+                cardW={44} cardH={62} overlap={14}
+              />
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   if (horizontal) {
-    // Sorted by suit in columns — for North dummy
     return (
       <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
         {['S','H','D','C'].map(suit => {
@@ -137,7 +170,6 @@ function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=t
     )
   }
 
-  // Vertical dummy (for East/West) — 2 columns of suits to save vertical space
   const leftSuits = ['S','H']
   const rightSuits = ['D','C']
   return (
@@ -173,7 +205,7 @@ function ThinkingDots() {
   return <span>{'●'.repeat(d)}{'○'.repeat(3-d)}</span>
 }
 
-// ─── Bid bubble next to player name ──────────────────────────────
+// ─── Bid bubble ───────────────────────────────────────────────────
 function BidBubble({ bid, thinking }) {
   if (!bid && !thinking) return null
   const isPass = bid?.type === 'pass'
@@ -182,7 +214,7 @@ function BidBubble({ bid, thinking }) {
   const borderCol = thinking ? 'var(--gold)' : isPass ? 'rgba(0,0,0,0.15)' : 'rgba(201,168,76,0.9)'
   const denomCol = !isPass && !isDbl && (bid?.denomination==='H'||bid?.denomination==='D') ? '#c0392b' : bid?.denomination==='NT' ? '#1a56db' : '#1a1a1a'
   return (
-    <div style={{ background:bg, border:`2px solid ${borderCol}`, borderRadius:8, padding:'6px 14px', fontSize:'1.05rem', fontWeight:800, whiteSpace:'nowrap', minWidth:48, textAlign:'center', boxShadow:'0 3px 10px rgba(0,0,0,0.4)' }}>
+    <div style={{ background:bg, border:`2px solid ${borderCol}`, borderRadius:8, padding:'4px 10px', fontSize:'0.95rem', fontWeight:800, whiteSpace:'nowrap', minWidth:40, textAlign:'center', boxShadow:'0 3px 10px rgba(0,0,0,0.4)' }}>
       {thinking ? <span style={{ color:'var(--gold)' }}><ThinkingDots/></span>
         : isPass ? <span style={{ color:'#666' }}>P</span>
         : isDbl ? <span style={{ color:'#c0392b' }}>X</span>
@@ -200,11 +232,11 @@ function AuctionHistory({ auction, dealer }) {
   return (
     <div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:2, marginBottom:4 }}>
-        {['W','N','E','South'].map(p=><div key={p} style={{ textAlign:'center', fontSize:'0.6rem', color:'rgba(245,240,232,0.35)', fontWeight:700, letterSpacing:'0.05em' }}>{p}</div>)}
+        {['W','N','E','S'].map(p=><div key={p} style={{ textAlign:'center', fontSize:'0.6rem', color:'rgba(245,240,232,0.35)', fontWeight:700, letterSpacing:'0.05em' }}>{p}</div>)}
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:2 }}>
         {pad.map((b,i)=>(
-          <div key={i} style={{ textAlign:'center', padding:'4px 2px', borderRadius:4, fontSize:'0.78rem', fontWeight:700, background:b?'rgba(255,255,255,0.06)':'transparent', minHeight:24, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div key={i} style={{ textAlign:'center', padding:'3px 2px', borderRadius:4, fontSize:'0.78rem', fontWeight:700, background:b?'rgba(255,255,255,0.06)':'transparent', minHeight:22, display:'flex', alignItems:'center', justifyContent:'center' }}>
             {b ? (
               b.type==='pass' ? <span style={{ color:'rgba(255,255,255,0.3)' }}>P</span>
               : b.type==='double' ? <span style={{ color:'#e74c3c' }}>X</span>
@@ -217,8 +249,8 @@ function AuctionHistory({ auction, dealer }) {
   )
 }
 
-// ─── Bid panel (BBO-style grid) ───────────────────────────────────
-function BidPanel({ auction, onBid, onPass, onDouble, canDouble }) {
+// ─── Bid panel ────────────────────────────────────────────────────
+function BidPanel({ auction, onBid, onPass, onDouble, canDouble, isMobile }) {
   const [selLevel, setSelLevel] = useState(null)
   const dn = ['C','D','H','S','NT']
   const last = auction.reduce((l,b)=>b.type==='bid'?b:l, null)
@@ -234,22 +266,21 @@ function BidPanel({ auction, onBid, onPass, onDouble, canDouble }) {
   const denomCol = { C:'#fff', D:'#e74c3c', H:'#e74c3c', S:'#fff', NT:'#7eb5f5' }
 
   return (
-    <div style={{ background:'rgba(0,0,0,0.85)', borderRadius:14, padding:'12px 14px', border:'1px solid rgba(201,168,76,0.3)', width:'100%', maxWidth:360 }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-        <p style={{ fontSize:'0.7rem', color:'var(--gold)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em' }}>Your Bid</p>
+    <div style={{ background:'rgba(0,0,0,0.85)', borderRadius:12, padding: isMobile ? '8px 10px' : '12px 14px', border:'1px solid rgba(201,168,76,0.3)', width:'100%', maxWidth: isMobile ? '100%' : 360, boxSizing:'border-box' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+        <p style={{ fontSize:'0.68rem', color:'var(--gold)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em' }}>Your Bid</p>
         <div style={{ display:'flex', gap:6 }}>
-          {canDouble && <button onClick={onDouble} style={{ padding:'6px 16px', borderRadius:8, fontWeight:800, fontSize:'0.95rem', background:'rgba(192,57,43,0.15)', border:'2px solid #c0392b', color:'#e74c3c', cursor:'pointer' }}>X</button>}
-          <button onClick={onPass} style={{ padding:'6px 18px', borderRadius:8, fontWeight:700, fontSize:'0.85rem', background:'rgba(255,255,255,0.08)', border:'1.5px solid rgba(255,255,255,0.25)', color:'rgba(245,240,232,0.8)', cursor:'pointer' }}>Pass</button>
+          {canDouble && <button onClick={onDouble} style={{ padding: isMobile ? '5px 12px' : '6px 16px', borderRadius:8, fontWeight:800, fontSize:'0.9rem', background:'rgba(192,57,43,0.15)', border:'2px solid #c0392b', color:'#e74c3c', cursor:'pointer', minHeight:40 }}>X</button>}
+          <button onClick={onPass} style={{ padding: isMobile ? '5px 14px' : '6px 18px', borderRadius:8, fontWeight:700, fontSize:'0.85rem', background:'rgba(255,255,255,0.08)', border:'1.5px solid rgba(255,255,255,0.25)', color:'rgba(245,240,232,0.8)', cursor:'pointer', minHeight:40 }}>Pass</button>
         </div>
       </div>
-      {/* Level row */}
-      <div style={{ display:'flex', gap:5, marginBottom:8 }}>
+      <div style={{ display:'flex', gap:4, marginBottom:7 }}>
         {[1,2,3,4,5,6,7].map(lv => {
           const anyValid = dn.some(d => isValid(lv, d))
           const sel = selLevel === lv
           return (
             <button key={lv} onClick={()=>anyValid&&setSelLevel(sel?null:lv)} style={{
-              flex:1, height:36, borderRadius:7, fontSize:'1rem', fontWeight:700,
+              flex:1, height: isMobile ? 40 : 36, borderRadius:7, fontSize: isMobile ? '1rem' : '1rem', fontWeight:700,
               background: sel ? 'var(--gold)' : anyValid ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.02)',
               border: sel ? '2px solid var(--gold)' : `1.5px solid ${anyValid?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.04)'}`,
               color: sel ? 'var(--felt-dark)' : anyValid ? 'white' : 'rgba(255,255,255,0.15)',
@@ -258,28 +289,81 @@ function BidPanel({ auction, onBid, onPass, onDouble, canDouble }) {
           )
         })}
       </div>
-      {/* Denom row — only show when level selected */}
       {selLevel && (
-        <div style={{ display:'flex', gap:5 }}>
+        <div style={{ display:'flex', gap:4 }}>
           {dn.map(d => {
             const valid = isValid(selLevel, d)
             return (
               <button key={d} onClick={()=>valid&&(onBid(selLevel,d),setSelLevel(null))} style={{
-                flex:1, height:44, borderRadius:8, fontSize:'1.3rem', fontWeight:700,
+                flex:1, height: isMobile ? 48 : 44, borderRadius:8, fontSize: isMobile ? '1.2rem' : '1.3rem', fontWeight:700,
                 background: valid ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.02)',
                 border: `2px solid ${valid?denomCol[d]+'55':'rgba(255,255,255,0.04)'}`,
                 color: valid ? denomCol[d] : 'rgba(255,255,255,0.1)',
                 cursor: valid ? 'pointer' : 'not-allowed',
                 transition: 'background 0.1s',
-              }}
-              onMouseEnter={e=>{ if(valid) e.target.style.background='rgba(255,255,255,0.2)' }}
-              onMouseLeave={e=>{ if(valid) e.target.style.background='rgba(255,255,255,0.1)' }}
-              >{denomDisplay[d]}</button>
+              }}>{denomDisplay[d]}</button>
             )
           })}
         </div>
       )}
-      {!selLevel && <p style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.3)', textAlign:'center', marginTop:4 }}>Select a level above, then choose a suit</p>}
+      {!selLevel && <p style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.3)', textAlign:'center', marginTop:4 }}>Select a level, then choose a suit</p>}
+    </div>
+  )
+}
+
+// ─── Mobile sidebar sheet (bottom slide-up) ───────────────────────
+function MobileSidePanel({ game, myHand, showPanel, onClose }) {
+  if (!showPanel) return null
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}
+         onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()}
+           style={{ background:'#0d1f14', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'16px 16px 0 0', padding:'16px 14px', maxHeight:'70vh', overflowY:'auto' }}>
+        <div style={{ width:36, height:4, background:'rgba(255,255,255,0.15)', borderRadius:2, margin:'0 auto 14px' }} />
+        <div style={{ marginBottom:12 }}>
+          <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Bidding History</p>
+          <AuctionHistory auction={game.auction} dealer={game.dealer} />
+        </div>
+        {game.contract && (
+          <div style={{ background:'rgba(0,0,0,0.3)', borderRadius:8, padding:'8px 10px', marginBottom:10 }}>
+            <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Contract</p>
+            <p style={{ fontSize:'1rem', fontWeight:700, marginBottom:4 }}>
+              <span style={{ color:'white' }}>{game.contract.level}</span>
+              <span style={{ color: game.contract.denomination==='H'||game.contract.denomination==='D'?'#e74c3c':game.contract.denomination==='NT'?'#7eb5f5':'#ffffff' }}>{DENOM_SYMBOLS[game.contract.denomination]}</span>
+              <span style={{ color:'var(--text-muted)', fontSize:'0.75rem', marginLeft:4 }}>by {game.contract.declarer==='S'?'South':game.contract.declarer==='N'?'North':game.contract.declarer==='E'?'East':'West'}</span>
+            </p>
+            {game.phase==='playing' && <>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:2 }}>
+                <span style={{ fontSize:'0.72rem', color:'#5DCAA5' }}>NS won</span>
+                <span style={{ fontSize:'0.82rem', color:'#5DCAA5', fontWeight:700 }}>{game.tricks.NS}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                <span style={{ fontSize:'0.72rem', color:'#c0392b' }}>EW won</span>
+                <span style={{ fontSize:'0.82rem', color:'#c0392b', fontWeight:700 }}>{game.tricks.EW}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between', borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:4 }}>
+                <span style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>Need</span>
+                <span style={{ fontSize:'0.82rem', color:'var(--gold)', fontWeight:700 }}>{game.contract.tricksNeeded - game.tricks[(game.contract.declarer==='N'||game.contract.declarer==='S')?'NS':'EW']} more</span>
+              </div>
+            </>}
+          </div>
+        )}
+        <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'8px 10px', marginBottom:10 }}>
+          <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Your Hand · {countHCP(myHand)} HCP</p>
+          {['S','H','D','C'].map(suit => {
+            const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+            if (!cards.length) return null
+            const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.85)' : SUIT_COLORS[suit]
+            return <p key={suit} style={{ fontSize:'0.82rem', color:col, marginBottom:3 }}>{SUIT_SYMBOLS[suit]} {cards.map(c=>c.value).join(' ')}</p>
+          })}
+        </div>
+        <div style={{ background:'rgba(0,0,0,0.2)', borderRadius:8, padding:'8px 10px' }}>
+          <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Vulnerability</p>
+          <p style={{ fontSize:'0.8rem', color:game.vulnerability?.NS?'#c0392b':'#5DCAA5', marginBottom:3 }}>NS: {game.vulnerability?.NS?'Vul':'Not vul'}</p>
+          <p style={{ fontSize:'0.8rem', color:game.vulnerability?.EW?'#c0392b':'#5DCAA5' }}>EW: {game.vulnerability?.EW?'Vul':'Not vul'}</p>
+        </div>
+        <button onClick={onClose} style={{ width:'100%', marginTop:12, padding:'10px', borderRadius:8, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'rgba(245,240,232,0.7)', cursor:'pointer', fontSize:'0.85rem' }}>Close</button>
+      </div>
     </div>
   )
 }
@@ -288,6 +372,7 @@ function BidPanel({ auction, onBid, onPass, onDouble, canDouble }) {
 export default function Bridge() {
   usePageMeta('/game/bridge')
   const { profile } = useAuth()
+  const isMobile = useIsMobile()
   const [screen, setScreen] = useState('menu')
   const [gameMode, setGameMode] = useState('rubber')
   const [difficulty, setDifficulty] = useState('medium')
@@ -297,6 +382,7 @@ export default function Bridge() {
   const [lastTrick, setLastTrick] = useState(null)
   const [showLastTrick, setShowLastTrick] = useState(false)
   const [resultSaved, setResultSaved] = useState(false)
+  const [showSidePanel, setShowSidePanel] = useState(false)
   const botTimer = useRef(null)
   const lastTrickTimer = useRef(null)
   const isPlusUser = profile?.plan==='plus'||profile?.plan==='club'
@@ -424,7 +510,6 @@ export default function Bridge() {
 
   function startGame() {
     const newGame = createBridgeGame(gameMode,'S',difficulty,{N:'North',E:'East',W:'West'})
-    // Store initial HCP before any cards are played
     newGame.initialHCP = {
       NS: countHCP(newGame.hands['N']) + countHCP(newGame.hands['S']),
       EW: countHCP(newGame.hands['E']) + countHCP(newGame.hands['W']),
@@ -524,7 +609,6 @@ export default function Bridge() {
   const isDummyTurn = game.phase==='playing' && game.currentLeader===game.dummy && isDeclarer
   const legalCards = isMyPlayTurn ? getLegalCards(myHand, game.currentTrick, trump) : null
   const isMyTurn = isMyBidTurn || isMyPlayTurn || isDummyTurn
-  // Can double: last real bid was by opponents
   const lastRealBid = game.auction ? [...game.auction].reverse().find(b=>b.type==='bid') : null
   const canDouble = isMyBidTurn && lastRealBid && (lastRealBid.position==='W'||lastRealBid.position==='E')
   const botName = p => p==='N'?'North':p==='E'?'East':p==='W'?'West':'South'
@@ -533,21 +617,15 @@ export default function Bridge() {
   const dummyHand = dummyPos ? game.hands[dummyPos] : null
   const showDummy = game.dummyRevealed && dummyHand
 
-  // ── Card visibility rules ─────────────────────────────────────
-  // N dummy (S declares): show N face up
-  // S dummy (N declares): show S face up at bottom
-  // E dummy (W declares): show E face up on right
-  // W dummy (E declares): show W face up on left
   const isNorthDummy = dummyPos==='N' && showDummy
   const isWestDummy  = dummyPos==='W' && showDummy
   const isEastDummy  = dummyPos==='E' && showDummy
 
-  // Player label helper
   function playerLabel(pos) {
     const isDummy = dummyPos===pos && showDummy
     const isDecl = game.contract?.declarer===pos
     const name = pos==='S' ? 'South' : botName(pos)
-    return `${name} (${pos})${isDummy?' ★ Dummy':isDecl?' ★ Declarer':''}`
+    return `${name}${isDummy?' ★ Dummy':isDecl?' ★ Decl':''}`
   }
 
   function labelColor(pos) {
@@ -557,21 +635,46 @@ export default function Bridge() {
     return 'rgba(245,240,232,0.55)'
   }
 
+  // ── Mobile card sizes ──────────────────────────────────────────
+  const mCardW = isMobile ? 52 : 72
+  const mCardH = isMobile ? 73 : 101
+  const mOverlap = isMobile ? 16 : 24
+  const mSideCardW = isMobile ? 40 : 60
+  const mSideCardH = isMobile ? 56 : 84
+  const mSideOverlap = isMobile ? 11 : 15
+  const mSouthCardW = isMobile ? 56 : 88
+  const mSouthCardH = isMobile ? 78 : 123
+  const mSouthOverlap = isMobile ? 18 : 26
+  const mTrickW = isMobile ? 160 : 240
+  const mTrickH = isMobile ? 140 : 200
+  const mTrickCardW = isMobile ? 50 : 76
+  const mTrickCardH = isMobile ? 70 : 106
+
   return (
     <div style={{ paddingTop:56, height:'100vh', display:'flex', flexDirection:'column', background:'#0d1f14', overflow:'hidden' }}>
 
+      {/* ── Mobile info panel (bottom sheet) ── */}
+      {isMobile && (
+        <MobileSidePanel
+          game={game}
+          myHand={myHand}
+          showPanel={showSidePanel}
+          onClose={()=>setShowSidePanel(false)}
+        />
+      )}
+
       {/* ── Result overlay ── */}
       {game.phase==='complete' && game.scoring && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ background:'#1a3d28', border:'2px solid var(--gold)', borderRadius:18, padding:'2rem', textAlign:'center', maxWidth:400, width:'90%' }}>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
+          <div style={{ background:'#1a3d28', border:'2px solid var(--gold)', borderRadius:18, padding: isMobile ? '1.5rem 1.25rem' : '2rem', textAlign:'center', maxWidth:400, width:'100%' }}>
             <div style={{ fontSize:'2.5rem', marginBottom:'0.5rem' }}>{game.scoring.made?'🎉':'😔'}</div>
-            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.8rem', color:'var(--gold)', marginBottom:'0.4rem' }}>{game.scoring.made?'Contract Made!':'Contract Defeated!'}</h2>
-            <p style={{ color:'var(--cream)', marginBottom:'0.2rem' }}>{game.contract.level}{DENOM_SYMBOLS[game.contract.denomination]} by {game.contract.declarer==='S'?'South':botName(game.contract.declarer)}</p>
-            <p style={{ color:'var(--text-muted)', fontSize:'0.9rem', marginBottom:'0.2rem' }}>NS: {game.tricks.NS} tricks · EW: {game.tricks.EW} tricks</p>
-            <p style={{ color:'rgba(245,240,232,0.4)', fontSize:'0.8rem', marginBottom:'0.5rem' }}>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? '1.4rem' : '1.8rem', color:'var(--gold)', marginBottom:'0.4rem' }}>{game.scoring.made?'Contract Made!':'Contract Defeated!'}</h2>
+            <p style={{ color:'var(--cream)', marginBottom:'0.2rem', fontSize: isMobile ? '0.9rem' : '1rem' }}>{game.contract.level}{DENOM_SYMBOLS[game.contract.denomination]} by {game.contract.declarer==='S'?'South':botName(game.contract.declarer)}</p>
+            <p style={{ color:'var(--text-muted)', fontSize:'0.88rem', marginBottom:'0.2rem' }}>NS: {game.tricks.NS} tricks · EW: {game.tricks.EW} tricks</p>
+            <p style={{ color:'rgba(245,240,232,0.4)', fontSize:'0.78rem', marginBottom:'0.5rem' }}>
               NS: {game.initialHCP?.NS ?? '?'} HCP &nbsp;·&nbsp; EW: {game.initialHCP?.EW ?? '?'} HCP
             </p>
-            <div style={{ fontSize:'1.6rem', fontWeight:700, color:'var(--gold)', margin:'0.75rem 0' }}>
+            <div style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--gold)', margin:'0.75rem 0' }}>
               {game.scoring.made ? `NS +${game.scoring.declarerScore}` : `EW +${game.scoring.defenderScore}`} pts
             </div>
             <div style={{ display:'flex', gap:'0.75rem', justifyContent:'center' }}>
@@ -584,48 +687,52 @@ export default function Bridge() {
 
       {/* ── Last trick overlay ── */}
       {showLastTrick && lastTrick && (
-        <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', zIndex:150, background:'rgba(0,0,0,0.93)', border:'2px solid rgba(201,168,76,0.4)', borderRadius:16, padding:'20px 28px', textAlign:'center', boxShadow:'0 8px 40px rgba(0,0,0,0.6)' }}>
-          <p style={{ fontSize:'0.85rem', color:'var(--gold)', fontWeight:700, marginBottom:12 }}>
+        <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', zIndex:150, background:'rgba(0,0,0,0.93)', border:'2px solid rgba(201,168,76,0.4)', borderRadius:16, padding: isMobile ? '14px 16px' : '20px 28px', textAlign:'center', boxShadow:'0 8px 40px rgba(0,0,0,0.6)', maxWidth: isMobile ? '95vw' : 'none' }}>
+          <p style={{ fontSize:'0.82rem', color:'var(--gold)', fontWeight:700, marginBottom:10 }}>
             {lastTrick.winner==='S'?'South won':botName(lastTrick.winner)+' won'} the trick 👑
           </p>
-          <div style={{ display:'flex', gap:10, justifyContent:'center', alignItems:'flex-end' }}>
+          <div style={{ display:'flex', gap: isMobile ? 6 : 10, justifyContent:'center', alignItems:'flex-end' }}>
             {lastTrick.trick.map((t,i)=>(
               <div key={i} style={{ textAlign:'center' }}>
-                <div style={{ fontSize:'0.65rem', color:t.position===lastTrick.winner?'var(--gold)':'rgba(245,240,232,0.4)', marginBottom:4, fontWeight:t.position===lastTrick.winner?700:400 }}>
-                  {t.position==='S'?'South':botName(t.position)}{t.position===lastTrick.winner?' 👑':''}
+                <div style={{ fontSize:'0.6rem', color:t.position===lastTrick.winner?'var(--gold)':'rgba(245,240,232,0.4)', marginBottom:3, fontWeight:t.position===lastTrick.winner?700:400 }}>
+                  {t.position==='S'?'S':t.position}{t.position===lastTrick.winner?' 👑':''}
                 </div>
-                <BCard card={t.card} w={72} h={100} />
+                <BCard card={t.card} w={isMobile ? 52 : 72} h={isMobile ? 73 : 100} />
               </div>
             ))}
           </div>
-          <p style={{ fontSize:'0.7rem', color:'rgba(245,240,232,0.2)', marginTop:10 }}>Next trick starting...</p>
+          <p style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.2)', marginTop:8 }}>Next trick starting...</p>
         </div>
       )}
 
       {/* ── Header ── */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 1rem', height:44, background:'rgba(0,0,0,0.6)', borderBottom:'1px solid rgba(201,168,76,0.12)', flexShrink:0 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
-          <button onClick={()=>setScreen('menu')} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:'0.8rem' }}>← Menu</button>
-          <span style={{ fontFamily:"'Playfair Display',serif", color:'var(--gold)', fontWeight:700 }}>♠ Bridge</span>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.75rem', height:44, background:'rgba(0,0,0,0.6)', borderBottom:'1px solid rgba(201,168,76,0.12)', flexShrink:0, gap:6 }}>
+        <div style={{ display:'flex', alignItems:'center', gap: isMobile ? '0.4rem' : '0.75rem', minWidth:0, flex:1 }}>
+          <button onClick={()=>setScreen('menu')} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:'0.8rem', flexShrink:0 }}>← Menu</button>
+          <span style={{ fontFamily:"'Playfair Display',serif", color:'var(--gold)', fontWeight:700, flexShrink:0 }}>♠</span>
           {game.contract && (
-            <span style={{ fontSize:'0.72rem', background:'rgba(255,255,255,0.08)', color:'var(--cream)', padding:'3px 12px', borderRadius:20 }}>
+            <span style={{ fontSize:'0.7rem', background:'rgba(255,255,255,0.08)', color:'var(--cream)', padding:'2px 8px', borderRadius:20, flexShrink:0 }}>
               <span style={{ color:'white' }}>{game.contract.level}</span>
               <span style={{ color:suitColor(game.contract.denomination) }}>{DENOM_SYMBOLS[game.contract.denomination]}</span>
-              <span style={{ color:'var(--text-muted)' }}> · {game.contract.declarer==='S'?'South':botName(game.contract.declarer)} declares</span>
+              {!isMobile && <span style={{ color:'var(--text-muted)' }}> · {game.contract.declarer==='S'?'South':botName(game.contract.declarer)} declares</span>}
             </span>
           )}
         </div>
-        <div style={{ fontSize:'0.82rem', fontWeight:600 }}>
+        {/* Turn indicator */}
+        <div style={{ fontSize:'0.75rem', fontWeight:600, flexShrink:0 }}>
           {isMyTurn
-            ? <span style={{ color:'#5DCAA5' }}>🟢 {isDummyTurn?'Play dummy':'Your turn'}</span>
+            ? <span style={{ color:'#5DCAA5' }}>🟢 {isDummyTurn?'Dummy':'Your turn'}</span>
             : botThinking
-            ? <span style={{ color:'var(--gold)' }}>{botName(botThinking)} thinking <ThinkingDots/></span>
-            : <span style={{ color:'var(--text-muted)' }}>Waiting...</span>}
+            ? <span style={{ color:'var(--gold)' }}>{isMobile ? '...' : botName(botThinking)+' '}<ThinkingDots/></span>
+            : <span style={{ color:'var(--text-muted)' }}>Wait...</span>}
         </div>
-        <div style={{ display:'flex', gap:'1.25rem', fontSize:'0.82rem', fontWeight:600 }}>
-          <span style={{ color:'#5DCAA5' }}>NS: {game.tricks.NS}</span>
-          <span style={{ color:'#c0392b' }}>EW: {game.tricks.EW}</span>
-          {game.contract && <span style={{ color:'rgba(245,240,232,0.4)' }}>Need {game.contract.tricksNeeded}</span>}
+        <div style={{ display:'flex', gap: isMobile ? '0.6rem' : '1rem', fontSize:'0.78rem', fontWeight:600, flexShrink:0, alignItems:'center' }}>
+          <span style={{ color:'#5DCAA5' }}>NS:{game.tricks.NS}</span>
+          <span style={{ color:'#c0392b' }}>EW:{game.tricks.EW}</span>
+          {isMobile && (
+            <button onClick={()=>setShowSidePanel(true)} style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'rgba(245,240,232,0.7)', borderRadius:6, padding:'4px 8px', fontSize:'0.7rem', cursor:'pointer' }}>Info</button>
+          )}
+          {!isMobile && game.contract && <span style={{ color:'rgba(245,240,232,0.4)' }}>Need {game.contract.tricksNeeded}</span>}
         </div>
       </div>
 
@@ -634,46 +741,46 @@ export default function Bridge() {
         <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
 
           {/* NORTH */}
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4, padding:'8px 12px 4px', flexShrink:0 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:'0.72rem', fontWeight:600, color:labelColor('N') }}>{playerLabel('N')}</span>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding: isMobile ? '4px 6px 2px' : '8px 12px 4px', flexShrink:0 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize: isMobile ? '0.62rem' : '0.72rem', fontWeight:600, color:labelColor('N') }}>{playerLabel('N')}</span>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
             </div>
             {isNorthDummy
-              ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} horizontal />
-              : <FannedHand cards={game.hands['N']||[]} faceDown cardW={72} cardH={101} overlap={24} />
+              ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} horizontal isMobile={isMobile} />
+              : <FannedHand cards={game.hands['N']||[]} faceDown cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
             }
           </div>
 
           {/* MIDDLE ROW */}
-          <div style={{ flex:1, display:'flex', alignItems:'stretch', overflow:'hidden', minHeight:0, padding:'0 8px', gap:8 }}>
+          <div style={{ flex:1, display:'flex', alignItems:'stretch', overflow:'hidden', minHeight:0, padding: isMobile ? '0 4px' : '0 8px', gap: isMobile ? 4 : 8 }}>
 
             {/* WEST */}
-            <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0 }}>
-              <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)' }}>{playerLabel('W')}</span>
+            <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap: isMobile ? 4 : 8, flexShrink:0 }}>
+              <span style={{ fontSize:'0.6rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)' }}>{isMobile ? 'W' : playerLabel('W')}</span>
               {isWestDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} horizontal={false} />
-                : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={60} cardH={84} overlap={15} />
+                : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
               }
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
             </div>
 
             {/* CENTER */}
-            <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8, minWidth:0 }}>
+            <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap: isMobile ? 4 : 8, minWidth:0, overflow:'hidden' }}>
 
               {/* Bidding */}
               {game.phase==='bidding' && (
                 isMyBidTurn
-                  ? <BidPanel auction={game.auction} onBid={handleBid} onPass={handlePass} onDouble={handleDouble} canDouble={canDouble} />
-                  : <div style={{ textAlign:'center', padding:'16px 24px', background:'rgba(0,0,0,0.45)', borderRadius:14, border:'1px solid rgba(201,168,76,0.1)' }}>
-                      <p style={{ fontSize:'0.9rem', color:'var(--text-muted)', marginBottom:8 }}>Waiting for {botName(game.currentBidder)}...</p>
+                  ? <BidPanel auction={game.auction} onBid={handleBid} onPass={handlePass} onDouble={handleDouble} canDouble={canDouble} isMobile={isMobile} />
+                  : <div style={{ textAlign:'center', padding: isMobile ? '10px 12px' : '16px 24px', background:'rgba(0,0,0,0.45)', borderRadius:12, border:'1px solid rgba(201,168,76,0.1)' }}>
+                      <p style={{ fontSize:'0.82rem', color:'var(--text-muted)', marginBottom:6 }}>Waiting for {botName(game.currentBidder)}...</p>
                       {botThinking && <ThinkingDots/>}
                     </div>
               )}
 
               {/* Trick area */}
               {game.phase==='playing' && (
-                <div style={{ position:'relative', width:240, height:200, flexShrink:0 }}>
+                <div style={{ position:'relative', width:mTrickW, height:mTrickH, flexShrink:0 }}>
                   {['N','S','E','W'].map(p => {
                     const play = game.currentTrick.find(t=>t.position===p)
                     const offsets = {
@@ -686,11 +793,11 @@ export default function Bridge() {
                       <div key={p} style={{ position:'absolute', ...offsets[p] }}>
                         {play
                           ? <div style={{ textAlign:'center' }}>
-                              <BCard card={play.card} w={76} h={106} />
-                              <div style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.45)', marginTop:3 }}>{p==='S'?'South':botName(p)}</div>
+                              <BCard card={play.card} w={mTrickCardW} h={mTrickCardH} />
+                              <div style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.45)', marginTop:2 }}>{p==='S'?'S':p}</div>
                             </div>
-                          : <div style={{ width:76, height:106, borderRadius:8, border:'2px dashed rgba(201,168,76,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                              <span style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.15)' }}>{p==='S'?'South':botName(p)}</span>
+                          : <div style={{ width:mTrickCardW, height:mTrickCardH, borderRadius:8, border:'2px dashed rgba(201,168,76,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                              <span style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.15)' }}>{p}</span>
                             </div>
                         }
                       </div>
@@ -699,105 +806,106 @@ export default function Bridge() {
                 </div>
               )}
 
-              {game.phase==='playing' && isDeclarer && (
-                <p style={{ fontSize:'0.68rem', color:'rgba(201,168,76,0.6)', textAlign:'center' }}>★ South declared — tap a card from your hand or dummy to play</p>
+              {game.phase==='playing' && isDeclarer && !isMobile && (
+                <p style={{ fontSize:'0.65rem', color:'rgba(201,168,76,0.6)', textAlign:'center' }}>★ Tap dummy or your hand to play</p>
               )}
             </div>
 
             {/* EAST */}
-            <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0 }}>
+            <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap: isMobile ? 4 : 8, flexShrink:0 }}>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
               {isEastDummy
                 ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} horizontal={false} />
-                : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={60} cardH={84} overlap={15} />
+                : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
               }
-              <span style={{ fontSize:'0.65rem', fontWeight:700, color:labelColor('E'), writingMode:'vertical-rl' }}>{playerLabel('E')}</span>
+              <span style={{ fontSize:'0.6rem', fontWeight:700, color:labelColor('E'), writingMode:'vertical-rl' }}>{isMobile ? 'E' : playerLabel('E')}</span>
             </div>
           </div>
 
           {/* SOUTH — your hand */}
-          <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'4px 12px 10px' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:'0.72rem', fontWeight:600, color:labelColor('S') }}>
-                {playerLabel('S')} · {countHCP(myHand)} HCP{isMyPlayTurn?' · Your turn':''}
+          <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap: isMobile ? 4 : 6, padding: isMobile ? '2px 6px 6px' : '4px 12px 10px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize: isMobile ? '0.62rem' : '0.72rem', fontWeight:600, color:labelColor('S') }}>
+                {playerLabel('S')} · {countHCP(myHand)} HCP{isMyPlayTurn ? ' · Your turn' : ''}
               </span>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('S',game.auction)} />}
             </div>
-            {/* South hand — always show face up, sorted by suit */}
-            <div style={{ display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
+            {/* South hand — sorted by suit */}
+            <div style={{ display:'flex', gap: isMobile ? 6 : 12, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end', maxWidth:'100%', overflow:'hidden' }}>
               {['S','H','D','C'].map(suit => {
                 const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
                 if (!cards.length) return null
                 const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
                 return (
-                  <div key={suit} style={{ display:'flex', alignItems:'center', gap:4 }}>
-                    <span style={{ fontSize:'1.4rem', color:col, fontWeight:700, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                  <div key={suit} style={{ display:'flex', alignItems:'center', gap: isMobile ? 2 : 4 }}>
+                    <span style={{ fontSize: isMobile ? '1rem' : '1.4rem', color:col, fontWeight:700, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
                     <FannedHand
                       cards={cards}
                       legalCards={legalCards}
                       selectedCard={selectedCard}
                       onCardClick={handleSouthCardClick}
-                      cardW={88} cardH={123} overlap={26}
+                      cardW={mSouthCardW} cardH={mSouthCardH} overlap={mSouthOverlap}
                     />
                   </div>
                 )
               })}
             </div>
             {game.dummy==='S' && game.dummyRevealed && (
-              <p style={{ fontSize:'0.72rem', color:'rgba(201,168,76,0.5)', fontStyle:'italic' }}>
+              <p style={{ fontSize:'0.7rem', color:'rgba(201,168,76,0.5)', fontStyle:'italic' }}>
                 {botName(game.contract?.declarer)} is playing South's hand as dummy
               </p>
             )}
-            {isMyPlayTurn && <p style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.2)' }}>Tap to select · Tap again to play</p>}
+            {isMyPlayTurn && <p style={{ fontSize:'0.6rem', color:'rgba(245,240,232,0.2)' }}>Tap to select · Tap again to play</p>}
           </div>
         </div>
 
-        {/* RIGHT PANEL */}
-        <div style={{ width:172, background:'rgba(0,0,0,0.4)', borderLeft:'1px solid rgba(201,168,76,0.1)', padding:'10px 8px', display:'flex', flexDirection:'column', gap:10, flexShrink:0, overflowY:'auto' }}>
-          <div>
-            <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Bidding History</p>
-            <AuctionHistory auction={game.auction} dealer={game.dealer} />
-          </div>
-          {game.contract && (
-            <div style={{ background:'rgba(0,0,0,0.3)', borderRadius:8, padding:'8px 10px' }}>
-              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Contract</p>
-              <p style={{ fontSize:'1rem', fontWeight:700, marginBottom:4 }}>
-                <span style={{ color:'white' }}>{game.contract.level}</span>
-                <span style={{ color: game.contract.denomination==='H'||game.contract.denomination==='D'?'#e74c3c':game.contract.denomination==='NT'?'#7eb5f5':'#ffffff' }}>{DENOM_SYMBOLS[game.contract.denomination]}</span>
-                <span style={{ color:'var(--text-muted)', fontSize:'0.75rem', marginLeft:4 }}>by {game.contract.declarer==='S'?'South':game.contract.declarer==='N'?'North':game.contract.declarer==='E'?'East':'West'}</span>
-              </p>
-              {game.phase==='playing' && <>
-                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:2 }}>
-                  <span style={{ fontSize:'0.72rem', color:'#5DCAA5' }}>NS won</span>
-                  <span style={{ fontSize:'0.82rem', color:'#5DCAA5', fontWeight:700 }}>{game.tricks.NS}</span>
-                </div>
-                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                  <span style={{ fontSize:'0.72rem', color:'#c0392b' }}>EW won</span>
-                  <span style={{ fontSize:'0.82rem', color:'#c0392b', fontWeight:700 }}>{game.tricks.EW}</span>
-                </div>
-                <div style={{ display:'flex', justifyContent:'space-between', borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:4 }}>
-                  <span style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>Need</span>
-                  <span style={{ fontSize:'0.82rem', color:'var(--gold)', fontWeight:700 }}>{game.contract.tricksNeeded - game.tricks[(game.contract.declarer==='N'||game.contract.declarer==='S')?'NS':'EW']} more</span>
-                </div>
-              </>}
+        {/* RIGHT PANEL — desktop only */}
+        {!isMobile && (
+          <div style={{ width:172, background:'rgba(0,0,0,0.4)', borderLeft:'1px solid rgba(201,168,76,0.1)', padding:'10px 8px', display:'flex', flexDirection:'column', gap:10, flexShrink:0, overflowY:'auto' }}>
+            <div>
+              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Bidding History</p>
+              <AuctionHistory auction={game.auction} dealer={game.dealer} />
             </div>
-          )}
-{/* HCP only shown on result screen — removed from sidebar to avoid cheating */}
-          <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'8px 10px' }}>
-            <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Your Hand · {countHCP(myHand)} HCP</p>
-            {['S','H','D','C'].map(suit => {
-              const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
-              if (!cards.length) return null
-              const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.85)' : SUIT_COLORS[suit]
-              return <p key={suit} style={{ fontSize:'0.82rem', color:col, marginBottom:3 }}>{SUIT_SYMBOLS[suit]} {cards.map(c=>c.value).join(' ')}</p>
-            })}
+            {game.contract && (
+              <div style={{ background:'rgba(0,0,0,0.3)', borderRadius:8, padding:'8px 10px' }}>
+                <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Contract</p>
+                <p style={{ fontSize:'1rem', fontWeight:700, marginBottom:4 }}>
+                  <span style={{ color:'white' }}>{game.contract.level}</span>
+                  <span style={{ color: game.contract.denomination==='H'||game.contract.denomination==='D'?'#e74c3c':game.contract.denomination==='NT'?'#7eb5f5':'#ffffff' }}>{DENOM_SYMBOLS[game.contract.denomination]}</span>
+                  <span style={{ color:'var(--text-muted)', fontSize:'0.75rem', marginLeft:4 }}>by {game.contract.declarer==='S'?'South':game.contract.declarer==='N'?'North':game.contract.declarer==='E'?'East':'West'}</span>
+                </p>
+                {game.phase==='playing' && <>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:2 }}>
+                    <span style={{ fontSize:'0.72rem', color:'#5DCAA5' }}>NS won</span>
+                    <span style={{ fontSize:'0.82rem', color:'#5DCAA5', fontWeight:700 }}>{game.tricks.NS}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                    <span style={{ fontSize:'0.72rem', color:'#c0392b' }}>EW won</span>
+                    <span style={{ fontSize:'0.82rem', color:'#c0392b', fontWeight:700 }}>{game.tricks.EW}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:4 }}>
+                    <span style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>Need</span>
+                    <span style={{ fontSize:'0.82rem', color:'var(--gold)', fontWeight:700 }}>{game.contract.tricksNeeded - game.tricks[(game.contract.declarer==='N'||game.contract.declarer==='S')?'NS':'EW']} more</span>
+                  </div>
+                </>}
+              </div>
+            )}
+            <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:8, padding:'8px 10px' }}>
+              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Your Hand · {countHCP(myHand)} HCP</p>
+              {['S','H','D','C'].map(suit => {
+                const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+                if (!cards.length) return null
+                const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.85)' : SUIT_COLORS[suit]
+                return <p key={suit} style={{ fontSize:'0.82rem', color:col, marginBottom:3 }}>{SUIT_SYMBOLS[suit]} {cards.map(c=>c.value).join(' ')}</p>
+              })}
+            </div>
+            <div style={{ background:'rgba(0,0,0,0.2)', borderRadius:8, padding:'8px 10px' }}>
+              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Vulnerability</p>
+              <p style={{ fontSize:'0.8rem', color:game.vulnerability?.NS?'#c0392b':'#5DCAA5', marginBottom:3 }}>NS: {game.vulnerability?.NS?'Vul':'Not vul'}</p>
+              <p style={{ fontSize:'0.8rem', color:game.vulnerability?.EW?'#c0392b':'#5DCAA5' }}>EW: {game.vulnerability?.EW?'Vul':'Not vul'}</p>
+            </div>
           </div>
-          <div style={{ background:'rgba(0,0,0,0.2)', borderRadius:8, padding:'8px 10px' }}>
-            <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Vulnerability</p>
-            <p style={{ fontSize:'0.8rem', color:game.vulnerability?.NS?'#c0392b':'#5DCAA5', marginBottom:3 }}>NS: {game.vulnerability?.NS?'Vul':'Not vul'}</p>
-            <p style={{ fontSize:'0.8rem', color:game.vulnerability?.EW?'#c0392b':'#5DCAA5' }}>EW: {game.vulnerability?.EW?'Vul':'Not vul'}</p>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
