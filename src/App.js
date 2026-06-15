@@ -22,6 +22,7 @@ import Games from './pages/Games'
 import Tournaments from './pages/Tournaments'
 import ContainerTycoon from './pages/ContainerTycoon'
 import BridgeGuide from './pages/BridgeGuide'
+import LearnBridge from './pages/LearnBridge'
 import LearnSolitaire from './pages/LearnSolitaire'
 import LearnRummy from './pages/LearnRummy'
 import LearnSpades from './pages/LearnSpades'
@@ -66,7 +67,8 @@ function AppRoutes() {
         <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-        {/* Learn / How-to guides */}
+        {/* Learn — visual step-by-step guides */}
+        <Route path="/learn/bridge-intro" element={<LearnBridge />} />
         <Route path="/learn/bridge" element={<BridgeGuide />} />
         <Route path="/learn/solitaire" element={<LearnSolitaire />} />
         <Route path="/learn/rummy" element={<LearnRummy />} />
