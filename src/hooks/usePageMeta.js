@@ -26,6 +26,10 @@ const PAGE_META = {
     title: 'Play Solitaire Online Free — Klondike Solitaire | CardGamers.io',
     description: 'Play Klondike Solitaire free online. No ads, no download. Track your moves, time and win streak. Hint system included. Works on mobile and desktop.',
   },
+  '/learn/bridge-intro': {
+    title: 'How to Play Bridge — Visual Beginner\'s Guide | CardGamers.io',
+    description: 'Learn Bridge with interactive visual examples — the table setup, bidding, dummy hand, tricks and scoring. Perfect for complete beginners.',
+  },
   '/learn/bridge': {
     title: 'How to Play Bridge — Complete Beginner\'s Guide | CardGamers.io',
     description: 'Learn Bridge from scratch. 11 chapters covering bidding, card play, scoring, conventions and strategy. The clearest Bridge guide for beginners online.',

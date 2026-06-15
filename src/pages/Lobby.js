@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 
 const GAMES = [
   { id: 'solitaire', suit: '♣', name: 'Solitaire', desc: 'Klondike Solitaire. Perfect solo play.', players: '1 player', status: 'live', color: '#5DCAA5', path: '/game/solitaire', learnPath: '/learn/solitaire' },
-  { id: 'bridge', suit: '♠', name: 'Bridge', desc: 'The flagship. 4-player contract bridge with full bidding.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/bridge', learnPath: '/learn/bridge' },
+  { id: 'bridge', suit: '♠', name: 'Bridge', desc: 'The flagship. 4-player contract bridge with full bidding.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/bridge', learnPath: '/learn/bridge-intro' },
   { id: 'rummy', suit: '♥', name: 'Rummy', desc: 'Gin Rummy against real opponents. Sign in to play.', players: '2–4 players', status: 'live', color: '#c0392b', path: '/game/rummy', learnPath: '/learn/rummy', requiresAuth: true },
   { id: 'spades', suit: '♠', name: 'Spades', desc: 'Partnership bidding and trick-taking.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/spades', learnPath: '/learn/spades' },
   { id: 'poker', suit: '♦', name: 'Poker', desc: "Texas Hold'em — coming soon!", players: '2–9 players', status: 'soon', color: '#85B7EB', path: '#' },

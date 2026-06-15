@@ -11,7 +11,7 @@ const GAMES = {
     deepLinkLabel: 'Read the full 11-chapter Bridge guide →',
     deepLinkDesc: 'Our complete guide covers bidding systems, card play, scoring, conventions and strategy across 11 chapters.',
     deepLinkBanner: '♠ Want to really learn Bridge?',
-    interactiveLink: '/learn/bridge',
+    interactiveLink: '/learn/bridge-intro',
     interactiveLinkLabel: 'Visual step-by-step Bridge guide →',
     sections: [
       { title: 'The Basics', content: 'Bridge is played by 4 players in two partnerships — North/South vs East/West. A standard 52-card deck is used. The goal is to win "tricks" and fulfil a contract you bid for during the auction.' },
