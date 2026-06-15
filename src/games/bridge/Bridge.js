@@ -7,7 +7,7 @@ import {
   SUIT_SYMBOLS, SUIT_COLORS, DENOM_SYMBOLS,
   PARTNERS, NEXT_PLAYER, VALUE_RANK,
   countHCP, getBotBid, getBotCardPlay,
-  isAuctionOver, getContract, getTrickWinner, calculateRubberScore,
+  isAuctionOver, getContract, getTrickWinner, calculateRubberScore, calculateIMPScore,
   calculateDuplicateScore, createBridgeGame, getLegalCards
 } from './BridgeEngine'
 
@@ -456,7 +456,9 @@ export default function Bridge() {
       ng.currentLeader = winner.position
       if (ng.tricks.NS+ng.tricks.EW===13) {
         const declSide = (ng.contract.declarer==='N'||ng.contract.declarer==='S')?'NS':'EW'
-        ng.scoring = ng.mode==='rubber'
+        ng.scoring = ng.mode==='imps'
+          ? calculateIMPScore(ng.contract, ng.tricks[declSide], ng.vulnerability)
+          : ng.mode==='rubber'
           ? calculateRubberScore(ng.contract, ng.tricks[declSide], ng.vulnerability)
           : calculateDuplicateScore(ng.contract, ng.tricks[declSide], ng.vulnerability)
         ng.phase = 'complete'
@@ -571,8 +573,8 @@ export default function Bridge() {
         </div>
         <div style={{ marginBottom:'1.25rem' }}>
           <p style={{ fontSize:'0.72rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'0.6rem' }}>Game Type</p>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-            {[{id:'rubber',name:'Rubber Bridge',desc:'Classic casual play'},{id:'duplicate',name:'Duplicate Bridge',desc:'Competitive scoring'}].map(m=>(
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.75rem' }}>
+            {[{id:'rubber',name:'Rubber Bridge',desc:'Classic casual play'},{id:'duplicate',name:'Duplicate Bridge',desc:'Competitive scoring'},{id:'imps',name:'Teams / IMPs',desc:'Professional scoring'}].map(m=>(
               <div key={m.id} onClick={()=>setGameMode(m.id)} style={{ background:gameMode===m.id?'rgba(201,168,76,0.15)':'var(--felt-light)', border:`2px solid ${gameMode===m.id?'var(--gold)':'var(--border)'}`, borderRadius:10, padding:'0.9rem', cursor:'pointer', textAlign:'center' }}>
                 <div style={{ fontWeight:600, color:'var(--cream)', marginBottom:3 }}>{m.name}</div>
                 <div style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>{m.desc}</div>
@@ -676,13 +678,25 @@ export default function Bridge() {
             </p>
             <div style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--gold)', margin:'0.75rem 0' }}>
               {(() => {
+                if (game.mode === 'imps') {
+                  const nsIMPs = game.scoring.imps ?? 0
+                  if (nsIMPs > 0) return `NS +${nsIMPs} IMPs`
+                  if (nsIMPs < 0) return `EW +${Math.abs(nsIMPs)} IMPs`
+                  return '0 IMPs'
+                }
                 const declSide = (game.contract.declarer==='N'||game.contract.declarer==='S') ? 'NS' : 'EW'
                 const defSide = declSide === 'NS' ? 'EW' : 'NS'
                 return game.scoring.made
                   ? `${declSide} +${game.scoring.declarerScore}`
                   : `${defSide} +${game.scoring.defenderScore}`
-              })()} pts
+              })()}
+              {game.mode === 'imps' ? '' : ' pts'}
             </div>
+            {game.mode === 'imps' && game.scoring && (
+              <p style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.4)', marginBottom:'0.5rem' }}>
+                Raw score: {game.scoring.rawScore > 0 ? '+' : ''}{game.scoring.rawScore} pts
+              </p>
+            )}
             <div style={{ display:'flex', gap:'0.75rem', justifyContent:'center' }}>
               <button className="btn-gold" onClick={startGame}>Next Hand</button>
               <button className="btn-outline" onClick={()=>setScreen('menu')}>Menu</button>
