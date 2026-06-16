@@ -1,4 +1,4 @@
-// ─── Bridge Game Engine v3.0 — Competitive Bot ───────────────────
+// ─── Bridge Game Engine v4.0 — Improved Card Play ────────────────
 
 export const SUITS = ['C', 'D', 'H', 'S']
 export const SUIT_SYMBOLS = { C: '♣', D: '♦', H: '♥', S: '♠' }
@@ -101,7 +101,6 @@ function hasStopper(hand, suit) {
 }
 
 function countAces(hand) { return hand.filter(c => c.value === 'A').length }
-function countKings(hand) { return hand.filter(c => c.value === 'K').length }
 
 function quickTricks(hand) {
   let qt = 0
@@ -127,26 +126,29 @@ function hasHeadOfSequence(hand, suit) {
   return VALUE_RANK[cards[0].value] - VALUE_RANK[cards[1].value] === 1 && VALUE_RANK[cards[0].value] >= 10
 }
 
-function countSolidWinners(hand, suit, played) {
-  const cards = hand.filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
+function countSolidWinners(cards, suit, played) {
+  const sorted = [...cards].filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
   const playedRanks = played.filter(c => c.suit === suit).map(c => VALUE_RANK[c.value])
   let winners = 0
-  for (const card of cards) {
+  for (const card of sorted) {
     const rank = VALUE_RANK[card.value]
     let higherOut = 0
     for (let r = rank + 1; r <= 14; r++) {
-      if (!playedRanks.includes(r) && !cards.some(c => VALUE_RANK[c.value] === r)) higherOut++
+      if (!playedRanks.includes(r) && !sorted.some(c => VALUE_RANK[c.value] === r)) higherOut++
     }
     if (higherOut === 0) winners++
+    else break // once we hit a non-winner, stop
   }
   return winners
 }
 
-function suitTrickEstimate(hand, suit, played) {
-  const cards = hand.filter(c => c.suit === suit)
-  const solid = countSolidWinners(hand, suit, played)
-  const extra = Math.max(0, cards.length - 4)
-  return solid + extra * 0.5
+// Count how many trumps opponents likely have remaining
+function countOutstandingTrumps(trumpSuit, hand, trickHistory) {
+  if (!trumpSuit) return 0
+  const played = trickHistory.flatMap(t => t.trick.map(p => p.card))
+  const playedTrumps = played.filter(c => c.suit === trumpSuit).length
+  const myTrumps = hand.filter(c => c.suit === trumpSuit).length
+  return 13 - playedTrumps - myTrumps // rough estimate of opponents' trumps
 }
 
 // ─── Bid validity helpers ─────────────────────────────────────────
@@ -175,7 +177,7 @@ function makeBid(level, denomination, auction) {
 function pass() { return { level: 0, denomination: 'PASS', type: 'pass' } }
 function dbl() { return { level: 0, denomination: 'DBL', type: 'double' } }
 
-// ─── COMPETITIVE BIDDING ENGINE ───────────────────────────────────
+// ─── BIDDING ENGINE (unchanged) ───────────────────────────────────
 export function getBotBid(hand, auction, position, vulnerability, difficulty = 'hard') {
   const hcp = countHCP(hand)
   const dist = getDistribution(hand)
@@ -183,10 +185,9 @@ export function getBotBid(hand, auction, position, vulnerability, difficulty = '
   const partnerPos = PARTNERS[position]
   const lastRealBid = getLastRealBid(auction)
   const vul = vulnerability?.[(position==='N'||position==='S')?'NS':'EW'] || false
-
-  const myBids    = auction.filter(b => b.position === position && b.type === 'bid')
+  const myBids = auction.filter(b => b.position === position && b.type === 'bid')
   const partnerBids = auction.filter(b => b.position === partnerPos && b.type === 'bid')
-  const oppBids   = auction.filter(b => b.position !== position && b.position !== partnerPos && b.type === 'bid')
+  const oppBids = auction.filter(b => b.position !== position && b.position !== partnerPos && b.type === 'bid')
   const partnerLastBid = partnerBids.length ? partnerBids[partnerBids.length - 1] : null
 
   if (difficulty === 'easy' && Math.random() < 0.15) return pass()
@@ -222,9 +223,8 @@ export function getBotBid(hand, auction, position, vulnerability, difficulty = '
       if ((hasSupport && hcp >= 11) || hcp >= 17) return dbl()
     }
   }
-  if (lastRealBid?.position !== partnerPos && lastRealBid?.type === 'bid' && hcp >= 13 && myBids.length === 0) {
-    if (hcp >= 15) return dbl()
-  }
+  if (lastRealBid?.position !== partnerPos && lastRealBid?.type === 'bid' && hcp >= 15 && myBids.length === 0)
+    return dbl()
   return pass()
 }
 
@@ -341,9 +341,7 @@ function getResponse(hand, hcp, dist, tp, partnerOpening, lastRealBid, oppBids, 
       }
       if (tp >= 16) return makeBid(4, 'NT', auction)
     }
-    if (suit === 'H') {
-      if (dist['S'] >= 4 && hcp >= 6) return makeBid(1, 'S', auction)
-    }
+    if (suit === 'H' && dist['S'] >= 4 && hcp >= 6) return makeBid(1, 'S', auction)
     if (hcp >= 13) {
       for (const s of ['D','C']) {
         if (dist[s] >= 4) return makeBid(2, s, auction)
@@ -430,10 +428,9 @@ function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastRea
     return pass()
   }
   if (respLevel === 2 && respSuit !== openSuit && respSuit !== 'NT') {
-    const combinedMin = hcp + 10
     if (dist[respSuit] >= 4) return makeBid(3, respSuit, auction)
     if (dist[openSuit] >= 6) return makeBid(3, openSuit, auction)
-    if (combinedMin >= 25 && SUITS.every(s => hasStopper(hand, s))) return makeBid(3, 'NT', auction)
+    if (SUITS.every(s => hasStopper(hand, s))) return makeBid(3, 'NT', auction)
     return makeBid(2, 'NT', auction)
   }
   if (respLevel === 1 && respSuit !== 'NT') {
@@ -520,7 +517,7 @@ export function getContract(auction) {
   return { level: lastBid.level, denomination: finalDenom, declarer, doubled, redoubled, tricksNeeded: lastBid.level + 6 }
 }
 
-// ─── SMART CARD PLAY ENGINE ───────────────────────────────────────
+// ─── CARD PLAY ENGINE v4 — Fixed ─────────────────────────────────
 export function getLegalCards(hand, trick, trumpSuit) {
   if (trick.length === 0) return hand
   const ledSuit = trick[0].card.suit
@@ -531,46 +528,71 @@ export function getLegalCards(hand, trick, trumpSuit) {
 export function getBotCardPlay(hand, trick, trumpSuit, contract, position, trickHistory, difficulty = 'hard') {
   const legal = getLegalCards(hand, trick, trumpSuit)
   if (legal.length === 1) return legal[0]
+
   if (difficulty === 'easy' && Math.random() < 0.18)
     return legal[Math.floor(Math.random() * legal.length)]
+
   const isDefender = position === 'E' || position === 'W'
   const partnerPos = PARTNERS[position]
   const played = trickHistory.flatMap(t => t.trick.map(p => p.card))
   const tricksLeft = 13 - trickHistory.length
   const declarerSide = (contract?.declarer === 'N' || contract?.declarer === 'S') ? ['N','S'] : ['E','W']
   const iAmDeclarer = declarerSide.includes(position) && contract?.declarer === position
+
   if (trick.length === 0)
     return getOpeningLead(hand, legal, trumpSuit, contract, position, isDefender, trickHistory, played, partnerPos, tricksLeft, iAmDeclarer)
   return getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, partnerPos, trickHistory, played, tricksLeft, contract, iAmDeclarer)
 }
 
+// ─── OPENING LEADS ────────────────────────────────────────────────
 function getOpeningLead(hand, legal, trumpSuit, contract, position, isDefender, trickHistory, played, partnerPos, tricksLeft, iAmDeclarer) {
   if (!isDefender) return getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, played, tricksLeft)
   return getDefenderLead(hand, legal, trumpSuit, contract, trickHistory, played, tricksLeft)
 }
 
+// ─── DECLARER LEAD — FIX: draw trumps first properly ─────────────
 function getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, played, tricksLeft) {
   const isTrump = trumpSuit && trumpSuit !== 'NT'
+
   if (isTrump) {
     const myTrumps = hand.filter(c => c.suit === trumpSuit)
-    if (myTrumps.length >= 4 && tricksLeft > 6)
-      return myTrumps.sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
+    const outstandingTrumps = countOutstandingTrumps(trumpSuit, hand, trickHistory)
+
+    // FIX: Draw trumps when opponents still have them AND we have enough entries
+    // Draw with LOWEST trump first to preserve honours
+    if (outstandingTrumps >= 2 && myTrumps.length >= 2 && tricksLeft > 4) {
+      // Lead lowest trump to draw opponents' trumps
+      const legalTrumps = legal.filter(c => c.suit === trumpSuit)
+      if (legalTrumps.length > 0) {
+        return legalTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      }
+    }
+
+    // Establish long side suit
     const bestSuit = getBestEstablishSuit(hand, legal, trumpSuit, played)
     if (bestSuit) {
       const sc = legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
       return sc[0]
     }
+
+    // Top of sequence in side suit
     const seq = findTopSequence(legal.filter(c => c.suit !== trumpSuit))
     if (seq) return seq
+
+    // Lead low from longest side suit
     const nonTrumps = legal.filter(c => c.suit !== trumpSuit)
     if (nonTrumps.length > 0) {
-      const byLength = SUITS.filter(s => s !== trumpSuit).map(s => ({ suit: s, cards: hand.filter(c => c.suit === s) })).sort((a,b) => b.cards.length - a.cards.length)
+      const byLength = SUITS.filter(s => s !== trumpSuit)
+        .map(s => ({ suit: s, cards: hand.filter(c => c.suit === s) }))
+        .sort((a,b) => b.cards.length - a.cards.length)
       for (const { suit } of byLength) {
         const lc = legal.filter(c => c.suit === suit)
         if (lc.length > 0) return lc.sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
       }
     }
   }
+
+  // NT — run longest/strongest suit
   const bestSuit = getBestEstablishSuit(hand, legal, null, played)
   if (bestSuit) return legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
   const seq = findTopSequence(legal)
@@ -578,31 +600,48 @@ function getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, played,
   return legal.sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])[0]
 }
 
+// ─── DEFENDER LEAD ────────────────────────────────────────────────
 function getDefenderLead(hand, legal, trumpSuit, contract, trickHistory, played, tricksLeft) {
   const isTrump = trumpSuit && trumpSuit !== 'NT'
   const nonTrumps = legal.filter(c => c.suit !== trumpSuit)
+
+  // Against NT — 4th best of longest/strongest suit
   if (!isTrump) {
     const bestSuit = getBestLeadSuit(hand, legal, null, played)
     const sc = legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
+    // Top of sequence (AKQ, KQJ, QJ10 etc)
     const seq = findTopSequence(sc)
     if (seq) return seq
+    // 4th best
     if (sc.length >= 4) return sc[3]
+    // MUD from 3 small
     if (sc.length === 3 && VALUE_RANK[sc[0].value] <= 9) return sc[1]
+    // Top of doubleton
+    if (sc.length === 2) return sc[0]
     return sc[sc.length - 1]
   }
+
+  // Against suit contract
+  // Lead singleton (hoping for ruff)
   for (const suit of SUITS) {
     if (suit === trumpSuit) continue
     const sc = hand.filter(c => c.suit === suit)
     if (sc.length === 1 && legal.some(c => c.suit === suit)) return sc[0]
   }
+
+  // Top of sequence in side suit
   const seq = findTopSequence(nonTrumps.length ? nonTrumps : legal)
   if (seq) return seq
+
+  // 4th best of best suit
   const bestSuit = getBestLeadSuit(hand, legal, trumpSuit, played)
   const sc = legal.filter(c => c.suit === bestSuit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
   if (sc.length >= 4) return sc[3]
+  if (sc.length === 2) return sc[0] // top of doubleton
   return sc[sc.length - 1] || legal[0]
 }
 
+// ─── FOLLOW TO TRICK — Major fixes here ──────────────────────────
 function getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, partnerPos, trickHistory, played, tricksLeft, contract, iAmDeclarer) {
   const ledSuit = trick[0].card.suit
   const currentWinner = getCurrentTrickWinner(trick, trumpSuit)
@@ -610,56 +649,137 @@ function getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, part
   const followCards = legal.filter(c => c.suit === ledSuit)
   const trumpCards = legal.filter(c => c.suit === trumpSuit)
   const isLastToPlay = trick.length === 3
+  const tricksMadeByDeclarerSide = trickHistory.filter(t => {
+    const declarerSide = (contract?.declarer === 'N' || contract?.declarer === 'S') ? ['N','S'] : ['E','W']
+    return declarerSide.includes(t.winner)
+  }).length
 
+  // ── FOLLOWING SUIT ──────────────────────────────────────────────
   if (followCards.length > 0) {
     const winFollow = followCards.filter(c => canBeat(c, currentWinner, trumpSuit))
-    if (trick.length === 1 && isDefender) {
-      const seq = findTopSequence(followCards)
-      if (seq && VALUE_RANK[seq.value] >= 12) return seq
-      const ledCard = trick[0].card
-      if (VALUE_RANK[ledCard.value] >= 11 && followCards.some(c => VALUE_RANK[c.value] > VALUE_RANK[ledCard.value]))
-        return followCards.filter(c => VALUE_RANK[c.value] > VALUE_RANK[ledCard.value]).sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+
+    // SECOND HAND: play low unless we have top of sequence
+    if (trick.length === 1) {
+      if (isDefender) {
+        // Cover an honour with an honour (Jack or higher led)
+        const ledCard = trick[0].card
+        if (VALUE_RANK[ledCard.value] >= 11) {
+          const coverCards = followCards.filter(c => VALUE_RANK[c.value] > VALUE_RANK[ledCard.value])
+          if (coverCards.length > 0)
+            return coverCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+        }
+        // Top of solid sequence (KQ, QJ, J10)
+        const seq = findTopSequence(followCards)
+        if (seq && VALUE_RANK[seq.value] >= 11) return seq
+        // Otherwise second hand low
+        return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      } else {
+        // Declarer second hand: play low to finesse later
+        return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      }
     }
-    if (trick.length === 2 && isDefender && !partnerWinning && winFollow.length > 0)
-      return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+
+    // THIRD HAND: play high (defenders), or cheapest winner (declarer)
+    if (trick.length === 2) {
+      if (isDefender && !partnerWinning && winFollow.length > 0) {
+        // Third hand high — play cheapest winner
+        return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      }
+      if (!isDefender && winFollow.length > 0) {
+        return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      }
+    }
+
+    // FOURTH HAND (last to play): win cheaply if needed
+    if (isLastToPlay) {
+      if (!partnerWinning && winFollow.length > 0)
+        return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      if (partnerWinning)
+        return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+    }
+
+    // Partner winning — don't overtake, play lowest
     if (partnerWinning)
       return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-    if (isLastToPlay && winFollow.length > 0)
-      return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-    if (!isDefender && winFollow.length > 0)
-      return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+
+    // Default: play lowest following card
     return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
   }
 
-  if (partnerWinning) return smartDiscard(hand, legal, trumpSuit, played, trickHistory)
+  // ── VOID IN LED SUIT ────────────────────────────────────────────
 
+  // FIX: Partner winning — NEVER trump, always discard
+  if (partnerWinning) {
+    return smartDiscard(hand, legal, trumpSuit, played, trickHistory)
+  }
+
+  // Trump if we have them and they're useful
   if (trumpCards.length > 0 && trumpSuit && trumpSuit !== 'NT') {
     const winTrumps = trumpCards.filter(c => canBeat(c, currentWinner, trumpSuit))
+
     if (winTrumps.length > 0) {
-      if (!isDefender) return winTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      if (isLastToPlay) return winTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      const significantTrumps = winTrumps.filter(c => VALUE_RANK[c.value] >= 11)
-      if (significantTrumps.length > 0) return significantTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      if (trumpCards.length <= 2) return winTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      if (!isDefender) {
+        // FIX: Declarer ruffs with LOWEST winning trump (preserve honours)
+        return winTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      } else {
+        // Defender ruffing
+        if (isLastToPlay) {
+          // Last to play — ruff with lowest winner
+          return winTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+        }
+        // FIX: Only ruff if we have a meaningful trump (9 or higher to avoid being overruffed)
+        // OR if we only have 1-2 trumps (shortness means ruffing is valuable)
+        const worthRuffing = winTrumps.filter(c => VALUE_RANK[c.value] >= 9)
+        if (worthRuffing.length > 0)
+          return worthRuffing.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+        if (trumpCards.length <= 2)
+          return winTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+        // Otherwise discard — don't waste low trumps getting overruffed
+        return smartDiscard(hand, legal, trumpSuit, played, trickHistory)
+      }
     }
   }
+
+  // No winning trump or can't usefully trump — discard
   return smartDiscard(hand, legal, trumpSuit, played, trickHistory)
 }
 
+// ─── SMART DISCARD — Improved ─────────────────────────────────────
 function smartDiscard(hand, legal, trumpSuit, played, trickHistory) {
+  // Never discard a trump if we have non-trumps
   const nonTrumps = legal.filter(c => c.suit !== trumpSuit)
-  if (!nonTrumps.length) return legal.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+  const candidates = nonTrumps.length > 0 ? nonTrumps : legal
+
+  if (candidates.length === 1) return candidates[0]
+
+  // Score each card: lower = safer to discard
+  // Discard from shortest suit with fewest winners
   let worst = null, worstScore = Infinity
-  for (const card of nonTrumps) {
+
+  for (const card of candidates) {
     const suitCards = hand.filter(c => c.suit === card.suit)
+    const legalSuitCards = candidates.filter(c => c.suit === card.suit)
     const winners = countSolidWinners(suitCards, card.suit, played)
-    const score = winners * 20 + suitCards.length * 3 + VALUE_RANK[card.value]
+
+    // Heavily penalise discarding from suits with winners
+    // Prefer to discard from suits where we have no winners
+    const winnerPenalty = winners > 0 ? winners * 30 : 0
+    // Prefer to discard low cards
+    const rankScore = VALUE_RANK[card.value]
+    // Prefer to discard from short suits (already established or useless)
+    const lengthScore = suitCards.length * 2
+    // Don't discard from long suits we're establishing
+    const establishScore = suitCards.length >= 5 ? 20 : 0
+
+    const score = winnerPenalty + rankScore + lengthScore + establishScore
+
     if (score < worstScore) { worstScore = score; worst = card }
   }
-  return worst || nonTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+
+  return worst || candidates.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
 }
 
+// ─── HELPERS ──────────────────────────────────────────────────────
 function findTopSequence(cards) {
   const bySuit = {}
   for (const c of cards) {
@@ -690,6 +810,7 @@ function getBestLeadSuit(hand, legal, trumpSuit, played) {
     const sc = hand.filter(c => c.suit === suit)
     const honours = sc.filter(c => VALUE_RANK[c.value] >= 10).length
     const winners = countSolidWinners(sc, suit, played)
+    // Prefer long suits with honours
     const score = sc.length * 3 + honours * 2 + winners * 5
     if (score > bestScore) { bestScore = score; best = suit }
   }
@@ -782,8 +903,7 @@ export function calculateDuplicateScore(contract, tricksMade, vulnerability) {
   return calculateRubberScore(contract, tricksMade, vulnerability)
 }
 
-// ─── IMP SCORING ─────────────────────────────────────────────────
-// Official WBF IMP conversion table
+// ─── IMP SCORING ──────────────────────────────────────────────────
 const IMP_SCALE = [
   [20, 1], [50, 2], [90, 3], [130, 4], [170, 5],
   [220, 6], [270, 7], [320, 8], [370, 9], [430, 10],
@@ -802,23 +922,15 @@ export function pointsToIMPs(diff) {
   return diff >= 0 ? imps : -imps
 }
 
-// IMP scoring for solo play vs bots.
-// NS score is compared against 0 (par reference) and converted to IMPs.
 export function calculateIMPScore(contract, tricksMade, vulnerability) {
   if (!contract) return { declarerScore: 0, defenderScore: 0, made: false, imps: 0, rawScore: 0, scoringMode: 'imps' }
   const raw = calculateRubberScore(contract, tricksMade, vulnerability)
   const declSide = (contract.declarer === 'N' || contract.declarer === 'S') ? 'NS' : 'EW'
-  // Compute NS raw score (positive = NS win, negative = EW win)
   const rawNS = declSide === 'NS'
     ? (raw.made ? raw.declarerScore : -raw.defenderScore)
     : (raw.made ? -raw.declarerScore : raw.defenderScore)
   const nsIMPs = pointsToIMPs(rawNS)
-  return {
-    ...raw,
-    imps: nsIMPs,
-    rawScore: rawNS,
-    scoringMode: 'imps',
-  }
+  return { ...raw, imps: nsIMPs, rawScore: rawNS, scoringMode: 'imps' }
 }
 
 // ─── GAME STATE FACTORY ───────────────────────────────────────────

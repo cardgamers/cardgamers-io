@@ -278,7 +278,7 @@ function BidPanel({ auction, onBid, onPass, onDouble, canDouble, isMobile }) {
           })}
         </div>
       )}
-      {!selLevel && <p style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.3)', textAlign:'center', marginTop:4 }}>Select a level, then choose a suit</p>}
+      {!selLevel && <p style={{ fontSize:'0.75rem', color:'rgba(245,240,232,0.3)', textAlign:'center', marginTop:4 }}>Select a level, then choose a suit</p>}
     </div>
   )
 }
@@ -312,7 +312,7 @@ function MobileSidePanel({ game, myHand, showPanel, onClose, session }) {
           )}
         </div>
         <div style={{ marginBottom:12 }}>
-          <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Bidding History</p>
+          <p style={{ fontSize:'0.65rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Bidding History</p>
           <AuctionHistory auction={game.auction} dealer={game.dealer} />
         </div>
         {game.contract && (
@@ -362,94 +362,276 @@ function MobileSidePanel({ game, myHand, showPanel, onClose, session }) {
 // ─── Session Summary Overlay ──────────────────────────────────────
 function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
   const { hands, totals } = session
+  const [tab, setTab] = useState('results') // 'results' | 'stats'
   const nsWins = totals.NS > totals.EW
   const ewWins = totals.EW > totals.NS
   const tie = totals.NS === totals.EW
   const showIMPs = gameMode === 'imps' || hands.some(h => h.imps !== 0)
 
+  // ── Compute session statistics ──
+  function computeStats() {
+    const completedHands = hands.filter(h => !h.passed)
+    if (!completedHands.length) return null
+
+    // Bidding accuracy — did partnership reach a reasonable contract?
+    // A contract is "accurate" if it made AND was at game level or appropriately cautious
+    const made = completedHands.filter(h => h.made).length
+    const total = completedHands.length
+    const makeRate = total > 0 ? Math.round(made / total * 100) : 0
+
+    // Declarer performance — tricks vs contract
+    let declarerHands = []
+    let defenderHands = []
+    for (const h of completedHands) {
+      const declSide = ['N','S'].includes(h.declarer[0]) ? 'NS' : 'EW'
+      if (declSide === 'NS') {
+        declarerHands.push(h)
+      } else {
+        defenderHands.push(h)
+      }
+    }
+
+    // Overtricks and undertricks
+    let totalOvertricks = 0, totalUndertricks = 0
+    for (const h of completedHands) {
+      if (h.made) totalOvertricks += (h.tricksMade - (h.tricksMade - (h.undertricks || 0))) // tricks above book
+      else totalUndertricks += h.undertricks || 0
+    }
+
+    // Overtricks more simply
+    let overtrickTotal = 0
+    for (const h of completedHands) {
+      if (h.made && h.tricksNeeded) {
+        overtrickTotal += h.tricksMade - h.tricksNeeded
+      }
+    }
+
+    // Slam attempts
+    const slams = completedHands.filter(h => {
+      const level = parseInt(h.contract?.[0])
+      return level >= 6
+    })
+    const slamsMade = slams.filter(h => h.made).length
+
+    // Game contracts
+    const games = completedHands.filter(h => {
+      const level = parseInt(h.contract?.[0])
+      const denom = h.contract?.slice(1)
+      if (level >= 4 && (denom === '♥' || denom === '♠')) return true
+      if (level >= 5 && (denom === '♣' || denom === '♦')) return true
+      if (level >= 3 && denom === 'NT') return true
+      return false
+    })
+    const gamesMade = games.filter(h => h.made).length
+
+    // Vulnerability performance
+    const vulHands = completedHands.filter(h => h.vulnerability?.NS || h.vulnerability?.EW)
+    const vulMade = vulHands.filter(h => h.made).length
+
+    // Best and worst hand by IMPs
+    const byIMPs = [...completedHands].sort((a,b) => b.imps - a.imps)
+    const bestHand = byIMPs[0]
+    const worstHand = byIMPs[byIMPs.length - 1]
+
+    // Session rating (0-100)
+    let rating = 50
+    rating += (makeRate - 50) * 0.6 // make rate contributes
+    rating += Math.min(totals.nsIMPs * 2, 20) // IMPs bonus
+    if (slamsMade > 0) rating += slamsMade * 8
+    if (slams.length > slamsMade) rating -= (slams.length - slamsMade) * 10
+    rating = Math.max(0, Math.min(100, Math.round(rating)))
+
+    let playerLabel = ''
+    if (rating >= 85) playerLabel = 'Expert Player'
+    else if (rating >= 70) playerLabel = 'Advanced Club Player'
+    else if (rating >= 55) playerLabel = 'Solid Club Player'
+    else if (rating >= 40) playerLabel = 'Developing Intermediate'
+    else playerLabel = 'Learning the Game'
+
+    return { made, total, makeRate, overtrickTotal, slams, slamsMade, games, gamesMade, vulHands, vulMade, bestHand, worstHand, rating, playerLabel }
+  }
+
+  const stats = computeStats()
+
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.92)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem', overflowY:'auto' }}>
-      <div style={{ background:'linear-gradient(135deg,#1a3d28,#0d2018)', border:'2px solid var(--gold)', borderRadius:20, padding: isMobile ? '1.5rem 1.25rem' : '2rem', maxWidth:520, width:'100%' }}>
+      <div style={{ background:'linear-gradient(135deg,#1a3d28,#0d2018)', border:'2px solid var(--gold)', borderRadius:20, padding: isMobile ? '1.5rem 1.25rem' : '2rem', maxWidth:540, width:'100%' }}>
+
         {/* Header */}
-        <div style={{ textAlign:'center', marginBottom:'1.5rem' }}>
+        <div style={{ textAlign:'center', marginBottom:'1.25rem' }}>
           <div style={{ fontSize:'2.5rem', marginBottom:'0.5rem' }}>
             {tie ? '🤝' : nsWins ? '🏆' : '🏆'}
           </div>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? '1.5rem' : '1.8rem', color:'var(--gold)', marginBottom:'0.3rem' }}>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? '1.5rem' : '1.8rem', color:'var(--gold)', marginBottom:'0.25rem' }}>
             Session Complete
           </h2>
           <p style={{ fontSize:'0.88rem', color: tie ? 'var(--text-muted)' : nsWins ? '#5DCAA5' : '#c0392b', fontWeight:600 }}>
-            {tie ? 'It\'s a tie!' : nsWins ? 'NS wins the session!' : 'EW wins the session!'}
+            {tie ? "It's a tie!" : nsWins ? 'NS wins the session!' : 'EW wins the session!'}
           </p>
         </div>
 
-        {/* Hand-by-hand table */}
-        <div style={{ background:'rgba(0,0,0,0.3)', borderRadius:12, overflow:'hidden', marginBottom:'1.25rem' }}>
-          <div style={{ display:'grid', gridTemplateColumns: showIMPs ? '0.4fr 1.2fr 0.8fr 0.8fr 0.7fr' : '0.4fr 1.2fr 0.8fr 0.8fr', background:'rgba(0,0,0,0.3)', padding:'8px 12px' }}>
-            {['#', 'Contract', 'Result', 'Points', ...(showIMPs ? ['IMPs'] : [])].map(h => (
-              <div key={h} style={{ fontSize:'0.6rem', color:'rgba(245,240,232,0.4)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', textAlign: h==='#'||h==='Contract'?'left':'right' }}>{h}</div>
-            ))}
-          </div>
-          {hands.map((h, i) => {
-            const vulLabel = h.vulnerability.NS && h.vulnerability.EW ? 'Both vul' : h.vulnerability.NS ? 'NS vul' : h.vulnerability.EW ? 'EW vul' : 'None vul'
-            const nsScore = h.nsRaw > 0 ? `NS +${h.nsRaw}` : h.nsRaw < 0 ? `EW +${Math.abs(h.nsRaw)}` : '—'
-            const impStr = h.imps > 0 ? `+${h.imps}` : h.imps < 0 ? `${h.imps}` : '0'
-            const impColor = h.imps > 0 ? '#5DCAA5' : h.imps < 0 ? '#c0392b' : 'var(--text-muted)'
-            return (
-              <div key={i} style={{ display:'grid', gridTemplateColumns: showIMPs ? '0.4fr 1.2fr 0.8fr 0.8fr 0.7fr' : '0.4fr 1.2fr 0.8fr 0.8fr', padding:'10px 12px', borderTop:'1px solid rgba(255,255,255,0.06)', background: i%2===0?'transparent':'rgba(255,255,255,0.02)', alignItems:'center' }}>
-                <div style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.4)' }}>{i+1}</div>
-                <div>
-                  {h.passed ? (
-                    <span style={{ fontSize:'0.78rem', color:'rgba(245,240,232,0.35)', fontStyle:'italic' }}>Passed out</span>
-                  ) : (
-                    <>
-                      <span style={{ fontSize:'0.88rem', fontWeight:700, color:'white' }}>{h.contract}</span>
-                      <span style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.4)', marginLeft:6 }}>by {h.declarer}</span>
-                      <div style={{ fontSize:'0.6rem', color:'rgba(245,240,232,0.25)', marginTop:1 }}>{vulLabel}</div>
-                    </>
-                  )}
-                </div>
-                <div style={{ textAlign:'right', fontSize:'0.78rem', color: h.made ? '#5DCAA5' : '#c0392b', fontWeight:600 }}>
-                  {h.passed ? '—' : h.made ? `Made ${h.tricksMade}` : `Down ${h.undertricks}`}
-                </div>
-                <div style={{ textAlign:'right', fontSize:'0.78rem', color: h.nsRaw > 0 ? '#5DCAA5' : h.nsRaw < 0 ? '#c0392b' : 'var(--text-muted)', fontWeight:600 }}>
-                  {nsScore}
-                </div>
-                {showIMPs && (
-                  <div style={{ textAlign:'right', fontSize:'0.82rem', fontWeight:700, color:impColor }}>
-                    {impStr}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Totals */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem', marginBottom:'1.5rem' }}>
-          {[
-            { side:'NS', pts: totals.NS, imps: totals.nsIMPs, win: nsWins, color:'#5DCAA5' },
-            { side:'EW', pts: totals.EW, imps: -totals.nsIMPs, win: ewWins, color:'#c0392b' },
-          ].map(({ side, pts, imps, win, color }) => (
-            <div key={side} style={{ background: win ? 'rgba(201,168,76,0.12)' : 'rgba(0,0,0,0.3)', border:`1.5px solid ${win?'var(--gold)':'rgba(255,255,255,0.08)'}`, borderRadius:12, padding:'1rem', textAlign:'center' }}>
-              <div style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{side}</div>
-              <div style={{ fontSize:'1.6rem', fontWeight:800, color: win ? 'var(--gold)' : color }}>{pts} pts</div>
-              {showIMPs && (
-                <div style={{ fontSize:'0.85rem', color: imps > 0 ? '#5DCAA5' : imps < 0 ? '#c0392b' : 'var(--text-muted)', fontWeight:600, marginTop:2 }}>
-                  {imps > 0 ? '+' : ''}{imps} IMPs
-                </div>
-              )}
-              {win && <div style={{ fontSize:'0.72rem', color:'var(--gold)', marginTop:4 }}>Winner 🏆</div>}
-            </div>
+        {/* Tab switcher */}
+        <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:4 }}>
+          {[['results','📊 Results'], ['stats','🧠 Analysis']].map(([id, label]) => (
+            <button key={id} onClick={() => setTab(id)} style={{
+              flex:1, padding:'8px', borderRadius:8, fontWeight:600, fontSize:'0.82rem', cursor:'pointer', border:'none',
+              background: tab===id ? 'rgba(201,168,76,0.2)' : 'transparent',
+              color: tab===id ? 'var(--gold)' : 'rgba(245,240,232,0.5)',
+              transition:'all 0.15s',
+            }}>{label}</button>
           ))}
         </div>
 
-        {/* Margin */}
-        {!tie && (
-          <p style={{ textAlign:'center', fontSize:'0.82rem', color:'rgba(245,240,232,0.5)', marginBottom:'1.25rem' }}>
-            {nsWins ? 'NS' : 'EW'} wins by {Math.abs(totals.NS - totals.EW)} points
-            {showIMPs && ` · ${Math.abs(totals.nsIMPs)} IMPs`}
-          </p>
+        {/* Results tab */}
+        {tab === 'results' && (
+          <>
+            {/* Hand-by-hand table */}
+            <div style={{ background:'rgba(0,0,0,0.3)', borderRadius:12, overflow:'hidden', marginBottom:'1rem' }}>
+              <div style={{ display:'grid', gridTemplateColumns: showIMPs ? '0.35fr 1.1fr 0.75fr 0.75fr 0.6fr' : '0.35fr 1.1fr 0.75fr 0.75fr', background:'rgba(0,0,0,0.3)', padding:'8px 12px' }}>
+                {['#','Contract','Result','Points',...(showIMPs?['IMPs']:[])].map(h => (
+                  <div key={h} style={{ fontSize:'0.62rem', color:'rgba(245,240,232,0.4)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', textAlign:h==='#'||h==='Contract'?'left':'right' }}>{h}</div>
+                ))}
+              </div>
+              {hands.map((h, i) => {
+                const vulLabel = h.vulnerability?.NS && h.vulnerability?.EW ? 'Both vul' : h.vulnerability?.NS ? 'NS vul' : h.vulnerability?.EW ? 'EW vul' : 'None vul'
+                const nsScore = h.nsRaw > 0 ? `NS +${h.nsRaw}` : h.nsRaw < 0 ? `EW +${Math.abs(h.nsRaw)}` : '—'
+                const impStr = h.imps > 0 ? `+${h.imps}` : h.imps < 0 ? `${h.imps}` : '0'
+                const impColor = h.imps > 0 ? '#5DCAA5' : h.imps < 0 ? '#c0392b' : 'var(--text-muted)'
+                return (
+                  <div key={i} style={{ display:'grid', gridTemplateColumns: showIMPs ? '0.35fr 1.1fr 0.75fr 0.75fr 0.6fr' : '0.35fr 1.1fr 0.75fr 0.75fr', padding:'10px 12px', borderTop:'1px solid rgba(255,255,255,0.06)', alignItems:'center' }}>
+                    <div style={{ fontSize:'0.75rem', color:'rgba(245,240,232,0.4)' }}>{i+1}</div>
+                    <div>
+                      {h.passed ? (
+                        <span style={{ fontSize:'0.78rem', color:'rgba(245,240,232,0.35)', fontStyle:'italic' }}>Passed out</span>
+                      ) : (
+                        <>
+                          <span style={{ fontSize:'0.9rem', fontWeight:700, color:'white' }}>{h.contract}</span>
+                          <span style={{ fontSize:'0.68rem', color:'rgba(245,240,232,0.4)', marginLeft:5 }}>by {h.declarer}</span>
+                          <div style={{ fontSize:'0.62rem', color: h.vulnerability?.NS || h.vulnerability?.EW ? '#c0392b' : 'rgba(245,240,232,0.25)', marginTop:1 }}>{vulLabel}</div>
+                        </>
+                      )}
+                    </div>
+                    <div style={{ textAlign:'right', fontSize:'0.8rem', color: h.made ? '#5DCAA5' : '#c0392b', fontWeight:600 }}>
+                      {h.passed ? '—' : h.made ? `Made ${h.tricksMade}` : `Down ${h.undertricks}`}
+                    </div>
+                    <div style={{ textAlign:'right', fontSize:'0.8rem', color: h.nsRaw > 0 ? '#5DCAA5' : h.nsRaw < 0 ? '#c0392b' : 'var(--text-muted)', fontWeight:600 }}>
+                      {nsScore}
+                    </div>
+                    {showIMPs && (
+                      <div style={{ textAlign:'right', fontSize:'0.85rem', fontWeight:700, color:impColor }}>{impStr}</div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Totals */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem', marginBottom:'1.25rem' }}>
+              {[
+                { side:'NS', pts:totals.NS, imps:totals.nsIMPs, win:nsWins, color:'#5DCAA5' },
+                { side:'EW', pts:totals.EW, imps:-totals.nsIMPs, win:ewWins, color:'#c0392b' },
+              ].map(({ side, pts, imps, win, color }) => (
+                <div key={side} style={{ background:win?'rgba(201,168,76,0.12)':'rgba(0,0,0,0.3)', border:`1.5px solid ${win?'var(--gold)':'rgba(255,255,255,0.08)'}`, borderRadius:12, padding:'1rem', textAlign:'center' }}>
+                  <div style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.5)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{side}</div>
+                  <div style={{ fontSize:'1.6rem', fontWeight:800, color:win?'var(--gold)':color }}>{pts} pts</div>
+                  {showIMPs && (
+                    <div style={{ fontSize:'0.85rem', color:imps>0?'#5DCAA5':imps<0?'#c0392b':'var(--text-muted)', fontWeight:600, marginTop:2 }}>
+                      {imps>0?'+':''}{imps} IMPs
+                    </div>
+                  )}
+                  {win && <div style={{ fontSize:'0.72rem', color:'var(--gold)', marginTop:4 }}>Winner 🏆</div>}
+                </div>
+              ))}
+            </div>
+            {!tie && (
+              <p style={{ textAlign:'center', fontSize:'0.82rem', color:'rgba(245,240,232,0.5)', marginBottom:'1.25rem' }}>
+                {nsWins?'NS':'EW'} wins by {Math.abs(totals.NS-totals.EW)} points{showIMPs?` · ${Math.abs(totals.nsIMPs)} IMPs`:''}
+              </p>
+            )}
+          </>
+        )}
+
+        {/* Analysis tab */}
+        {tab === 'stats' && stats && (
+          <div style={{ marginBottom:'1.25rem' }}>
+
+            {/* Session rating */}
+            <div style={{ background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.25)', borderRadius:12, padding:'1rem', marginBottom:'1rem', textAlign:'center' }}>
+              <div style={{ fontSize:'0.62rem', color:'var(--gold)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:6 }}>Session Rating</div>
+              <div style={{ fontSize:'2.5rem', fontWeight:800, color:'var(--gold)', lineHeight:1 }}>{stats.rating}</div>
+              <div style={{ fontSize:'0.75rem', color:'rgba(245,240,232,0.6)', marginTop:4 }}>{stats.playerLabel}</div>
+              <div style={{ height:6, background:'rgba(255,255,255,0.08)', borderRadius:3, marginTop:10, overflow:'hidden' }}>
+                <div style={{ height:6, background:'linear-gradient(90deg,#c0392b,#c9a84c,#5DCAA5)', borderRadius:3, width:`${stats.rating}%`, transition:'width 0.8s' }} />
+              </div>
+            </div>
+
+            {/* Key stats grid */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem', marginBottom:'1rem' }}>
+              {[
+                { label:'Contracts Made', value:`${stats.made}/${stats.total}`, sub:`${stats.makeRate}% success rate`, color: stats.makeRate >= 75 ? '#5DCAA5' : stats.makeRate >= 50 ? '#c9a84c' : '#c0392b' },
+                { label:'Overtricks', value: stats.overtrickTotal > 0 ? `+${stats.overtrickTotal}` : stats.overtrickTotal, sub:'tricks above contract', color: stats.overtrickTotal > 0 ? '#5DCAA5' : 'var(--text-muted)' },
+                { label:'Game Contracts', value:`${stats.gamesMade}/${stats.games.length}`, sub: stats.games.length === 0 ? 'none bid' : `${Math.round(stats.gamesMade/Math.max(1,stats.games.length)*100)}% made`, color: stats.gamesMade === stats.games.length && stats.games.length > 0 ? '#5DCAA5' : '#c9a84c' },
+                { label:'Slam Contracts', value: stats.slams.length === 0 ? 'None bid' : `${stats.slamsMade}/${stats.slams.length}`, sub: stats.slams.length === 0 ? '—' : stats.slamsMade === stats.slams.length ? '✅ All made!' : '⚠️ Some went down', color: stats.slamsMade === stats.slams.length && stats.slams.length > 0 ? '#5DCAA5' : stats.slams.length === 0 ? 'var(--text-muted)' : '#c0392b' },
+              ].map(({ label, value, sub, color }) => (
+                <div key={label} style={{ background:'rgba(0,0,0,0.3)', borderRadius:10, padding:'0.75rem' }}>
+                  <div style={{ fontSize:'0.6rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{label}</div>
+                  <div style={{ fontSize:'1.3rem', fontWeight:800, color, lineHeight:1.1 }}>{value}</div>
+                  <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.35)', marginTop:3 }}>{sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Best and worst hand */}
+            {stats.bestHand && stats.worstHand && showIMPs && (
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem', marginBottom:'1rem' }}>
+                <div style={{ background:'rgba(93,202,165,0.08)', border:'1px solid rgba(93,202,165,0.2)', borderRadius:10, padding:'0.75rem' }}>
+                  <div style={{ fontSize:'0.6rem', color:'#5DCAA5', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>Best Hand</div>
+                  <div style={{ fontSize:'1rem', fontWeight:700, color:'white' }}>{stats.bestHand.contract}</div>
+                  <div style={{ fontSize:'0.72rem', color:'#5DCAA5', fontWeight:600 }}>+{stats.bestHand.imps} IMPs</div>
+                  <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.35)' }}>{stats.bestHand.made ? `Made ${stats.bestHand.tricksMade}` : `Down ${stats.bestHand.undertricks}`}</div>
+                </div>
+                <div style={{ background:'rgba(192,57,43,0.08)', border:'1px solid rgba(192,57,43,0.2)', borderRadius:10, padding:'0.75rem' }}>
+                  <div style={{ fontSize:'0.6rem', color:'#c0392b', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>Hardest Hand</div>
+                  <div style={{ fontSize:'1rem', fontWeight:700, color:'white' }}>{stats.worstHand.contract}</div>
+                  <div style={{ fontSize:'0.72rem', color:'#c0392b', fontWeight:600 }}>{stats.worstHand.imps} IMPs</div>
+                  <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.35)' }}>{stats.worstHand.made ? `Made ${stats.worstHand.tricksMade}` : `Down ${stats.worstHand.undertricks}`}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Vulnerability performance */}
+            {stats.vulHands.length > 0 && (
+              <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:10, padding:'0.75rem', marginBottom:'1rem' }}>
+                <div style={{ fontSize:'0.6rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>Vulnerable Hands</div>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span style={{ fontSize:'0.82rem', color:'rgba(245,240,232,0.6)' }}>{stats.vulMade}/{stats.vulHands.length} contracts made under pressure</span>
+                  <span style={{ fontSize:'0.88rem', fontWeight:700, color: stats.vulMade === stats.vulHands.length ? '#5DCAA5' : '#c9a84c' }}>
+                    {Math.round(stats.vulMade/Math.max(1,stats.vulHands.length)*100)}%
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Plain English insight */}
+            <div style={{ background:'rgba(255,255,255,0.04)', borderRadius:10, padding:'0.85rem', borderLeft:'3px solid var(--gold)' }}>
+              <div style={{ fontSize:'0.6rem', color:'var(--gold)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>Session Insight</div>
+              <p style={{ fontSize:'0.8rem', color:'rgba(245,240,232,0.7)', lineHeight:1.6, margin:0 }}>
+                {stats.makeRate >= 75 && stats.overtrickTotal > 0
+                  ? `Strong session — you made ${stats.makeRate}% of contracts and collected ${stats.overtrickTotal} overtrick${stats.overtrickTotal !== 1 ? 's' : ''}. Focus on accurate bidding to reach the right levels.`
+                  : stats.makeRate >= 75
+                  ? `Good accuracy — ${stats.makeRate}% of contracts made. Work on squeezing out overtricks to maximise your scores.`
+                  : stats.makeRate >= 50
+                  ? `Mixed session with ${stats.makeRate}% of contracts made. Review your declarer play — are you drawing trumps early enough and establishing side suits?`
+                  : `Tough session — focus on contract planning before playing. Count your winners, draw trumps in suit contracts, and establish your long suit in NT.`
+                }
+                {stats.slams.length > 0 && stats.slamsMade < stats.slams.length
+                  ? ' Your slam went down — check if you had enough combined HCP (typically 33+ for small slam).'
+                  : stats.slams.length > 0 && stats.slamsMade === stats.slams.length
+                  ? ' Excellent slam bidding and play!'
+                  : ''}
+              </p>
+            </div>
+          </div>
         )}
 
         <div style={{ display:'flex', gap:'0.75rem', justifyContent:'center' }}>
@@ -936,7 +1118,7 @@ export default function Bridge() {
             Hand {session.handNumber}/4
           </span>
           {game.contract && (
-            <span style={{ fontSize:'0.7rem', background:'rgba(255,255,255,0.08)', color:'var(--cream)', padding:'2px 8px', borderRadius:20, flexShrink:0 }}>
+            <span style={{ fontSize:'0.82rem', background:'rgba(255,255,255,0.08)', color:'var(--cream)', padding:'2px 8px', borderRadius:20, flexShrink:0 }}>
               <span style={{ color:'white' }}>{game.contract.level}</span>
               <span style={{ color:suitColor(game.contract.denomination) }}>{DENOM_SYMBOLS[game.contract.denomination]}</span>
               {!isMobile && <span style={{ color:'var(--text-muted)' }}> · {game.contract.declarer==='S'?'South':botName(game.contract.declarer)} declares</span>}
@@ -971,7 +1153,7 @@ export default function Bridge() {
           {/* NORTH */}
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding: isMobile ? '4px 6px 2px' : '8px 12px 4px', flexShrink:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize: isMobile ? '0.62rem' : '0.72rem', fontWeight:600, color:labelColor('N') }}>{playerLabel('N')}</span>
+              <span style={{ fontSize: isMobile ? '0.82rem' : '0.88rem', fontWeight:600, color:labelColor('N') }}>{playerLabel('N')}</span>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
             </div>
             {isNorthDummy
@@ -1017,7 +1199,7 @@ export default function Bridge() {
                         {play
                           ? <div style={{ textAlign:'center' }}>
                               <BCard card={play.card} w={mTrickCardW} h={mTrickCardH} />
-                              <div style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.45)', marginTop:2 }}>{p==='S'?'S':p}</div>
+                              <div style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.55)', marginTop:2 }}>{p==='S'?'S':p}</div>
                             </div>
                           : <div style={{ width:mTrickCardW, height:mTrickCardH, borderRadius:8, border:'2px dashed rgba(201,168,76,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                               <span style={{ fontSize:'0.58rem', color:'rgba(245,240,232,0.15)' }}>{p}</span>
@@ -1047,8 +1229,8 @@ export default function Bridge() {
           {/* SOUTH */}
           <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap: isMobile ? 4 : 6, padding: isMobile ? '2px 6px 6px' : '4px 12px 10px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize: isMobile ? '0.62rem' : '0.72rem', fontWeight:600, color:labelColor('S') }}>
-                {playerLabel('S')} · {countHCP(myHand)} HCP{isMyPlayTurn ? ' · Your turn' : ''}
+              <span style={{ fontSize: isMobile ? '0.82rem' : '0.88rem', fontWeight:600, color:labelColor('S') }}>
+                {playerLabel('S')} · {countHCP(myHand)} HCP{isMyPlayTurn ? ' · Your turn ▶' : ''}
               </span>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('S',game.auction)} />}
             </div>
@@ -1102,7 +1284,7 @@ export default function Bridge() {
               <p style={{ fontSize:'0.8rem', color:game.vulnerability?.EW?'#c0392b':'#5DCAA5' }}>EW: {game.vulnerability?.EW?'Vul':'Not vul'}</p>
             </div>
             <div>
-              <p style={{ fontSize:'0.58rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Bidding History</p>
+              <p style={{ fontSize:'0.65rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Bidding History</p>
               <AuctionHistory auction={game.auction} dealer={game.dealer} />
             </div>
             {game.contract && (
