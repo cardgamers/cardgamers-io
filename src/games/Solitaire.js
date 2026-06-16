@@ -68,56 +68,93 @@ function checkWin(foundations) { return foundations.every(f=>f.length===13) }
 function isStuck(game) {
   const { tableau, stock, waste, foundations } = game
 
-  // If stock still has cards, not stuck
+  // Stock has cards — can always draw, not stuck
   if (stock.length > 0) return false
 
-  // Check waste top card
-  const wasteTop = waste.length > 0 ? waste[waste.length - 1] : null
+  // Waste has cards — can reset stock and cycle through again
+  // BUT: if waste has cards and stock is 0, clicking stock resets it
+  // So we are only stuck if BOTH stock and waste are empty AND no tableau moves
+  // OR if stock=0, waste has cards but none of them can go anywhere AND
+  // there are no tableau moves — meaning cycling through waste again won't help
+  // We approximate: if stock=0 and waste>0, player can still reset — not stuck yet
+  // EXCEPTION: if we just reset and still no moves, we need to catch that
+  // The safest check: stock=0, waste=0 → no draws possible at all
+  // Plus check if any tableau move exists
 
-  // Can waste top go to foundation?
-  if (wasteTop) {
-    for (let fi = 0; fi < 4; fi++) {
-      if (canPlaceOnFoundation(wasteTop, foundations[fi], fi)) return false
+  // If waste still has cards, player can reset stock — not fully stuck
+  // unless this is Draw 1 and the single waste card has no moves
+  const drawMode = game.drawMode || 1
+
+  if (drawMode === 1) {
+    // Draw 1: stock=0 means waste cards will be reversed back to stock on next click
+    // Only stuck if stock=0 AND waste=0 (nothing left to draw ever)
+    // OR stock=0, waste has cards but after checking all waste cards none can move
+    // AND no tableau moves exist
+    if (stock.length === 0 && waste.length === 0) {
+      // No cards left to draw at all — check only tableau
+      return !hasAnyTableauMove(tableau, foundations)
     }
-    // Can waste top go to tableau?
-    for (let ci = 0; ci < 7; ci++) {
-      if (canPlaceOnTableau(wasteTop, tableau[ci])) return false
+    if (stock.length === 0 && waste.length > 0) {
+      // Can reset — check if ANY waste card can eventually be played
+      // For simplicity: if no tableau moves AND no waste card can go anywhere, stuck
+      const anyWasteMove = waste.some(card => {
+        for (let fi = 0; fi < 4; fi++) {
+          if (canPlaceOnFoundation(card, foundations[fi], fi)) return true
+        }
+        for (let ci = 0; ci < 7; ci++) {
+          if (canPlaceOnTableau(card, tableau[ci])) return true
+        }
+        return false
+      })
+      if (anyWasteMove) return false
+      return !hasAnyTableauMove(tableau, foundations)
     }
   }
 
-  // Can any remaining waste cards be cycled? Only if there are more waste cards
-  if (waste.length > 1) return false
+  if (drawMode === 3) {
+    // Draw 3: only stuck when stock=0 AND waste=0
+    if (stock.length > 0 || waste.length > 0) return false
+    return !hasAnyTableauMove(tableau, foundations)
+  }
 
-  // Check tableau cards
+  return false
+}
+
+function hasAnyTableauMove(tableau, foundations) {
   for (let ci = 0; ci < 7; ci++) {
     const col = tableau[ci]
-    // Any face-down cards left to flip at the bottom of a column?
-    for (let i = 0; i < col.length; i++) {
-      if (!col[i].faceUp && i === col.length - 1) return false
-    }
-    // Check each face-up card
+
+    // Face-down card at bottom of column can be flipped
+    if (col.length > 0 && !col[col.length - 1].faceUp) return true
+
+    // Check each face-up card for any valid move
     for (let i = col.length - 1; i >= 0; i--) {
       if (!col[i].faceUp) break
       const card = col[i]
-      // Can go to foundation?
+
+      // Top card can go to foundation
       if (i === col.length - 1) {
         for (let fi = 0; fi < 4; fi++) {
-          if (canPlaceOnFoundation(card, foundations[fi], fi)) return false
+          if (canPlaceOnFoundation(card, foundations[fi], fi)) return true
         }
       }
-      // Can move to another tableau column?
+
+      // Any face-up card (and its sequence) can move to another column
       for (let tci = 0; tci < 7; tci++) {
         if (tci === ci) continue
         if (canPlaceOnTableau(card, tableau[tci])) {
-          // Only count as a move if it uncovers a face-down card or moves to empty with purpose
-          if (i > 0 && !col[i - 1].faceUp) return false
-          if (card.value === 'K' && tableau[tci].length === 0 && col.length > 1) return false
+          // It's a real move if:
+          // 1. It uncovers a face-down card
+          // 2. It's a King moving to a genuinely empty column (col has other cards)
+          // 3. It's any card moving somewhere useful (destination not empty, real placement)
+          if (i > 0 && !col[i - 1].faceUp) return true
+          if (tableau[tci].length > 0) return true
+          if (card.value === 'K' && tableau[tci].length === 0 && col.length > 1) return true
         }
       }
     }
   }
-
-  return true
+  return false
 }
 
 // ─── Responsive sizing ────────────────────────────────────────────
@@ -862,10 +899,10 @@ export default function Solitaire() {
             <div onClick={drawStock} style={{ cursor:'pointer', flex:1, maxWidth:W, position:'relative' }}>
               {game.stock.length > 0
                 ? <Card card={{faceUp:false}} W={W} H={H} fs={fs} ss={ss} />
-                : <Slot label="↺" onClick={drawStock} W={W} H={H} />
+                : <Slot label={game.waste.length > 0 ? "↺" : "∅"} onClick={drawStock} W={W} H={H} />
               }
               <div style={{ textAlign:'center', fontSize:'0.55rem', color:'rgba(245,240,232,0.3)', marginTop:2 }}>
-                {game.stock.length > 0 ? game.stock.length : 'Reset'}
+                {game.stock.length > 0 ? game.stock.length : waste.length > 0 ? 'Reset' : 'Empty'}
               </div>
             </div>
 
