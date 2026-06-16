@@ -157,6 +157,66 @@ function hasAnyTableauMove(tableau, foundations) {
   return false
 }
 
+// ─── Auto-complete detector ──────────────────────────────────────
+// Returns true when all remaining cards are face-up (game is trivially winnable)
+function allCardsFaceUp(game) {
+  const { tableau, stock, waste } = game
+  if (stock.length > 0) return false
+  if (waste.some(c => !c.faceUp)) return false
+  for (const col of tableau) {
+    if (col.some(c => !c.faceUp)) return false
+  }
+  return true
+}
+
+// Auto-complete one step: move the lowest available card to its foundation
+// Returns updated game state or null if no move found
+function autoCompleteStep(game) {
+  const { tableau, waste, foundations } = game
+  const ng = JSON.parse(JSON.stringify(game))
+
+  // Try waste top first
+  if (ng.waste.length > 0) {
+    const card = ng.waste[ng.waste.length - 1]
+    for (let fi = 0; fi < 4; fi++) {
+      if (canPlaceOnFoundation(card, ng.foundations[fi], fi)) {
+        ng.waste.pop()
+        ng.foundations[fi].push(card)
+        return ng
+      }
+    }
+  }
+
+  // Try tableau top cards — prioritise lowest value to avoid blocking
+  // Sort columns by foundation value to move in safe order
+  const candidates = []
+  for (let ci = 0; ci < 7; ci++) {
+    const col = ng.tableau[ci]
+    if (col.length === 0) continue
+    const card = col[col.length - 1]
+    if (!card.faceUp) continue
+    for (let fi = 0; fi < 4; fi++) {
+      if (canPlaceOnFoundation(card, ng.foundations[fi], fi)) {
+        candidates.push({ ci, fi, card })
+      }
+    }
+  }
+
+  if (candidates.length === 0) return null
+
+  // Pick the card with lowest value to avoid playing out of order
+  candidates.sort((a, b) => {
+    const va = VALUES.indexOf(a.card.value)
+    const vb = VALUES.indexOf(b.card.value)
+    return va - vb
+  })
+
+  const { ci, fi } = candidates[0]
+  const card = ng.tableau[ci].pop()
+  ng.foundations[fi].push(card)
+  return ng
+}
+
 // ─── Responsive sizing ────────────────────────────────────────────
 function useLayout() {
   const [layout, setLayout] = useState(() => calcLayout())
@@ -455,6 +515,39 @@ function StuckDialog({ onNewGame, onUndo, canUndo }) {
   )
 }
 
+// ─── Auto-complete dialog ────────────────────────────────────────
+function AutoCompleteDialog({ onAutoComplete, onManual }) {
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
+      <div style={{ background:'linear-gradient(135deg,#1a3d28,#0f2a1a)', border:'2px solid #c9a84c', borderRadius:20, padding:'2rem 1.75rem', maxWidth:380, width:'100%', textAlign:'center' }}>
+        <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>🎯</div>
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.5rem', color:'#c9a84c', marginBottom:'0.5rem' }}>Almost there!</h2>
+        <p style={{ fontSize:'0.88rem', color:'rgba(245,240,232,0.7)', lineHeight:1.7, marginBottom:'0.4rem' }}>
+          All cards are face-up — the game is won from here.
+        </p>
+        <p style={{ fontSize:'0.78rem', color:'rgba(245,240,232,0.4)', lineHeight:1.6, marginBottom:'1.5rem' }}>
+          Want to auto-complete, or finish the last moves yourself?
+        </p>
+        <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+          <button
+            onClick={onAutoComplete}
+            className="btn-gold"
+            style={{ fontSize:'0.95rem', padding:'0.7rem', width:'100%' }}
+          >
+            ✨ Auto-complete
+          </button>
+          <button
+            onClick={onManual}
+            style={{ padding:'0.65rem', borderRadius:8, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.2)', color:'rgba(245,240,232,0.7)', cursor:'pointer', fontSize:'0.88rem', width:'100%' }}
+          >
+            I'll finish manually →
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Solitaire ───────────────────────────────────────────────
 export default function Solitaire() {
   usePageMeta('/game/solitaire')
@@ -472,6 +565,9 @@ export default function Solitaire() {
   const [lastClickTime, setLastClickTime] = useState({})
   const [showStuck, setShowStuck] = useState(false)
   const [stuckChecked, setStuckChecked] = useState(false)
+  const [showAutoComplete, setShowAutoComplete] = useState(false)
+  const [isAutoCompleting, setIsAutoCompleting] = useState(false)
+  const autoCompleteTimer = useRef(null)
   const layout = useLayout()
   const { W, H, fs, ss, faceDownH, faceUpOverlap, gap } = layout
 
@@ -484,6 +580,35 @@ export default function Solitaire() {
     }, 600)
     return () => clearTimeout(t)
   }, [game, won, showStuck, showNewGameDialog])
+
+  // Detect all-cards-face-up state
+  useEffect(() => {
+    if (!game || won || showStuck || showAutoComplete || isAutoCompleting || showNewGameDialog) return
+    const t = setTimeout(() => {
+      if (allCardsFaceUp(game)) setShowAutoComplete(true)
+    }, 400)
+    return () => clearTimeout(t)
+  }, [game, won, showStuck, showAutoComplete, isAutoCompleting, showNewGameDialog])
+
+  // Auto-complete animation loop
+  useEffect(() => {
+    if (!isAutoCompleting || won) return
+    autoCompleteTimer.current = setTimeout(() => {
+      setGame(prev => {
+        if (!prev) return prev
+        const next = autoCompleteStep(prev)
+        if (!next) { setIsAutoCompleting(false); return prev }
+        if (checkWin(next.foundations)) {
+          setWon(true)
+          setIsAutoCompleting(false)
+        }
+        setScore(s => s + 15)
+        setMoves(m => m + 1)
+        return next
+      })
+    }, 80) // 80ms between each card — smooth animation
+    return () => clearTimeout(autoCompleteTimer.current)
+  }, [isAutoCompleting, game, won])
 
   useEffect(() => {
     if (!won || resultSaved) return
@@ -552,6 +677,8 @@ export default function Solitaire() {
     setWon(false); setHistory([]); setResultSaved(false)
     setPercentiles(null); setTotalWins(0)
     setShowStuck(false)
+    setShowAutoComplete(false)
+    setIsAutoCompleting(false)
     setShowNewGameDialog(false)
   }
 
@@ -798,6 +925,14 @@ export default function Solitaire() {
           onNewGame={() => setShowNewGameDialog(true)}
           onUndo={() => { undo(); setShowStuck(false) }}
           canUndo={history.length > 0}
+        />
+      )}
+
+      {/* Auto-complete dialog */}
+      {showAutoComplete && !won && !isAutoCompleting && (
+        <AutoCompleteDialog
+          onAutoComplete={() => { setShowAutoComplete(false); setIsAutoCompleting(true) }}
+          onManual={() => setShowAutoComplete(false)}
         />
       )}
 
