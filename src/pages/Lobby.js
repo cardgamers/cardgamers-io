@@ -6,7 +6,6 @@ const GAMES = [
   { id: 'bridge', suit: '♠', name: 'Bridge', desc: 'The flagship. 4-player contract bridge with full bidding.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/bridge', learnPath: '/learn/bridge-intro' },
   { id: 'rummy', suit: '♥', name: 'Rummy', desc: 'Gin Rummy against real opponents. Sign in to play.', players: '2–4 players', status: 'live', color: '#c0392b', path: '/game/rummy', learnPath: '/learn/rummy', requiresAuth: true },
   { id: 'spades', suit: '♠', name: 'Spades', desc: 'Partnership bidding and trick-taking.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/spades', learnPath: '/learn/spades' },
-  { id: 'poker', suit: '♦', name: 'Poker', desc: "Texas Hold'em — coming soon!", players: '2–9 players', status: 'soon', color: '#85B7EB', path: '#' },
 ]
 
 export default function Lobby() {
@@ -72,49 +71,39 @@ export default function Lobby() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
           {GAMES.map(game => {
             const needsLogin = game.requiresAuth && isGuest
-            const isDisabled = game.status === 'soon'
-            const destination = isDisabled ? '#' : needsLogin ? '/login' : game.path
+            const destination = needsLogin ? '/login' : game.path
 
             return (
               <div key={game.id} style={{
                 background: 'var(--felt-light)',
-                border: `1px solid ${isDisabled ? 'var(--border)' : 'rgba(201,168,76,0.2)'}`,
+                border: '1px solid rgba(201,168,76,0.2)',
                 borderRadius: 14, padding: '1.5rem',
-                opacity: isDisabled ? 0.6 : 1,
                 display: 'flex', flexDirection: 'column',
                 transition: 'border-color 0.15s',
               }}>
-                {/* Badge row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '2rem', lineHeight: 1 }}>{game.suit}</span>
                   <span style={{
                     fontSize: '0.68rem', fontWeight: 600, padding: '2px 8px', borderRadius: 20,
-                    background: isDisabled ? 'rgba(201,168,76,0.1)' : needsLogin ? 'rgba(255,255,255,0.07)' : 'rgba(29,158,117,0.2)',
-                    color: isDisabled ? 'var(--gold)' : needsLogin ? 'var(--text-muted)' : 'var(--green-accent)',
+                    background: needsLogin ? 'rgba(255,255,255,0.07)' : 'rgba(29,158,117,0.2)',
+                    color: needsLogin ? 'var(--text-muted)' : 'var(--green-accent)',
                     textTransform: 'uppercase', letterSpacing: '0.06em',
                   }}>
-                    {isDisabled ? 'Coming soon' : needsLogin ? '🔒 Sign in' : 'Play now'}
+                    {needsLogin ? '🔒 Sign in' : 'Play now'}
                   </span>
                 </div>
-
-                {/* Game info */}
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.3rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--cream)' }}>{game.name}</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '0.75rem', flex: 1 }}>{game.desc}</div>
                 <div style={{ fontSize: '0.75rem', color: game.color, fontWeight: 500, marginBottom: '1rem' }}>{game.players}</div>
-
-                {/* Action buttons */}
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  {!isDisabled && (
-                    <Link to={destination} style={{
-                      flex: 1, textAlign: 'center', padding: '0.55rem 0.75rem',
-                      borderRadius: 8, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600,
-                      background: 'var(--gold)', color: 'var(--felt-dark)',
-                      cursor: 'pointer',
-                    }}>
-                      {needsLogin ? 'Sign in to play' : `Play ${game.name}`}
-                    </Link>
-                  )}
-                  {game.learnPath && !isDisabled && (
+                  <Link to={destination} style={{
+                    flex: 1, textAlign: 'center', padding: '0.55rem 0.75rem',
+                    borderRadius: 8, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600,
+                    background: 'var(--gold)', color: 'var(--felt-dark)',
+                  }}>
+                    {needsLogin ? 'Sign in to play' : `Play ${game.name}`}
+                  </Link>
+                  {game.learnPath && (
                     <Link to={game.learnPath} style={{
                       padding: '0.55rem 0.75rem', borderRadius: 8, textDecoration: 'none',
                       fontSize: '0.78rem', fontWeight: 500, whiteSpace: 'nowrap',
