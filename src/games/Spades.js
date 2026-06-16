@@ -252,15 +252,31 @@ export default function Spades() {
     clearTimeout(botTimer.current)
     botTimer.current = setTimeout(() => {
       setTrick([])
+      setCurrentPlayer(winner)
       if (newTrickNo === 13) {
-        // Hand complete
-        setPhase('complete')
-        setCurrentPlayer(winner)
-      } else {
-        setCurrentPlayer(winner)
+        // Use functional update to avoid stale closure on tricksWon
+        setTricksWon(latestTricksWon => {
+          const t0 = calcTeamScore([bids[0], bids[2]], [latestTricksWon[0], latestTricksWon[2]])
+          const t1 = calcTeamScore([bids[1], bids[3]], [latestTricksWon[1], latestTricksWon[3]])
+          setScores(prev => {
+            const newScores = [prev[0] + t0, prev[1] + t1]
+            if (newScores[0] >= 500 || newScores[1] >= 500) {
+              setGameOver(true)
+              if (!resultSaved) {
+                const playerWon = newScores[0] > newScores[1]
+                saveGameResult('spades', playerWon, newScores[0], playerWon ? 20 : -10, {})
+                setResultSaved(true)
+              }
+            } else {
+              botTimer.current = setTimeout(() => startGame(), 2000)
+            }
+            return newScores
+          })
+          return latestTricksWon
+        })
       }
     }, 1400)
-  }, [trickNo])
+  }, [trickNo, bids, resultSaved, startGame])
 
   // ── Bot card play ────────────────────────────────────────────────
   useEffect(() => {
@@ -285,25 +301,7 @@ export default function Spades() {
     return () => clearTimeout(botTimer.current)
   }, [phase, currentPlayer, hands, trick, spadesBroken, tricksWon, resolveTrick])
 
-  // ── Hand complete — score + next hand or game over ───────────────
-  useEffect(() => {
-    if (phase !== 'complete') return
-    const t0 = calcTeamScore([bids[0], bids[2]], [tricksWon[0], tricksWon[2]])
-    const t1 = calcTeamScore([bids[1], bids[3]], [tricksWon[1], tricksWon[3]])
-    const newScores = [scores[0] + t0, scores[1] + t1]
-    setScores(newScores)
-    if (newScores[0] >= 500 || newScores[1] >= 500) {
-      setGameOver(true)
-      if (!resultSaved) {
-        const playerWon = newScores[0] > newScores[1]
-        saveGameResult('spades', playerWon, newScores[0], playerWon ? 20 : -10, {})
-        setResultSaved(true)
-      }
-    } else {
-      clearTimeout(botTimer.current)
-      botTimer.current = setTimeout(() => startGame(), 2000)
-    }
-  }, [phase])
+
 
   // ── Human plays a card ───────────────────────────────────────────
   const playCard = useCallback((card) => {
