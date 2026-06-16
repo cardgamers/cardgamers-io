@@ -158,24 +158,25 @@ function hasAnyTableauMove(tableau, foundations) {
 }
 
 // ─── Auto-complete detector ──────────────────────────────────────
-// Returns true when all remaining cards are face-up (game is trivially winnable)
+// Trigger auto-complete offer when all tableau cards are face-up.
+// Remaining cards in stock/waste will trivially sequence to foundation.
 function allCardsFaceUp(game) {
-  const { tableau, stock, waste } = game
-  if (stock.length > 0) return false
-  if (waste.some(c => !c.faceUp)) return false
+  const { tableau } = game
+  // All tableau cards must be face-up
   for (const col of tableau) {
     if (col.some(c => !c.faceUp)) return false
   }
-  return true
+  // Need at least some progress to avoid triggering too early
+  const foundationCount = game.foundations.reduce((s, f) => s + f.length, 0)
+  return foundationCount >= 13
 }
 
-// Auto-complete one step: move the lowest available card to its foundation
-// Returns updated game state or null if no move found
+// Auto-complete one step: always moves exactly ONE card to foundation
+// or draws one card from stock. Returns null if nothing to do.
 function autoCompleteStep(game) {
-  const { tableau, waste, foundations } = game
   const ng = JSON.parse(JSON.stringify(game))
 
-  // Try waste top first
+  // Priority 1: send waste top to foundation
   if (ng.waste.length > 0) {
     const card = ng.waste[ng.waste.length - 1]
     for (let fi = 0; fi < 4; fi++) {
@@ -187,12 +188,11 @@ function autoCompleteStep(game) {
     }
   }
 
-  // Try tableau top cards — prioritise lowest value to avoid blocking
-  // Sort columns by foundation value to move in safe order
+  // Priority 2: send tableau top card to foundation
   const candidates = []
   for (let ci = 0; ci < 7; ci++) {
     const col = ng.tableau[ci]
-    if (col.length === 0) continue
+    if (!col.length) continue
     const card = col[col.length - 1]
     if (!card.faceUp) continue
     for (let fi = 0; fi < 4; fi++) {
@@ -201,20 +201,35 @@ function autoCompleteStep(game) {
       }
     }
   }
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => VALUES.indexOf(a.card.value) - VALUES.indexOf(b.card.value))
+    const { ci, fi } = candidates[0]
+    ng.foundations[fi].push(ng.tableau[ci].pop())
+    return ng
+  }
 
-  if (candidates.length === 0) return null
+  // Priority 3: draw one card from stock
+  if (ng.stock.length > 0) {
+    const card = ng.stock.pop()
+    card.faceUp = true
+    ng.waste.push(card)
+    return ng
+  }
 
-  // Pick the card with lowest value to avoid playing out of order
-  candidates.sort((a, b) => {
-    const va = VALUES.indexOf(a.card.value)
-    const vb = VALUES.indexOf(b.card.value)
-    return va - vb
-  })
+  // Priority 4: reset waste to stock (one reset only)
+  if (ng.waste.length > 0) {
+    ng.stock = [...ng.waste].reverse().map(c => ({...c, faceUp:false}))
+    ng.waste = []
+    // Immediately draw first card
+    if (ng.stock.length > 0) {
+      const card = ng.stock.pop()
+      card.faceUp = true
+      ng.waste.push(card)
+      return ng
+    }
+  }
 
-  const { ci, fi } = candidates[0]
-  const card = ng.tableau[ci].pop()
-  ng.foundations[fi].push(card)
-  return ng
+  return null
 }
 
 // ─── Responsive sizing ────────────────────────────────────────────
@@ -590,25 +605,42 @@ export default function Solitaire() {
     return () => clearTimeout(t)
   }, [game, won, showStuck, showAutoComplete, isAutoCompleting, showNewGameDialog])
 
-  // Auto-complete animation loop
+  // Auto-complete animation loop — runs only when isAutoCompleting flips on
   useEffect(() => {
-    if (!isAutoCompleting || won) return
-    autoCompleteTimer.current = setTimeout(() => {
-      setGame(prev => {
-        if (!prev) return prev
-        const next = autoCompleteStep(prev)
-        if (!next) { setIsAutoCompleting(false); return prev }
-        if (checkWin(next.foundations)) {
-          setWon(true)
-          setIsAutoCompleting(false)
-        }
-        setScore(s => s + 15)
-        setMoves(m => m + 1)
-        return next
-      })
-    }, 80) // 80ms between each card — smooth animation
-    return () => clearTimeout(autoCompleteTimer.current)
-  }, [isAutoCompleting, game, won])
+    if (!isAutoCompleting) return
+    let stopped = false
+
+    function step(currentGame) {
+      if (stopped || !currentGame) return
+      const next = autoCompleteStep(currentGame)
+      if (!next || next === currentGame) {
+        setIsAutoCompleting(false)
+        return
+      }
+      setScore(s => s + 15)
+      setMoves(m => m + 1)
+      setGame(next)
+      if (checkWin(next.foundations)) {
+        setWon(true)
+        setIsAutoCompleting(false)
+        return
+      }
+      autoCompleteTimer.current = setTimeout(() => step(next), 80)
+    }
+
+    // Get current game state via functional setter peek
+    setGame(currentGame => {
+      if (currentGame) {
+        autoCompleteTimer.current = setTimeout(() => step(currentGame), 80)
+      }
+      return currentGame
+    })
+
+    return () => {
+      stopped = true
+      clearTimeout(autoCompleteTimer.current)
+    }
+  }, [isAutoCompleting])
 
   useEffect(() => {
     if (!won || resultSaved) return
