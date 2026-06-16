@@ -550,7 +550,18 @@ export default function Solitaire() {
       const ng = JSON.parse(JSON.stringify(g))
       const drawCount = ng.drawMode || 1
       if (ng.stock.length===0) {
-        ng.stock = [...ng.waste].reverse().map(c => ({...c, faceUp:false}))
+        // Draw 3: shuffle waste on reset — harder, more casino-like
+        // Draw 1: reverse order (standard Klondike)
+        const resetCards = ng.waste.map(c => ({...c, faceUp:false}))
+        if (ng.drawMode === 3) {
+          for (let i = resetCards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [resetCards[i], resetCards[j]] = [resetCards[j], resetCards[i]]
+          }
+          ng.stock = resetCards
+        } else {
+          ng.stock = [...resetCards].reverse()
+        }
         ng.waste = []
       } else {
         const toDraw = Math.min(drawCount, ng.stock.length)
