@@ -434,7 +434,7 @@ export default function Solitaire() {
       } catch(e) { /* never crash */ }
     }, 800)
     return () => clearTimeout(t)
-  }, [game]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game])
 
   useEffect(() => {
     if (!won || resultSaved) return
