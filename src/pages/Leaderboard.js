@@ -1,22 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const GAMES = [
-  { id: 'all', label: 'Overall', icon: '🏆' },
-  { id: 'bridge', label: 'Bridge', icon: '♠' },
-  { id: 'rummy', label: 'Rummy', icon: '♥' },
+  { id: 'all',       label: 'Overall',   icon: '🏆' },
+  { id: 'bridge',    label: 'Bridge',    icon: '♠' },
+  { id: 'rummy',     label: 'Rummy',     icon: '♥' },
+  { id: 'spades',    label: 'Spades',    icon: '♠' },
   { id: 'solitaire', label: 'Solitaire', icon: '♣' },
-  { id: 'teen-patti', label: 'Teen Patti', icon: '🪔' },
 ]
 
 const PERIODS = [
-  { id: 'all', label: 'All Time' },
+  { id: 'all',   label: 'All Time' },
   { id: 'month', label: 'This Month' },
-  { id: 'week', label: 'This Week' },
+  { id: 'week',  label: 'This Week' },
 ]
 
 export default function Leaderboard() {
+  usePageMeta('/leaderboard')
   const [activeGame, setActiveGame] = useState('all')
   const [activePeriod, setActivePeriod] = useState('all')
   const [rows, setRows] = useState([])
@@ -29,14 +31,13 @@ export default function Leaderboard() {
     if (activeGame === 'all') {
       query = query.order('rating', { ascending: false })
     } else {
-      const gameCol = activeGame === 'teen-patti' ? 'teen_patti' : activeGame
+      const gameCol = activeGame
       query = query
         .gt(`${gameCol}_played`, 0)
         .order(`${gameCol}_won`, { ascending: false })
     }
 
     query.limit(50).then(({ data }) => {
-      // Filter by period
       setRows(data || [])
       setLoading(false)
     })
@@ -90,7 +91,6 @@ export default function Leaderboard() {
         {!loading && rows.length >= 3 && (
           <div style={{ display:'flex', gap:'1rem', marginBottom:'1.5rem', alignItems:'flex-end', justifyContent:'center' }}>
             {[rows[1], rows[0], rows[2]].map((row, i) => {
-              const actualRank = i === 0 ? 1 : i === 1 ? 0 : 2
               const heights = [140, 170, 120]
               const medals = ['🥈', '🥇', '🥉']
               return (
@@ -133,36 +133,37 @@ export default function Leaderboard() {
               </thead>
               <tbody>
                 {rows.map((row, i) => {
-                  const gameCol = activeGame === 'teen-patti' ? 'teen_patti' : activeGame
+                  const gameCol = activeGame
                   const gamesPlayed = activeGame === 'all' ? row.games_played : (row[`${gameCol}_played`] || 0)
-                  const gamesWon = activeGame === 'all' ? row.games_won : (row[`${gameCol}_won`] || 0)
+                  const gamesWon   = activeGame === 'all' ? row.games_won   : (row[`${gameCol}_won`]    || 0)
                   const winPct = gamesPlayed > 0 ? Math.round(gamesWon / gamesPlayed * 100) : 0
                   return (
-                  <tr key={row.username} style={{ borderTop:'1px solid var(--border)', background: i===0?'rgba(201,168,76,0.05)':i===1?'rgba(192,192,192,0.03)':i===2?'rgba(205,127,50,0.03)':'transparent' }}>
-                    <td style={{ padding:'0.85rem 1.25rem', width:60 }}>
-                      <span style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.1rem', fontWeight:700, color:rankColor(i) }}>
-                        {rankLabel(i)}
-                      </span>
-                    </td>
-                    <td style={{ padding:'0.85rem 1.25rem' }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                        <div style={{ width:34, height:34, borderRadius:'50%', background:'var(--gold)', color:'var(--felt-dark)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:'0.9rem', flexShrink:0 }}>
-                          {row.username?.[0]?.toUpperCase()}
+                    <tr key={row.username} style={{ borderTop:'1px solid var(--border)', background: i===0?'rgba(201,168,76,0.05)':i===1?'rgba(192,192,192,0.03)':i===2?'rgba(205,127,50,0.03)':'transparent' }}>
+                      <td style={{ padding:'0.85rem 1.25rem', width:60 }}>
+                        <span style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.1rem', fontWeight:700, color:rankColor(i) }}>
+                          {rankLabel(i)}
+                        </span>
+                      </td>
+                      <td style={{ padding:'0.85rem 1.25rem' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                          <div style={{ width:34, height:34, borderRadius:'50%', background:'var(--gold)', color:'var(--felt-dark)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:'0.9rem', flexShrink:0 }}>
+                            {row.username?.[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight:500, color:'var(--cream)', fontSize:'0.9rem' }}>{row.username}</div>
+                            {row.plan && row.plan !== 'free' && (
+                              <div style={{ fontSize:'0.65rem', color:'var(--gold)', fontWeight:600, textTransform:'uppercase' }}>{row.plan}</div>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <div style={{ fontWeight:500, color:'var(--cream)', fontSize:'0.9rem' }}>{row.username}</div>
-                          {row.plan && row.plan !== 'free' && (
-                            <div style={{ fontSize:'0.65rem', color:'var(--gold)', fontWeight:600, textTransform:'uppercase' }}>{row.plan}</div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', fontWeight:700, color:'var(--gold)', fontSize:'0.95rem' }}>{row.rating}</td>
-                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--text-muted)', fontSize:'0.88rem' }}>{gamesPlayed}</td>
-                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--green-accent)', fontSize:'0.88rem' }}>{gamesWon}</td>
-                    <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--green-accent)', fontSize:'0.88rem', fontWeight:600 }}>{winPct}%</td>
-                  </tr>
-                )})}
+                      </td>
+                      <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', fontWeight:700, color:'var(--gold)', fontSize:'0.95rem' }}>{row.rating}</td>
+                      <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--text-muted)', fontSize:'0.88rem' }}>{gamesPlayed}</td>
+                      <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--green-accent)', fontSize:'0.88rem' }}>{gamesWon}</td>
+                      <td style={{ padding:'0.85rem 1.25rem', textAlign:'right', color:'var(--green-accent)', fontSize:'0.88rem', fontWeight:600 }}>{winPct}%</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}

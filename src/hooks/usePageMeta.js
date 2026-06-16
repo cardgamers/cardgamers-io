@@ -11,8 +11,8 @@ const PAGE_META = {
     description: 'Pick a card game and start playing instantly. Bridge, Rummy, Spades and Solitaire — free to play, no download, no sign-up required.',
   },
   '/game/bridge': {
-    title: 'Play Bridge Online Free — Rubber & Duplicate Bridge | CardGamers.io',
-    description: 'Play Bridge online free against smart bots. Rubber and Duplicate formats, Standard American bidding, dummy hand revealed. No download needed.',
+    title: 'Play Bridge Online Free — Rubber, Duplicate & IMP Scoring | CardGamers.io',
+    description: 'Play Bridge online free against smart bots. Rubber, Duplicate and IMP scoring. Standard American bidding, dummy hand revealed. No download needed.',
   },
   '/game/rummy': {
     title: 'Play Rummy Online Free — Multiplayer Gin Rummy | CardGamers.io',
@@ -23,32 +23,32 @@ const PAGE_META = {
     description: 'Play Spades online free. Bid your tricks, play your hand, beat the bots. Classic partnership Spades with full scoring. No download needed.',
   },
   '/game/solitaire': {
-    title: 'Play Solitaire Online Free — Klondike Solitaire | CardGamers.io',
-    description: 'Play Klondike Solitaire free online. No ads, no download. Track your moves, time and win streak. Hint system included. Works on mobile and desktop.',
+    title: 'Play Solitaire Online Free — Klondike Draw 1 & Draw 3 | CardGamers.io',
+    description: 'Play Klondike Solitaire free online. Choose Draw 1 or Draw 3 mode. No ads, no download. Hint system, undo, win streak tracking. Works on mobile and desktop.',
   },
   '/learn/bridge-intro': {
-    title: 'How to Play Bridge — Visual Beginner\'s Guide | CardGamers.io',
-    description: 'Learn Bridge with interactive visual examples — the table setup, bidding, dummy hand, tricks and scoring. Perfect for complete beginners.',
+    title: 'How to Play Bridge — Rules & Guide | CardGamers.io',
+    description: 'Learn how to play Bridge card game with our complete beginner\'s guide. Bidding, tricks, scoring explained simply. Then play free online — no sign-up needed.',
   },
   '/learn/bridge': {
-    title: 'How to Play Bridge — Complete Beginner\'s Guide | CardGamers.io',
-    description: 'Learn Bridge from scratch. 11 chapters covering bidding, card play, scoring, conventions and strategy. The clearest Bridge guide for beginners online.',
+    title: 'Bridge Card Game Guide — Bidding, Conventions & Strategy | CardGamers.io',
+    description: 'Master Bridge with our 11-chapter guide. Covers Standard American bidding, card play, scoring, Stayman, Blackwood, slams and defence strategy.',
   },
   '/learn/solitaire': {
-    title: 'How to Play Solitaire — Visual Step-by-Step Guide | CardGamers.io',
-    description: 'Learn Klondike Solitaire with interactive visual examples. Setup, moving cards, the Foundation, Stock pile and winning strategy — all clearly explained.',
+    title: 'How to Play Solitaire — Rules & Strategy Guide | CardGamers.io',
+    description: 'Learn how to play Klondike Solitaire. Setup, moving cards, Foundation rules, Stock pile strategy and winning tips — explained with visual examples.',
   },
   '/learn/rummy': {
-    title: 'How to Play Rummy — Visual Guide with Examples | CardGamers.io',
-    description: 'Learn Gin Rummy with visual card examples. Sets, runs, knocking, strategy — everything a beginner needs to start winning at Rummy.',
+    title: 'How to Play Rummy — Rules & Strategy Guide | CardGamers.io',
+    description: 'Learn how to play Gin Rummy. Sets, runs, knocking, deadwood scoring and strategy — everything a beginner needs to start winning at Rummy.',
   },
   '/learn/spades': {
-    title: 'How to Play Spades — Visual Guide with Examples | CardGamers.io',
-    description: 'Learn Spades with visual trick examples. Trump rules, bidding, scoring, Nil bids and strategy — the complete beginner\'s guide to Spades.',
+    title: 'How to Play Spades — Rules & Strategy Guide | CardGamers.io',
+    description: 'Learn how to play Spades. Trump rules, bidding, Nil bids, bags penalty and winning strategy — the complete beginner\'s guide to Spades card game.',
   },
   '/how-to-play': {
     title: 'How to Play Card Games — Bridge, Rummy, Spades & Solitaire | CardGamers.io',
-    description: 'Step-by-step guides for every card game on CardGamers.io. Learn Bridge, Rummy, Spades and Solitaire rules and strategy from scratch.',
+    description: 'Step-by-step guides for Bridge, Rummy, Spades and Solitaire. Learn the rules and strategy for every card game on CardGamers.io — free to play after.',
   },
   '/leaderboard': {
     title: 'Leaderboard — Top Card Game Players | CardGamers.io',
@@ -56,19 +56,19 @@ const PAGE_META = {
   },
   '/upgrade': {
     title: 'Upgrade to Plus — Ad-Free Card Games | CardGamers.io',
-    description: 'Go ad-free, unlock hard bots, full game history and private club rooms. CardGamers.io Plus from $6/month.',
+    description: 'Go ad-free, unlock hard bots, full game history and private club rooms. CardGamers.io Plus from $6/month. Cancel anytime.',
   },
   '/about': {
     title: 'About CardGamers.io — Free Online Card Games Platform',
     description: 'CardGamers.io is a free browser-based card game platform. Play Bridge, Rummy, Spades and Solitaire from any device. No download, no sign-up needed to try.',
   },
   '/games': {
-    title: 'All Card Games — CardGamers.io',
-    description: 'Browse all card games on CardGamers.io. Bridge, Rummy, Spades, Solitaire and more. Free to play, no download needed.',
+    title: 'All Card Games — Bridge, Rummy, Spades & Solitaire | CardGamers.io',
+    description: 'Browse all card games on CardGamers.io. Bridge, Rummy, Spades and Solitaire — free to play, no download needed.',
   },
   '/tournaments': {
-    title: 'Card Game Tournaments — CardGamers.io',
-    description: 'Compete in Bridge, Rummy and Spades tournaments on CardGamers.io. Test your skills against the best players.',
+    title: 'Card Game Tournaments — Bridge, Rummy & Spades | CardGamers.io',
+    description: 'Compete in Bridge, Rummy and Spades tournaments on CardGamers.io. Join the waitlist for scheduled events, prize pools and live leaderboards.',
   },
   '/contact': {
     title: 'Contact Us — CardGamers.io',
@@ -100,12 +100,26 @@ export function usePageMeta(path) {
       if (el) el.setAttribute(attr, value)
     }
 
+    // Standard meta
     setMeta('meta[name="description"]',        'content', meta.description)
+
+    // Open Graph
     setMeta('meta[property="og:title"]',        'content', meta.title)
     setMeta('meta[property="og:description"]',  'content', meta.description)
     setMeta('meta[property="og:url"]',          'content', `https://www.cardgamers.io${path}`)
+
+    // Twitter
     setMeta('meta[name="twitter:title"]',       'content', meta.title)
     setMeta('meta[name="twitter:description"]', 'content', meta.description)
+
+    // Canonical — update or create
+    let canonical = document.querySelector('link[rel="canonical"]')
+    if (!canonical) {
+      canonical = document.createElement('link')
+      canonical.setAttribute('rel', 'canonical')
+      document.head.appendChild(canonical)
+    }
+    canonical.setAttribute('href', `https://www.cardgamers.io${path}`)
 
     return () => { document.title = DEFAULT_META.title }
   }, [path])
