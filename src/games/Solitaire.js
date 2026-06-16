@@ -157,80 +157,6 @@ function hasAnyTableauMove(tableau, foundations) {
   return false
 }
 
-// ─── Auto-complete detector ──────────────────────────────────────
-// Trigger auto-complete offer when all tableau cards are face-up.
-// Remaining cards in stock/waste will trivially sequence to foundation.
-function allCardsFaceUp(game) {
-  const { tableau } = game
-  // All tableau cards must be face-up
-  for (const col of tableau) {
-    if (col.some(c => !c.faceUp)) return false
-  }
-  // Need at least some progress to avoid triggering too early
-  const foundationCount = game.foundations.reduce((s, f) => s + f.length, 0)
-  return foundationCount >= 13
-}
-
-// Auto-complete one step: always moves exactly ONE card to foundation
-// or draws one card from stock. Returns null if nothing to do.
-function autoCompleteStep(game) {
-  const ng = JSON.parse(JSON.stringify(game))
-
-  // Priority 1: send waste top to foundation
-  if (ng.waste.length > 0) {
-    const card = ng.waste[ng.waste.length - 1]
-    for (let fi = 0; fi < 4; fi++) {
-      if (canPlaceOnFoundation(card, ng.foundations[fi], fi)) {
-        ng.waste.pop()
-        ng.foundations[fi].push(card)
-        return ng
-      }
-    }
-  }
-
-  // Priority 2: send tableau top card to foundation
-  const candidates = []
-  for (let ci = 0; ci < 7; ci++) {
-    const col = ng.tableau[ci]
-    if (!col.length) continue
-    const card = col[col.length - 1]
-    if (!card.faceUp) continue
-    for (let fi = 0; fi < 4; fi++) {
-      if (canPlaceOnFoundation(card, ng.foundations[fi], fi)) {
-        candidates.push({ ci, fi, card })
-      }
-    }
-  }
-  if (candidates.length > 0) {
-    candidates.sort((a, b) => VALUES.indexOf(a.card.value) - VALUES.indexOf(b.card.value))
-    const { ci, fi } = candidates[0]
-    ng.foundations[fi].push(ng.tableau[ci].pop())
-    return ng
-  }
-
-  // Priority 3: draw one card from stock
-  if (ng.stock.length > 0) {
-    const card = ng.stock.pop()
-    card.faceUp = true
-    ng.waste.push(card)
-    return ng
-  }
-
-  // Priority 4: reset waste to stock (one reset only)
-  if (ng.waste.length > 0) {
-    ng.stock = [...ng.waste].reverse().map(c => ({...c, faceUp:false}))
-    ng.waste = []
-    // Immediately draw first card
-    if (ng.stock.length > 0) {
-      const card = ng.stock.pop()
-      card.faceUp = true
-      ng.waste.push(card)
-      return ng
-    }
-  }
-
-  return null
-}
 
 // ─── Responsive sizing ────────────────────────────────────────────
 function useLayout() {
@@ -530,38 +456,6 @@ function StuckDialog({ onNewGame, onUndo, canUndo }) {
   )
 }
 
-// ─── Auto-complete dialog ────────────────────────────────────────
-function AutoCompleteDialog({ onAutoComplete, onManual }) {
-  return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
-      <div style={{ background:'linear-gradient(135deg,#1a3d28,#0f2a1a)', border:'2px solid #c9a84c', borderRadius:20, padding:'2rem 1.75rem', maxWidth:380, width:'100%', textAlign:'center' }}>
-        <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>🎯</div>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.5rem', color:'#c9a84c', marginBottom:'0.5rem' }}>Almost there!</h2>
-        <p style={{ fontSize:'0.88rem', color:'rgba(245,240,232,0.7)', lineHeight:1.7, marginBottom:'0.4rem' }}>
-          All cards are face-up — the game is won from here.
-        </p>
-        <p style={{ fontSize:'0.78rem', color:'rgba(245,240,232,0.4)', lineHeight:1.6, marginBottom:'1.5rem' }}>
-          Want to auto-complete, or finish the last moves yourself?
-        </p>
-        <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-          <button
-            onClick={onAutoComplete}
-            className="btn-gold"
-            style={{ fontSize:'0.95rem', padding:'0.7rem', width:'100%' }}
-          >
-            ✨ Auto-complete
-          </button>
-          <button
-            onClick={onManual}
-            style={{ padding:'0.65rem', borderRadius:8, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.2)', color:'rgba(245,240,232,0.7)', cursor:'pointer', fontSize:'0.88rem', width:'100%' }}
-          >
-            I'll finish manually →
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ─── Main Solitaire ───────────────────────────────────────────────
 export default function Solitaire() {
@@ -580,9 +474,6 @@ export default function Solitaire() {
   const [lastClickTime, setLastClickTime] = useState({})
   const [showStuck, setShowStuck] = useState(false)
   const [stuckChecked, setStuckChecked] = useState(false)
-  const [showAutoComplete, setShowAutoComplete] = useState(false)
-  const [isAutoCompleting, setIsAutoCompleting] = useState(false)
-  const autoCompleteTimer = useRef(null)
   const layout = useLayout()
   const { W, H, fs, ss, faceDownH, faceUpOverlap, gap } = layout
 
@@ -595,52 +486,6 @@ export default function Solitaire() {
     }, 600)
     return () => clearTimeout(t)
   }, [game, won, showStuck, showNewGameDialog])
-
-  // Detect all-cards-face-up state
-  useEffect(() => {
-    if (!game || won || showStuck || showAutoComplete || isAutoCompleting || showNewGameDialog) return
-    const t = setTimeout(() => {
-      if (allCardsFaceUp(game)) setShowAutoComplete(true)
-    }, 400)
-    return () => clearTimeout(t)
-  }, [game, won, showStuck, showAutoComplete, isAutoCompleting, showNewGameDialog])
-
-  // Auto-complete animation loop — runs only when isAutoCompleting flips on
-  useEffect(() => {
-    if (!isAutoCompleting) return
-    let stopped = false
-
-    function step(currentGame) {
-      if (stopped || !currentGame) return
-      const next = autoCompleteStep(currentGame)
-      if (!next || next === currentGame) {
-        setIsAutoCompleting(false)
-        return
-      }
-      setScore(s => s + 15)
-      setMoves(m => m + 1)
-      setGame(next)
-      if (checkWin(next.foundations)) {
-        setWon(true)
-        setIsAutoCompleting(false)
-        return
-      }
-      autoCompleteTimer.current = setTimeout(() => step(next), 80)
-    }
-
-    // Get current game state via functional setter peek
-    setGame(currentGame => {
-      if (currentGame) {
-        autoCompleteTimer.current = setTimeout(() => step(currentGame), 80)
-      }
-      return currentGame
-    })
-
-    return () => {
-      stopped = true
-      clearTimeout(autoCompleteTimer.current)
-    }
-  }, [isAutoCompleting])
 
   useEffect(() => {
     if (!won || resultSaved) return
@@ -709,8 +554,6 @@ export default function Solitaire() {
     setWon(false); setHistory([]); setResultSaved(false)
     setPercentiles(null); setTotalWins(0)
     setShowStuck(false)
-    setShowAutoComplete(false)
-    setIsAutoCompleting(false)
     setShowNewGameDialog(false)
   }
 
@@ -957,14 +800,6 @@ export default function Solitaire() {
           onNewGame={() => setShowNewGameDialog(true)}
           onUndo={() => { undo(); setShowStuck(false) }}
           canUndo={history.length > 0}
-        />
-      )}
-
-      {/* Auto-complete dialog */}
-      {showAutoComplete && !won && !isAutoCompleting && (
-        <AutoCompleteDialog
-          onAutoComplete={() => { setShowAutoComplete(false); setIsAutoCompleting(true) }}
-          onManual={() => setShowAutoComplete(false)}
         />
       )}
 
