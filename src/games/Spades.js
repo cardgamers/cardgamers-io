@@ -366,7 +366,7 @@ export default function Spades() {
       </div>
 
       {/* TABLE */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0, paddingRight: isMobile ? 0 : 200 }}>
 
         {/* NORTH */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: isMobile ? '4px 6px 2px' : '8px 12px 4px', flexShrink: 0 }}>
@@ -382,7 +382,7 @@ export default function Spades() {
         </div>
 
         {/* MIDDLE ROW */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', overflow: 'hidden', minHeight: 0, padding: isMobile ? '0 4px' : '0 8px', gap: isMobile ? 4 : 8 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', overflow: 'hidden', minHeight: 0, padding: isMobile ? '0 8px' : '0 20px', gap: isMobile ? 6 : 14 }}>
 
           {/* WEST */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flexShrink: 0 }}>
