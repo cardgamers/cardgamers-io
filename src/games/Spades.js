@@ -95,20 +95,21 @@ function SCard({ card, selected, valid, onClick, w = 72, h = 100, faceDown }) {
   )
   if (!card) return null
   const isRed = card.suit === '♥' || card.suit === '♦'
-  const col = isRed ? '#c0392b' : '#1a1a2e'
+  const isInvalid = valid === false
+  const col = isInvalid ? (isRed ? '#a05050' : '#555566') : (isRed ? '#c0392b' : '#1a1a2e')
   const fs = Math.max(8, Math.round(w * 0.16))
   const ss = Math.max(12, Math.round(w * 0.28))
   return (
     <div onClick={valid && onClick ? onClick : undefined} style={{
       width: w, height: h, borderRadius: 7, flexShrink: 0,
-      background: selected ? '#fffde7' : valid === false ? 'rgba(255,255,255,0.4)' : 'white',
-      border: selected ? '2.5px solid #c9a84c' : '1px solid #ccc',
+      background: selected ? '#fffde7' : isInvalid ? '#d8d8d8' : 'white',
+      border: selected ? '2.5px solid #c9a84c' : isInvalid ? '1px solid #aaa' : '1px solid #ccc',
       boxShadow: selected ? '0 0 0 2px rgba(201,168,76,0.5),0 6px 16px rgba(0,0,0,0.4)' : '0 2px 5px rgba(0,0,0,0.2)',
       cursor: valid && onClick ? 'pointer' : 'default',
       userSelect: 'none', position: 'relative',
       transform: selected ? 'translateY(-10px)' : 'none',
       transition: 'transform 0.12s, box-shadow 0.12s',
-      opacity: valid === false ? 0.4 : 1,
+      opacity: isInvalid ? 0.65 : 1,
     }}>
       <div style={{ position: 'absolute', top: 3, left: 4, lineHeight: 1.1 }}>
         <div style={{ fontSize: fs, fontWeight: 800, color: col, lineHeight: 1 }}>{card.rank}</div>
@@ -154,14 +155,14 @@ function BidPanel({ onBid, isMobile }) {
       border: '1px solid rgba(201,168,76,0.3)',
       width: '100%', maxWidth: 340, boxSizing: 'border-box',
     }}>
-      <p style={{ fontSize: '0.82rem', color: 'var(--gold)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+      <p style={{ fontSize: '0.94rem', color: 'var(--gold)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
         Your Bid — How many tricks?
       </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
         {[0,1,2,3,4,5,6,7,8,9,10,11,12,13].map(n => (
           <button key={n} onClick={() => setSel(n)} style={{
             width: isMobile ? 38 : 42, height: isMobile ? 38 : 42,
-            borderRadius: 8, fontWeight: 700, fontSize: '0.9rem',
+            borderRadius: 8, fontWeight: 700, fontSize: '1.02rem',
             background: sel === n ? 'var(--gold)' : 'rgba(255,255,255,0.08)',
             border: `2px solid ${sel === n ? 'var(--gold)' : 'rgba(255,255,255,0.15)'}`,
             color: sel === n ? '#1a1a1a' : 'white', cursor: 'pointer',
@@ -307,10 +308,10 @@ export default function Spades() {
   const currentWinner = trickComplete ? trickWinner(g.trick) : null
 
   // Card sizes
-  const nCW = isMobile ? 40 : 56; const nCH = isMobile ? 56 : 78; const nOL = isMobile ? 12 : 16
-  const sCW = isMobile ? 34 : 44; const sCH = isMobile ? 48 : 62; const sOL = isMobile ? 9 : 12
-  const myCW = isMobile ? 52 : 72; const myCH = isMobile ? 73 : 100; const myOL = isMobile ? 15 : 20
-  const tCW = isMobile ? 44 : 60; const tCH = isMobile ? 62 : 84
+  const nCW = isMobile ? 48 : 68; const nCH = isMobile ? 67 : 95; const nOL = isMobile ? 14 : 20
+  const sCW = isMobile ? 40 : 54; const sCH = isMobile ? 56 : 76; const sOL = isMobile ? 11 : 15
+  const myCW = isMobile ? 62 : 88; const myCH = isMobile ? 87 : 123; const myOL = isMobile ? 18 : 26
+  const tCW = isMobile ? 56 : 78; const tCH = isMobile ? 79 : 109
 
   return (
     <div style={{ paddingTop: 56, height: '100vh', display: 'flex', flexDirection: 'column', background: '#0d1f14', overflow: 'hidden' }}>
@@ -335,13 +336,13 @@ export default function Spades() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.75rem', height: 44, background: 'rgba(0,0,0,0.6)', borderBottom: '1px solid rgba(201,168,76,0.12)', flexShrink: 0, gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: 0 }}>
-          <Link to="/lobby" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none', flexShrink: 0 }}>← Menu</Link>
+          <Link to="/lobby" style={{ color: 'var(--text-muted)', fontSize: '0.97rem', textDecoration: 'none', flexShrink: 0 }}>← Menu</Link>
           <span style={{ fontFamily: "'Playfair Display',serif", color: 'var(--gold)', fontWeight: 700, flexShrink: 0 }}>♠</span>
-          <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.08)', color: 'white', padding: '2px 8px', borderRadius: 20, flexShrink: 0 }}>
+          <span style={{ fontSize: '1.04rem', background: 'rgba(255,255,255,0.08)', color: 'white', padding: '2px 8px', borderRadius: 20, flexShrink: 0 }}>
             ♠ Spades trump{g.spadesBroken ? ' · broken' : ''}
           </span>
         </div>
-        <div style={{ fontSize: '0.82rem', fontWeight: 600, flexShrink: 0 }}>
+        <div style={{ fontSize: '0.94rem', fontWeight: 600, flexShrink: 0 }}>
           {isBidding
             ? <span style={{ color: g.currentPlayer === 0 ? '#5DCAA5' : 'var(--gold)' }}>
                 {g.currentPlayer === 0 ? '🟢 Your bid' : `${LABELS[g.currentPlayer]} bidding...`}
@@ -353,7 +354,7 @@ export default function Spades() {
             : null
           }
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.82rem', fontWeight: 600, flexShrink: 0, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.94rem', fontWeight: 600, flexShrink: 0, alignItems: 'center' }}>
           <span style={{ color: '#5DCAA5' }}>We:{scores[0]}</span>
           <span style={{ color: '#c0392b' }}>They:{scores[1]}</span>
           {g.phase === 'playing' && <>
@@ -385,7 +386,7 @@ export default function Spades() {
 
           {/* WEST */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flexShrink: 0 }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: g.currentPlayer === 1 ? '#c9a84c' : 'rgba(245,240,232,0.45)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+            <span style={{ fontSize: '0.98rem', fontWeight: 700, color: g.currentPlayer === 1 ? '#c9a84c' : 'rgba(245,240,232,0.45)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
               {isMobile ? 'W' : `West${g.bids[1] !== null ? ` · ${g.bids[1]}` : ''}`}
             </span>
             <FaceDownHand count={g.hands[1]?.length || 0} vertical cardW={sCW} cardH={sCH} overlap={sOL} />
@@ -400,12 +401,12 @@ export default function Spades() {
               g.currentPlayer === 0
                 ? <BidPanel onBid={handleBid} isMobile={isMobile} />
                 : <div style={{ textAlign: 'center', padding: '16px 24px', background: 'rgba(0,0,0,0.45)', borderRadius: 12, border: '1px solid rgba(201,168,76,0.1)' }}>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: 8 }}>
+                    <p style={{ fontSize: '1.02rem', color: 'var(--text-muted)', marginBottom: 8 }}>
                       {LABELS[g.currentPlayer]} is bidding...
                     </p>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
                       {g.bids.map((b, i) => b !== null && (
-                        <span key={i} style={{ fontSize: '0.82rem', background: 'rgba(255,255,255,0.08)', padding: '3px 10px', borderRadius: 20, color: 'var(--cream)' }}>
+                        <span key={i} style={{ fontSize: '0.94rem', background: 'rgba(255,255,255,0.08)', padding: '3px 10px', borderRadius: 20, color: 'var(--cream)' }}>
                           {LABELS[i]}: {b === 0 ? 'Nil' : b}
                         </span>
                       ))}
@@ -413,7 +414,7 @@ export default function Spades() {
                   </div>
             ) : (
               /* Trick area */
-              <div style={{ position: 'relative', width: isMobile ? 180 : 260, height: isMobile ? 160 : 220, flexShrink: 0 }}>
+              <div style={{ position: 'relative', width: isMobile ? 220 : 320, height: isMobile ? 200 : 280, flexShrink: 0 }}>
                 {[
                   { player: 2, pos: { top: 0, left: '50%', transform: 'translateX(-50%)' } },
                   { player: 0, pos: { bottom: 0, left: '50%', transform: 'translateX(-50%)' } },
@@ -429,13 +430,13 @@ export default function Spades() {
                           <div style={{ border: isWinner ? '2.5px solid #c9a84c' : '2px solid transparent', borderRadius: 9, boxShadow: isWinner ? '0 0 14px rgba(201,168,76,0.6)' : 'none' }}>
                             <SCard card={played.card} w={tCW} h={tCH} />
                           </div>
-                          <div style={{ fontSize: '0.68rem', color: isWinner ? '#c9a84c' : 'rgba(245,240,232,0.4)', marginTop: 2, fontWeight: isWinner ? 700 : 400 }}>
+                          <div style={{ fontSize: '0.94rem', color: isWinner ? '#c9a84c' : 'rgba(245,240,232,0.4)', marginTop: 2, fontWeight: isWinner ? 700 : 400 }}>
                             {LABELS[player]}{isWinner ? ' 👑' : ''}
                           </div>
                         </div>
                       ) : (
                         <div style={{ width: tCW, height: tCH, borderRadius: 8, border: '2px dashed rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ fontSize: '0.65rem', color: 'rgba(245,240,232,0.15)' }}>{LABELS[player][0]}</span>
+                          <span style={{ fontSize: '1.02rem', color: 'rgba(245,240,232,0.15)' }}>{LABELS[player][0]}</span>
                         </div>
                       )}
                     </div>
@@ -444,7 +445,7 @@ export default function Spades() {
                 {/* Last trick winner label when trick cleared */}
                 {g.trick.length === 0 && g.lastWinner !== null && showLastTrick === false && g.trickNo > 0 && (
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'rgba(245,240,232,0.35)' }}>
+                    <div style={{ fontSize: '1rem', color: 'rgba(245,240,232,0.35)' }}>
                       {LABELS[g.lastWinner]} won trick {g.trickNo}
                     </div>
                   </div>
@@ -459,7 +460,7 @@ export default function Spades() {
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#c9a84c', animation: 'spulse 1.2s ease-in-out infinite' }} />
             )}
             <FaceDownHand count={g.hands[3]?.length || 0} vertical cardW={sCW} cardH={sCH} overlap={sOL} />
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: g.currentPlayer === 3 ? '#c9a84c' : 'rgba(245,240,232,0.45)', writingMode: 'vertical-rl' }}>
+            <span style={{ fontSize: '0.98rem', fontWeight: 700, color: g.currentPlayer === 3 ? '#c9a84c' : 'rgba(245,240,232,0.45)', writingMode: 'vertical-rl' }}>
               {isMobile ? 'E' : `East${g.bids[3] !== null ? ` · ${g.bids[3]}` : ''}`}
             </span>
           </div>
@@ -503,56 +504,56 @@ export default function Spades() {
               )
             })}
           </div>
-          {isMyTurn && <p style={{ fontSize: '0.72rem', color: 'rgba(245,240,232,0.3)' }}>Tap to select · Tap again to play</p>}
+          {isMyTurn && <p style={{ fontSize: '0.98rem', color: 'rgba(245,240,232,0.3)' }}>Tap to select · Tap again to play</p>}
         </div>
       </div>
 
       {/* Right panel desktop */}
       {!isMobile && (
-        <div style={{ position: 'fixed', right: 0, top: 56, bottom: 0, width: 185, background: 'rgba(0,0,0,0.4)', borderLeft: '1px solid rgba(201,168,76,0.1)', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', right: 0, top: 56, bottom: 0, width: 200, background: 'rgba(0,0,0,0.4)', borderLeft: '1px solid rgba(201,168,76,0.1)', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
           <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: 8, padding: '8px 10px' }}>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700 }}>This Hand</p>
+            <p style={{ fontSize: '0.98rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700 }}>This Hand</p>
             {[{ label:'You', i:0, col:'#5DCAA5' },{ label:'Partner', i:2, col:'#5DCAA5' },{ label:'West', i:1, col:'#c0392b' },{ label:'East', i:3, col:'#c0392b' }].map(({ label, i, col }) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: '0.82rem', color: 'rgba(245,240,232,0.6)' }}>{label}</span>
-                <span style={{ fontSize: '0.82rem', color: col, fontWeight: 600 }}>
+                <span style={{ fontSize: '0.94rem', color: 'rgba(245,240,232,0.6)' }}>{label}</span>
+                <span style={{ fontSize: '0.94rem', color: col, fontWeight: 600 }}>
                   {g.bids[i] !== null ? `${g.bids[i] === 0 ? 'Nil' : g.bids[i]} · ${g.tricksWon[i]}✓` : '—'}
                 </span>
               </div>
             ))}
           </div>
           <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: '8px 10px' }}>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700 }}>Score</p>
+            <p style={{ fontSize: '0.98rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700 }}>Score</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: '0.84rem', color: '#5DCAA5' }}>NS (We)</span>
-              <span style={{ fontSize: '0.92rem', color: '#5DCAA5', fontWeight: 700 }}>{scores[0]}</span>
+              <span style={{ fontSize: '0.96rem', color: '#5DCAA5' }}>NS (We)</span>
+              <span style={{ fontSize: '1.04rem', color: '#5DCAA5', fontWeight: 700 }}>{scores[0]}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: '0.84rem', color: '#c0392b' }}>EW (They)</span>
-              <span style={{ fontSize: '0.92rem', color: '#c0392b', fontWeight: 700 }}>{scores[1]}</span>
+              <span style={{ fontSize: '0.96rem', color: '#c0392b' }}>EW (They)</span>
+              <span style={{ fontSize: '1.04rem', color: '#c0392b', fontWeight: 700 }}>{scores[1]}</span>
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(245,240,232,0.35)', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 4 }}>First to 500 wins</div>
+            <div style={{ fontSize: '0.98rem', color: 'rgba(245,240,232,0.35)', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 4 }}>First to 500 wins</div>
           </div>
           {g.phase === 'playing' && (
             <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: '8px 10px' }}>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 700 }}>Tricks</p>
+              <p style={{ fontSize: '0.98rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 700 }}>Tricks</p>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                <span style={{ fontSize: '0.82rem', color: 'rgba(245,240,232,0.5)' }}>Trick</span>
-                <span style={{ fontSize: '0.88rem', color: 'var(--gold)', fontWeight: 700 }}>{g.trickNo + 1}/13</span>
+                <span style={{ fontSize: '0.94rem', color: 'rgba(245,240,232,0.5)' }}>Trick</span>
+                <span style={{ fontSize: '1rem', color: 'var(--gold)', fontWeight: 700 }}>{g.trickNo + 1}/13</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                <span style={{ fontSize: '0.82rem', color: '#5DCAA5' }}>NS won</span>
-                <span style={{ fontSize: '0.88rem', color: '#5DCAA5', fontWeight: 700 }}>{g.tricksWon[0]+g.tricksWon[2]}</span>
+                <span style={{ fontSize: '0.94rem', color: '#5DCAA5' }}>NS won</span>
+                <span style={{ fontSize: '1rem', color: '#5DCAA5', fontWeight: 700 }}>{g.tricksWon[0]+g.tricksWon[2]}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.82rem', color: '#c0392b' }}>EW won</span>
-                <span style={{ fontSize: '0.88rem', color: '#c0392b', fontWeight: 700 }}>{g.tricksWon[1]+g.tricksWon[3]}</span>
+                <span style={{ fontSize: '0.94rem', color: '#c0392b' }}>EW won</span>
+                <span style={{ fontSize: '1rem', color: '#c0392b', fontWeight: 700 }}>{g.tricksWon[1]+g.tricksWon[3]}</span>
               </div>
             </div>
           )}
           <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: 8, padding: '8px 10px' }}>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 700 }}>How to Play</p>
-            <p style={{ fontSize: '0.78rem', color: 'rgba(245,240,232,0.4)', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.98rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 700 }}>How to Play</p>
+            <p style={{ fontSize: '1.02rem', color: 'rgba(245,240,232,0.4)', lineHeight: 1.5 }}>
               ♠ Always trump. Bid your tricks, make your contract. Bags count against you. First to 500 wins.
             </p>
           </div>
