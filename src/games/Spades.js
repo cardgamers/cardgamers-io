@@ -35,6 +35,7 @@ function newGameState() {
     tricksWon: [0, 0, 0, 0],
     lastTrick: null,
     lastWinner: null,
+    trickResolved: false,
   }
 }
 
@@ -62,20 +63,29 @@ function applyCard(g, playerIdx, card) {
   if (card.suit === '♠') ng.spadesBroken = true
 
   if (ng.trick.length === 4) {
-    // Trick complete
+    // Trick complete — keep all 4 cards visible, mark as resolved
+    // The trick is cleared later by a separate timer (see clearResolvedTrick)
     const winner = trickWinner(ng.trick)
     ng.tricksWon[winner] += 1
     ng.lastTrick = ng.trick
     ng.lastWinner = winner
     ng.trickNo += 1
-    ng.trick = []
     ng.currentPlayer = winner
+    ng.trickResolved = true // signals: trick is full, waiting to be cleared
     if (ng.trickNo === 13) {
       ng.phase = 'handEnd'
     }
   } else {
     ng.currentPlayer = (playerIdx + 1) % 4
   }
+  return ng
+}
+
+// Called after a delay once a trick is resolved, to clear it from the table
+function clearResolvedTrick(g) {
+  const ng = deepClone(g)
+  ng.trick = []
+  ng.trickResolved = false
   return ng
 }
 
@@ -252,12 +262,12 @@ export default function Spades() {
       return () => clearTimeout(botTimer.current)
     }
 
-    // Bot card play
-    if (g.phase === 'playing' && g.currentPlayer !== 0 && g.trick.length < 4) {
+    // Bot card play — skip while a completed trick is waiting to clear
+    if (g.phase === 'playing' && g.currentPlayer !== 0 && g.trick.length < 4 && !g.trickResolved) {
       clearTimeout(botTimer.current)
       botTimer.current = setTimeout(() => {
         setG(prev => {
-          if (!prev || prev.phase !== 'playing' || prev.currentPlayer === 0) return prev
+          if (!prev || prev.phase !== 'playing' || prev.currentPlayer === 0 || prev.trickResolved) return prev
           const card = botPlay(prev.hands[prev.currentPlayer], prev.trick, prev.spadesBroken)
           return applyCard(prev, prev.currentPlayer, card)
         })
@@ -266,17 +276,30 @@ export default function Spades() {
     }
   }, [g])
 
+  // ── Clear a resolved trick after a pause so the 4th card is visible ──
+  useEffect(() => {
+    if (!g || !g.trickResolved) return
+    clearTimeout(lastTrickTimer.current)
+    lastTrickTimer.current = setTimeout(() => {
+      setG(prev => {
+        if (!prev || !prev.trickResolved) return prev
+        return clearResolvedTrick(prev)
+      })
+    }, 1600) // 1.6s pause showing the completed trick with winner highlighted
+    return () => clearTimeout(lastTrickTimer.current)
+  }, [g?.trickResolved, g?.trickNo])
+
   // ── Show last trick briefly after trick completes ─────────────────
   useEffect(() => {
     if (!g?.lastTrick) return
     setShowLastTrick(true)
-    clearTimeout(lastTrickTimer.current)
-    lastTrickTimer.current = setTimeout(() => setShowLastTrick(false), 1800)
+    const t = setTimeout(() => setShowLastTrick(false), 1800)
+    return () => clearTimeout(t)
   }, [g?.trickNo])
 
   // ── Human plays card ──────────────────────────────────────────────
   function handleCardClick(card) {
-    if (!g || g.phase !== 'playing' || g.currentPlayer !== 0) return
+    if (!g || g.phase !== 'playing' || g.currentPlayer !== 0 || g.trickResolved) return
     const valid = getValidCards(g.hands[0], g.trick, g.spadesBroken)
     if (!valid.find(c => c.rank === card.rank && c.suit === card.suit)) return
     if (selected && selected.rank === card.rank && selected.suit === card.suit) {
