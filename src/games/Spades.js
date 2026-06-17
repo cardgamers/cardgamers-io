@@ -186,6 +186,7 @@ export default function Spades() {
   const [resultSaved, setResultSaved] = useState(false)
 
   const botTimer = useRef(null)
+  const bidsRef = useRef([null, null, null, null])
 
   // CSS pulse animation
   useEffect(() => {
@@ -231,6 +232,9 @@ export default function Spades() {
     return () => clearTimeout(botTimer.current)
   }, [phase, currentPlayer, bids, hands])
 
+  // Keep bidsRef in sync so resolveTrick can read latest bids without stale closure
+  useEffect(() => { bidsRef.current = bids }, [bids])
+
   const submitBid = (bid) => {
     const newBids = [...bids]
     newBids[0] = bid
@@ -243,10 +247,11 @@ export default function Spades() {
     const winner = trickWinner(completedTrick)
     const newTricksWon = [...currentTricksWon]
     newTricksWon[winner] += 1
+    const newTrickNo = trickNo + 1
+
     setTricksWon(newTricksWon)
     setLastTrick(completedTrick)
     setLastWinner(winner)
-    const newTrickNo = trickNo + 1
     setTrickNo(newTrickNo)
 
     clearTimeout(botTimer.current)
@@ -254,29 +259,42 @@ export default function Spades() {
       setTrick([])
       setCurrentPlayer(winner)
       if (newTrickNo === 13) {
-        // Use functional update to avoid stale closure on tricksWon
-        setTricksWon(latestTricksWon => {
-          const t0 = calcTeamScore([bids[0], bids[2]], [latestTricksWon[0], latestTricksWon[2]])
-          const t1 = calcTeamScore([bids[1], bids[3]], [latestTricksWon[1], latestTricksWon[3]])
-          setScores(prev => {
-            const newScores = [prev[0] + t0, prev[1] + t1]
-            if (newScores[0] >= 500 || newScores[1] >= 500) {
-              setGameOver(true)
-              if (!resultSaved) {
-                const playerWon = newScores[0] > newScores[1]
-                saveGameResult('spades', playerWon, newScores[0], playerWon ? 20 : -10, {})
-                setResultSaved(true)
-              }
-            } else {
-              botTimer.current = setTimeout(() => startGame(), 2000)
-            }
-            return newScores
-          })
-          return latestTricksWon
-        })
+        // All tricks done — score the hand
+        // Use bidsRef to avoid stale closure
+        setPhase('scoring')
       }
     }, 1400)
-  }, [trickNo, bids, resultSaved, startGame])
+  }, [trickNo])
+
+  // ── Hand scoring ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (phase !== 'scoring') return
+    const latestBids = bidsRef.current
+    if (!latestBids || latestBids.some(b => b === null)) return
+    setTricksWon(latestTricksWon => {
+      const t0 = calcTeamScore([latestBids[0], latestBids[2]], [latestTricksWon[0], latestTricksWon[2]])
+      const t1 = calcTeamScore([latestBids[1], latestBids[3]], [latestTricksWon[1], latestTricksWon[3]])
+      setScores(prev => {
+        const newScores = [prev[0] + t0, prev[1] + t1]
+        if (newScores[0] >= 500 || newScores[1] >= 500) {
+          setGameOver(true)
+        } else {
+          botTimer.current = setTimeout(() => startGame(), 2500)
+        }
+        return newScores
+      })
+      return latestTricksWon
+    })
+    setPhase('done')
+  }, [phase, startGame])
+
+  // ── Save result when game over ────────────────────────────────────
+  useEffect(() => {
+    if (!gameOver || resultSaved) return
+    const playerWon = scores[0] > scores[1]
+    saveGameResult('spades', playerWon, scores[0], playerWon ? 20 : -10, {})
+    setResultSaved(true)
+  }, [gameOver, resultSaved, scores])
 
   // ── Bot card play ────────────────────────────────────────────────
   useEffect(() => {
