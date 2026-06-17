@@ -268,7 +268,7 @@ export default function Spades() {
       botTimer.current = setTimeout(() => {
         setG(prev => {
           if (!prev || prev.phase !== 'playing' || prev.currentPlayer === 0 || prev.trickResolved) return prev
-          const card = botPlay(prev.hands[prev.currentPlayer], prev.trick, prev.spadesBroken)
+          const card = botPlay(prev.hands[prev.currentPlayer], prev.trick, prev.spadesBroken, prev.currentPlayer)
           return applyCard(prev, prev.currentPlayer, card)
         })
       }, 750)
