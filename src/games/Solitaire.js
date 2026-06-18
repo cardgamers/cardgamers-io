@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { saveGameResult } from '../lib/saveGameResult'
+import { getSolitairePercentile } from '../lib/getSolitairePercentile'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 const SUITS = ['♠', '♥', '♦', '♣']
@@ -277,14 +278,25 @@ export default function Solitaire() {
   const [history, setHistory] = useState([])
   const [resultSaved, setResultSaved] = useState(false)
   const [lastClickTime, setLastClickTime] = useState({})
+  const [percentileStats, setPercentileStats] = useState(null)
+  const [statsLoading, setStatsLoading] = useState(false)
   const layout = useLayout()
   const { W, H, fs, ss, faceDownH, faceUpOverlap, gap } = layout
 
   useEffect(() => {
     if (!won || resultSaved) return
-    saveGameResult('solitaire', true, score, 15, { moves, duration_seconds: time })
+    saveGameResult('solitaire', true, score, 15, { moves, duration_seconds: time, drawMode: game?.drawMode || 1 })
     setResultSaved(true)
   }, [won, resultSaved, score, moves, time])
+
+  // Fetch how this win compares to all other players, once the win is recorded
+  useEffect(() => {
+    if (!won || !resultSaved) return
+    setStatsLoading(true)
+    getSolitairePercentile(game?.drawMode || 1, time, moves)
+      .then(stats => setPercentileStats(stats))
+      .finally(() => setStatsLoading(false))
+  }, [won, resultSaved])
 
   useEffect(() => {
     if (won || !game) return
@@ -307,6 +319,7 @@ export default function Solitaire() {
     setGame(dealGame(drawMode))
     setSelected(null); setMoves(0); setScore(0); setTime(0)
     setWon(false); setHistory([]); setResultSaved(false)
+    setPercentileStats(null); setStatsLoading(false)
     setShowNewGameDialog(false)
   }
 
@@ -498,17 +511,48 @@ export default function Solitaire() {
       {/* Win overlay */}
       {won && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.82)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <div style={{background:'linear-gradient(135deg,#1a3d28,#0f2a1a)',border:'2px solid #c9a84c',borderRadius:20,padding:'2.5rem 2rem',textAlign:'center',maxWidth:360,width:'90%'}}>
+          <div style={{background:'linear-gradient(135deg,#1a3d28,#0f2a1a)',border:'2px solid #c9a84c',borderRadius:20,padding:'2.5rem 2rem',textAlign:'center',maxWidth:400,width:'90%'}}>
             <div style={{fontSize:'3.5rem',marginBottom:'0.75rem'}}>🏆</div>
             <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:'2rem',color:'#c9a84c',marginBottom:'0.25rem'}}>You Won!</h2>
             <p style={{color:'rgba(245,240,232,0.5)',fontSize:'0.82rem',marginBottom:'0.5rem'}}>
               {game.drawMode===3?'🔥 Draw 3 — impressive!':'Draw 1'}
             </p>
-            <p style={{color:'rgba(245,240,232,0.5)',fontSize:'0.85rem',marginBottom:'1.5rem'}}>
+            <p style={{color:'rgba(245,240,232,0.5)',fontSize:'0.85rem',marginBottom:'1rem'}}>
               Score: <strong style={{color:'#c9a84c'}}>{score}</strong> &nbsp;·&nbsp;
               Moves: <strong style={{color:'#c9a84c'}}>{moves}</strong> &nbsp;·&nbsp;
               Time: <strong style={{color:'#c9a84c'}}>{fmt(time)}</strong>
             </p>
+
+            {/* Percentile comparison vs other players */}
+            {statsLoading && (
+              <p style={{fontSize:'0.75rem',color:'rgba(245,240,232,0.35)',marginBottom:'1.25rem'}}>Comparing to other players...</p>
+            )}
+            {!statsLoading && percentileStats && (
+              <div style={{background:'rgba(0,0,0,0.25)',borderRadius:10,padding:'0.85rem',marginBottom:'1.25rem',textAlign:'left'}}>
+                <p style={{fontSize:'0.62rem',color:'rgba(245,240,232,0.4)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8,fontWeight:700,textAlign:'center'}}>
+                  How you compare — Draw {game.drawMode||1}
+                </p>
+                {[
+                  { label:'Faster than', val:`${percentileStats.timePercentile}%`, sub:'of players' },
+                  { label:'Fewer moves than', val:`${percentileStats.movesPercentile}%`, sub:'of players' },
+                  { label:'Platform win rate', val:`${percentileStats.winRatePct}%`, sub:`of ${percentileStats.totalGames} games` },
+                ].map(({label,val,sub}) => (
+                  <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
+                    <span style={{fontSize:'0.78rem',color:'rgba(245,240,232,0.6)'}}>{label}</span>
+                    <span>
+                      <strong style={{fontSize:'0.95rem',color:'#5DCAA5'}}>{val}</strong>
+                      <span style={{fontSize:'0.65rem',color:'rgba(245,240,232,0.35)',marginLeft:4}}>{sub}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!statsLoading && !percentileStats && (
+              <p style={{fontSize:'0.7rem',color:'rgba(245,240,232,0.3)',marginBottom:'1.25rem'}}>
+                Sign in to see how you compare to other players
+              </p>
+            )}
+
             <div style={{display:'flex',gap:'1rem',justifyContent:'center'}}>
               <button className="btn-gold" onClick={()=>setShowNewGameDialog(true)}>Play Again</button>
               <Link to="/lobby" className="btn-outline">Lobby</Link>
