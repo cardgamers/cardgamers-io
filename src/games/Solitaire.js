@@ -92,9 +92,9 @@ function Card({ card, selected, onClick, W, H, fs, ss, style={} }) {
   if (!card.faceUp) return (
     <div onClick={onClick} style={{
       width:W, height:H, borderRadius:6, flexShrink:0,
-      background:'linear-gradient(135deg,#1a3a6a 0%,#0f2245 100%)',
-      backgroundImage:'repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0,rgba(255,255,255,0.03) 2px,transparent 2px,transparent 10px)',
-      border:'1.5px solid rgba(255,255,255,0.18)', boxShadow:'0 2px 5px rgba(0,0,0,0.45)',
+      background:'linear-gradient(135deg,#7a1f2b 0%,#4a0f18 100%)',
+      backgroundImage:'repeating-linear-gradient(45deg,rgba(255,255,255,0.05) 0,rgba(255,255,255,0.05) 2px,transparent 2px,transparent 10px)',
+      border:'1.5px solid rgba(255,255,255,0.25)', boxShadow:'0 2px 5px rgba(0,0,0,0.45)',
       cursor:onClick?'pointer':'default', ...style
     }} />
   )
