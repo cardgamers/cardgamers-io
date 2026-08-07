@@ -11,7 +11,7 @@
     <meta name="author" content="CardGamers.io" />
     <meta name="robots" content="index, follow" />
 
-    <!-- Open Graph (for WhatsApp, Facebook, LinkedIn sharing) -->
+    <!-- Open Graph -->
     <meta property="og:title" content="CardGamers.io — Play Card Games Free Online" />
     <meta property="og:description" content="Bridge, Spades, Hearts, Gin Rummy, Solitaire and more — beautifully designed, real opponents, live tournaments. Play free from any device." />
     <meta property="og:type" content="website" />
@@ -33,6 +33,99 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
+    <!-- Schema.org structured data — helps Google understand this is a game platform -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "CardGamers.io",
+      "url": "https://www.cardgamers.io",
+      "description": "Play Bridge, Spades, Gin Rummy and Solitaire online free. No download, no sign-up needed.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.cardgamers.io/how-to-play?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Free Card Games at CardGamers.io",
+      "description": "Classic card games you can play free online with no download required",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "VideoGame",
+            "name": "Bridge",
+            "description": "Play Contract Bridge online free. 4-player partnership trick-taking game. Standard American bidding, Rubber and IMP scoring. Play against smart bots, no download needed.",
+            "url": "https://www.cardgamers.io/game/bridge",
+            "applicationCategory": "Game",
+            "operatingSystem": "Web Browser",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "VideoGame",
+            "name": "Spades",
+            "description": "Play Spades online free. Classic partnership trick-taking game with trump bidding. Play against bots, no download needed.",
+            "url": "https://www.cardgamers.io/game/spades",
+            "applicationCategory": "Game",
+            "operatingSystem": "Web Browser",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "VideoGame",
+            "name": "Gin Rummy",
+            "description": "Play Gin Rummy online free. Form sets and runs, knock to score. Classic card game against smart bots.",
+            "url": "https://www.cardgamers.io/game/rummy",
+            "applicationCategory": "Game",
+            "operatingSystem": "Web Browser",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "VideoGame",
+            "name": "Solitaire",
+            "description": "Play Klondike Solitaire online free. Choose Draw 1 or Draw 3 mode. Track your score, moves and time. No download needed.",
+            "url": "https://www.cardgamers.io/game/solitaire",
+            "applicationCategory": "Game",
+            "operatingSystem": "Web Browser",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+          }
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "CardGamers.io",
+      "url": "https://www.cardgamers.io",
+      "logo": "https://www.cardgamers.io/og-image.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "support@cardgamers.io",
+        "contactType": "customer support"
+      },
+      "sameAs": []
+    }
+    </script>
+
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WGQH49XHZ"></script>
     <script>
@@ -47,8 +140,102 @@
 
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2214413278672676" crossorigin="anonymous"></script>
+
+    <style>
+      /* Static SEO content — visible to Google before JS loads, hidden once React mounts */
+      #seo-content {
+        font-family: Georgia, serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        color: #1a1a1a;
+        line-height: 1.7;
+      }
+      #seo-content h1 { font-size: 2rem; margin-bottom: 1rem; }
+      #seo-content h2 { font-size: 1.3rem; margin: 1.5rem 0 0.5rem; }
+      #seo-content p { margin-bottom: 1rem; }
+      #seo-content ul { margin: 0.5rem 0 1rem 1.5rem; }
+      /* Hide once React loads */
+      body.react-loaded #seo-content { display: none; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Static SEO content — read by Google crawlers, hidden after React loads -->
+    <div id="seo-content">
+      <h1>CardGamers.io — Play Classic Card Games Free Online</h1>
+      <p>
+        CardGamers.io is a free browser-based card game platform where you can play Bridge, Spades,
+        Gin Rummy and Solitaire against smart bots or real opponents. No download, no installation,
+        no sign-up required — just open your browser and start playing instantly from any device.
+      </p>
+
+      <h2>Play Bridge Online Free</h2>
+      <p>
+        Our Bridge game features Standard American bidding (SAYC), Rubber and IMP scoring, 4-hand
+        session play with cumulative scoring, and a full session analysis showing how you performed.
+        The dummy hand is revealed after the opening lead, exactly as in real Bridge. Choose from
+        Easy, Medium or Hard bot difficulty.
+      </p>
+
+      <h2>Play Spades Online Free</h2>
+      <p>
+        Classic partnership Spades with a full 4-player table layout showing North, South, East and
+        West positions. Bid your tricks, play your hand, and race to 500 points. Spades are always
+        trump. Nil bids supported. Smart bots that understand partner play.
+      </p>
+
+      <h2>Play Gin Rummy Online Free</h2>
+      <p>
+        Gin Rummy against smart computer opponents. Form sets (three or four of a kind) and runs
+        (sequences in the same suit), then knock when your deadwood count is low enough. Full
+        scoring with knock bonus and gin bonus.
+      </p>
+
+      <h2>Play Solitaire Online Free</h2>
+      <p>
+        Klondike Solitaire with Draw 1 and Draw 3 modes. Build four foundation piles from Ace to
+        King by suit. Track your score, move count and time. Hint system included. Works on mobile
+        and desktop browsers.
+      </p>
+
+      <h2>How to Play Card Games — Free Guides</h2>
+      <p>
+        New to card games? Our step-by-step visual guides explain the rules and strategy for every
+        game on the platform:
+      </p>
+      <ul>
+        <li><a href="/learn/bridge-intro">How to Play Bridge — Visual Beginner's Guide</a></li>
+        <li><a href="/learn/spades">How to Play Spades — Rules and Strategy</a></li>
+        <li><a href="/learn/rummy">How to Play Gin Rummy — Rules and Strategy</a></li>
+        <li><a href="/learn/solitaire">How to Play Solitaire — Rules and Strategy</a></li>
+      </ul>
+
+      <h2>Why CardGamers.io?</h2>
+      <ul>
+        <li>100% free to play — no hidden fees, no pay-to-win</li>
+        <li>No download or installation required — plays in any modern browser</li>
+        <li>No sign-up needed to try — just click and play</li>
+        <li>Smart bots available 24/7 — no waiting for opponents</li>
+        <li>Works on mobile, tablet and desktop</li>
+        <li>Available in 5 languages — English, Spanish, French, Hindi, Chinese</li>
+        <li>Live leaderboards and tournament system coming soon</li>
+      </ul>
+    </div>
+
+    <script>
+      // Hide static SEO content once React has loaded
+      document.addEventListener('DOMContentLoaded', function() {
+        var root = document.getElementById('root');
+        var observer = new MutationObserver(function() {
+          if (root.children.length > 0) {
+            document.body.classList.add('react-loaded');
+            observer.disconnect();
+          }
+        });
+        observer.observe(root, { childList: true });
+      });
+    </script>
   </body>
 </html>
