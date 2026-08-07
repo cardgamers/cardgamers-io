@@ -1,24 +1,35 @@
-import { createClient } from '@supabase/supabase-js'
+// api/keepalive.js — Supabase ping using plain fetch (no package dependencies)
+module.exports = async function handler(req, res) {
+  const url = process.env.REACT_APP_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
-
-export default async function handler(req, res) {
-  if (req.headers['x-vercel-cron'] !== '1' && process.env.NODE_ENV === 'production') {
-    return res.status(401).json({ error: 'Unauthorized' })
+  if (!url || !key) {
+    return res.status(500).json({ ok: false, error: 'Missing env vars' })
   }
+
   try {
-    const { count, error } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-    if (error) throw error
+    // Lightweight REST ping — count profiles table, head=true means no rows returned
+    const response = await fetch(`${url}/rest/v1/profiles?select=count`, {
+      method: 'GET',
+      headers: {
+        'apikey': key,
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'count=exact',
+        'Range': '0-0',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Supabase responded with ${response.status}`)
+    }
+
     const now = new Date().toISOString()
-    console.log(`[keepalive] ${now} — Supabase ping OK, ${count} profiles`)
-    return res.status(200).json({ ok: true, pinged_at: now, count })
+    console.log(`[keepalive] ${now} — Supabase ping OK`)
+    return res.status(200).json({ ok: true, pinged_at: now })
+
   } catch (e) {
-    console.error('[keepalive] Supabase ping failed:', e.message)
+    console.error('[keepalive] Failed:', e.message)
     return res.status(500).json({ ok: false, error: e.message })
   }
 }
