@@ -26,6 +26,10 @@ const PAGE_META = {
     title: 'Play Solitaire Online Free — Klondike Draw 1 & Draw 3 | CardGamers.io',
     description: 'Play Klondike Solitaire free online. Choose Draw 1 or Draw 3 mode. No ads, no download. Hint system, undo, win streak tracking. Works on mobile and desktop.',
   },
+  '/learn/bridge/scoring': {
+    title: 'Bridge Scoring Systems Explained — Rubber, Duplicate, IMP & Matchpoints | CardGamers.io',
+    description: 'A clear guide to how bridge is scored — Rubber Bridge, Duplicate, IMP, and Matchpoint scoring — explained simply for players at any level.',
+  },
   '/learn/bridge-intro': {
     title: 'How to Play Bridge — Rules & Guide | CardGamers.io',
     description: 'Learn how to play Bridge card game with our complete beginner\'s guide. Bidding, tricks, scoring explained simply. Then play free online — no sign-up needed.',
