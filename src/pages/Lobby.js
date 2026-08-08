@@ -6,6 +6,7 @@ const GAMES = [
   { id: 'bridge', suit: '♠', name: 'Bridge', desc: 'The flagship. 4-player contract bridge with full bidding.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/bridge', learnPath: '/learn/bridge-intro' },
   { id: 'rummy', suit: '♥', name: 'Rummy', desc: 'Gin Rummy against real opponents. Sign in to play.', players: '2–4 players', status: 'live', color: '#c0392b', path: '/game/rummy', learnPath: '/learn/rummy', requiresAuth: true },
   { id: 'spades', suit: '♠', name: 'Spades', desc: 'Partnership bidding and trick-taking.', players: '4 players', status: 'live', color: 'var(--gold)', path: '/game/spades', learnPath: '/learn/spades' },
+  { id: 'hearts', suit: '♥', name: 'Hearts', desc: 'Avoid penalty cards. Shoot the Moon!', players: '4 players', status: 'live', color: '#c0392b', path: '/game/hearts', learnPath: '/learn/spades' },
 ]
 
 export default function Lobby() {

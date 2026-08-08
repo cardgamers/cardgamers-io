@@ -15,6 +15,7 @@ import Rummy from './games/Rummy'
 import Bridge from './games/bridge/Bridge'
 import TeenPatti from './games/TeenPatti'
 import Spades from './games/Spades'
+import Hearts from './games/Hearts'
 import ComingSoon from './pages/ComingSoon'
 import Contact from './pages/Contact'
 import About from './pages/About'
@@ -59,6 +60,7 @@ function AppRoutes() {
         <Route path="/game/bridge" element={<Bridge />} />
         <Route path="/game/teen-patti" element={<TeenPatti />} />
         <Route path="/game/spades" element={<Spades />} />
+        <Route path="/game/hearts" element={<Hearts />} />
         <Route path="/game/container-tycoon" element={<ContainerTycoon />} />
 
         {/* Multiplayer — requires real account */}
