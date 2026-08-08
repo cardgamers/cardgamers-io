@@ -70,7 +70,7 @@ function AppRoutes() {
 
         {/* Learn — visual step-by-step guides */}
         <Route path="/learn/bridge-intro" element={<LearnBridge />} />
-              <Route path="/learn/bridge/scoring" element={<LearnBridgeScoring />} />
+        <Route path="/learn/bridge/scoring" element={<LearnBridgeScoring />} />
         <Route path="/learn/bridge" element={<BridgeGuide />} />
         <Route path="/learn/solitaire" element={<LearnSolitaire />} />
         <Route path="/learn/rummy" element={<LearnRummy />} />
