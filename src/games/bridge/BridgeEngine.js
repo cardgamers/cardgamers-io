@@ -371,9 +371,16 @@ function getOpenerRebid(hand, hcp, dist, tp, myOpening, partnerResponse, lastRea
   const respLevel = partnerResponse.level
   if (respSuit === openSuit && (openSuit === 'H' || openSuit === 'S')) {
     if (respLevel === 2) {
-      if (tp >= 20) return makeBid(4, 'NT', auction)
-      if (tp >= 18) return makeBid(4, openSuit, auction)
-      if (tp >= 16) return makeBid(3, openSuit, auction)
+      // Detect 3rd seat opening — two passes before opener's first bid
+      const openingBidIdx = auction.findIndex(b => b.type === 'bid')
+      const passesBeforeOpen = openingBidIdx > 0 ? auction.slice(0, openingBidIdx).filter(b => b.type === 'pass').length : 0
+      const isThirdSeat = passesBeforeOpen === 2
+      // 3rd seat openers can be sub-minimum — raise thresholds significantly
+      const gameTP = isThirdSeat ? 22 : 18
+      const inviteTP = isThirdSeat ? 20 : 16
+      if (tp >= 22) return makeBid(4, 'NT', auction)
+      if (tp >= gameTP) return makeBid(4, openSuit, auction)
+      if (tp >= inviteTP) return makeBid(3, openSuit, auction)
       return pass()
     }
     if (respLevel === 3) {
@@ -558,12 +565,12 @@ function getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, played,
     const myTrumps = hand.filter(c => c.suit === trumpSuit)
     const outstandingTrumps = countOutstandingTrumps(trumpSuit, hand, trickHistory)
 
-    // FIX: Draw trumps when opponents still have them AND we have enough entries
-    // Draw with LOWEST trump first to preserve honours
-    if (outstandingTrumps >= 2 && myTrumps.length >= 2 && tricksLeft > 4) {
-      // Lead lowest trump to draw opponents' trumps
+    // Draw trumps with LOWEST first to preserve honours for later
+    // Only draw when we have enough trumps and entries
+    if (outstandingTrumps >= 1 && myTrumps.length >= 2 && tricksLeft > 3) {
       const legalTrumps = legal.filter(c => c.suit === trumpSuit)
       if (legalTrumps.length > 0) {
+        // Always lead LOWEST trump when drawing — never waste the Ace or King
         return legalTrumps.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
       }
     }
@@ -649,6 +656,12 @@ function getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, part
   const followCards = legal.filter(c => c.suit === ledSuit)
   const trumpCards = legal.filter(c => c.suit === trumpSuit)
   const isLastToPlay = trick.length === 3
+  // Helper: cheapest card that beats the current winner
+  function cheapestWinner(cards) {
+    const winners = cards.filter(c => canBeat(c, currentWinner, trumpSuit))
+    if (!winners.length) return null
+    return winners.sort((a,b) => VALUE_RANK[a.value] - VALUE_RANK[b.value])[0]
+  }
   const tricksMadeByDeclarerSide = trickHistory.filter(t => {
     const declarerSide = (contract?.declarer === 'N' || contract?.declarer === 'S') ? ['N','S'] : ['E','W']
     return declarerSide.includes(t.winner)
@@ -658,51 +671,53 @@ function getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, part
   if (followCards.length > 0) {
     const winFollow = followCards.filter(c => canBeat(c, currentWinner, trumpSuit))
 
-    // SECOND HAND: play low unless we have top of sequence
+    // SECOND HAND: play low — never waste honours unnecessarily
     if (trick.length === 1) {
       if (isDefender) {
-        // Cover an honour with an honour (Jack or higher led)
+        // Cover an honour with an honour (Q or higher led)
         const ledCard = trick[0].card
-        if (VALUE_RANK[ledCard.value] >= 11) {
+        if (VALUE_RANK[ledCard.value] >= VALUE_RANK['Q']) {
           const coverCards = followCards.filter(c => VALUE_RANK[c.value] > VALUE_RANK[ledCard.value])
           if (coverCards.length > 0)
             return coverCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
         }
         // Top of solid sequence (KQ, QJ, J10)
         const seq = findTopSequence(followCards)
-        if (seq && VALUE_RANK[seq.value] >= 11) return seq
-        // Otherwise second hand low
+        if (seq && VALUE_RANK[seq.value] >= VALUE_RANK['J']) return seq
+        // Second hand low always
         return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
       } else {
-        // Declarer second hand: play low to finesse later
+        // Declarer second hand: always low (preserve tenace positions)
         return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
       }
     }
 
-    // THIRD HAND: play high (defenders), or cheapest winner (declarer)
+    // THIRD HAND: high — play cheapest winning card
     if (trick.length === 2) {
-      if (isDefender && !partnerWinning && winFollow.length > 0) {
-        // Third hand high — play cheapest winner
-        return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      if (!partnerWinning) {
+        const cw = cheapestWinner(followCards)
+        if (cw) return cw
       }
-      if (!isDefender && winFollow.length > 0) {
-        return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      }
+      // Partner winning — play lowest
+      return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
-    // FOURTH HAND (last to play): win cheaply if needed
+    // FOURTH HAND (last to play): win as cheaply as possible
     if (isLastToPlay) {
-      if (!partnerWinning && winFollow.length > 0)
-        return winFollow.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
-      if (partnerWinning)
-        return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+      if (!partnerWinning) {
+        const cw = cheapestWinner(followCards)
+        if (cw) return cw
+      }
+      return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
     }
 
     // Partner winning — don't overtake, play lowest
     if (partnerWinning)
       return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
 
-    // Default: play lowest following card
+    // Default: cheapest winner or lowest
+    const cw = cheapestWinner(followCards)
+    if (cw) return cw
     return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
   }
 
@@ -752,31 +767,33 @@ function smartDiscard(hand, legal, trumpSuit, played, trickHistory) {
 
   if (candidates.length === 1) return candidates[0]
 
-  // Score each card: lower = safer to discard
-  // Discard from shortest suit with fewest winners
+  // NEVER discard an Ace — it's always a winner
+  const nonAces = candidates.filter(c => c.value !== 'A' && VALUE_RANK[c.value] < 14)
+  const pool = nonAces.length > 0 ? nonAces : candidates
+
   let worst = null, worstScore = Infinity
 
-  for (const card of candidates) {
+  for (const card of pool) {
     const suitCards = hand.filter(c => c.suit === card.suit)
-    const legalSuitCards = candidates.filter(c => c.suit === card.suit)
     const winners = countSolidWinners(suitCards, card.suit, played)
 
-    // Heavily penalise discarding from suits with winners
-    // Prefer to discard from suits where we have no winners
-    const winnerPenalty = winners > 0 ? winners * 30 : 0
-    // Prefer to discard low cards
+    // Never throw winners — massive penalty
+    const winnerPenalty = winners > 0 ? winners * 50 : 0
+    // Prefer to throw low cards from suits we can't establish
     const rankScore = VALUE_RANK[card.value]
-    // Prefer to discard from short suits (already established or useless)
-    const lengthScore = suitCards.length * 2
-    // Don't discard from long suits we're establishing
-    const establishScore = suitCards.length >= 5 ? 20 : 0
+    // Prefer short suits (already useless)
+    const lengthScore = suitCards.length <= 2 ? 0 : suitCards.length * 3
+    // Penalise throwing from long suits we might establish
+    const establishScore = suitCards.length >= 4 && winners === 0 ? 15 : 0
+    // Penalise throwing Kings and Queens — they may become winners
+    const honourPenalty = VALUE_RANK[card.value] >= VALUE_RANK['K'] ? 20 : VALUE_RANK[card.value] >= VALUE_RANK['Q'] ? 10 : 0
 
-    const score = winnerPenalty + rankScore + lengthScore + establishScore
+    const score = winnerPenalty + rankScore + lengthScore + establishScore + honourPenalty
 
     if (score < worstScore) { worstScore = score; worst = card }
   }
 
-  return worst || candidates.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+  return worst || pool.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────
