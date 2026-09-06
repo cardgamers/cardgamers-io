@@ -477,9 +477,9 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
   const stats = computeStats()
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.92)', zIndex:200, overflowY:'auto', WebkitOverflowScrolling:'touch' }}>
-      <div style={{ minHeight:'100%', display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'1rem' }}>
-      <div style={{ background:'linear-gradient(135deg,#1a3d28,#0d2018)', border:'2px solid var(--gold)', borderRadius:20, padding: isMobile ? '1.5rem 1.25rem' : '2rem', maxWidth:540, width:'100%', marginTop:'auto', marginBottom:'auto' }}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.92)', zIndex:200, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'1rem' }}>
+      <div style={{ maxWidth:540, width:'100%', margin:'0 auto' }}>
+      <div style={{ background:'linear-gradient(135deg,#1a3d28,#0d2018)', border:'2px solid var(--gold)', borderRadius:20, padding: isMobile ? '1.5rem 1.25rem' : '2rem' }}>
 
         {/* Header */}
         <div style={{ textAlign:'center', marginBottom:'1.25rem' }}>
