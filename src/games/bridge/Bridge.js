@@ -362,11 +362,34 @@ function MobileSidePanel({ game, myHand, showPanel, onClose, session }) {
 // ─── Session Summary Overlay ──────────────────────────────────────
 function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
   const { hands, totals } = session
-  const [tab, setTab] = useState('results') // 'results' | 'stats' | 'review'
+  const [tab, setTab] = useState('results') // 'results' | 'stats' | 'review' | 'coach'
+  const [aiAnalysis, setAiAnalysis] = useState(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState(null)
   const nsWins = totals.NS > totals.EW
   const ewWins = totals.EW > totals.NS
   const tie = totals.NS === totals.EW
   const showIMPs = gameMode === 'imps' || hands.some(h => h.imps !== 0)
+
+  async function fetchAiAnalysis() {
+    if (aiAnalysis || aiLoading) return
+    setAiLoading(true)
+    setAiError(null)
+    try {
+      const res = await fetch('/api/analyze-bridge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session, gameMode }),
+      })
+      const data = await res.json()
+      if (data.analysis) setAiAnalysis(data.analysis)
+      else setAiError('Analysis unavailable — please try again.')
+    } catch (e) {
+      setAiError('Could not connect to analysis service.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   // ── Compute session statistics ──
   function computeStats() {
@@ -472,8 +495,8 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
 
         {/* Tab switcher */}
         <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:4 }}>
-          {[['results','📊 Results'], ['stats','🧠 Analysis'], ['review','🃏 Review Hands']].map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)} style={{
+          {[['results','📊 Results'], ['stats','🧠 Analysis'], ['review','🃏 Review Hands'], ['coach','🤖 AI Coach']].map(([id, label]) => (
+            <button key={id} onClick={() => { setTab(id); if (id === 'coach') fetchAiAnalysis() }} style={{
               flex:1, padding:'8px', borderRadius:8, fontWeight:600, fontSize:'0.94rem', cursor:'pointer', border:'none',
               background: tab===id ? 'rgba(201,168,76,0.2)' : 'transparent',
               color: tab===id ? 'var(--gold)' : 'rgba(245,240,232,0.5)',
@@ -722,6 +745,59 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
             ))}
           </div>
         )}
+        {/* AI Coach tab */}
+        {tab === 'coach' && (
+          <div style={{ marginBottom:'1.25rem' }}>
+            {aiLoading && (
+              <div style={{ textAlign:'center', padding:'2rem' }}>
+                <div style={{ fontSize:'2rem', marginBottom:'0.75rem' }}>🤖</div>
+                <p style={{ color:'var(--gold)', fontSize:'0.88rem', marginBottom:'0.5rem' }}>Analyzing your session...</p>
+                <p style={{ color:'rgba(245,240,232,0.4)', fontSize:'0.78rem' }}>Claude is reviewing your hands and bidding decisions</p>
+              </div>
+            )}
+            {aiError && (
+              <div style={{ background:'rgba(192,57,43,0.1)', border:'1px solid rgba(192,57,43,0.3)', borderRadius:10, padding:'1rem', textAlign:'center' }}>
+                <p style={{ color:'#c0392b', fontSize:'0.85rem', marginBottom:'0.5rem' }}>⚠️ {aiError}</p>
+                <button onClick={fetchAiAnalysis} style={{ fontSize:'0.8rem', padding:'6px 16px', borderRadius:6, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.2)', color:'var(--cream)', cursor:'pointer' }}>
+                  Try Again
+                </button>
+              </div>
+            )}
+            {aiAnalysis && !aiLoading && (
+              <div>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:'0.75rem' }}>
+                  <div style={{ fontSize:'1.5rem' }}>🤖</div>
+                  <div>
+                    <div style={{ fontSize:'0.88rem', fontWeight:700, color:'var(--gold)' }}>Claude Bridge Coach</div>
+                    <div style={{ fontSize:'0.7rem', color:'rgba(245,240,232,0.4)' }}>Personalized analysis of your session</div>
+                  </div>
+                </div>
+                <div style={{ background:'rgba(0,0,0,0.25)', borderRadius:12, padding:'1.25rem', borderLeft:'3px solid var(--gold)' }}>
+                  <p style={{ fontSize:'0.88rem', color:'rgba(245,240,232,0.85)', lineHeight:1.75, margin:0, whiteSpace:'pre-wrap' }}>
+                    {aiAnalysis}
+                  </p>
+                </div>
+                <div style={{ marginTop:'0.75rem', display:'flex', justifyContent:'flex-end' }}>
+                  <button onClick={() => { setAiAnalysis(null); fetchAiAnalysis() }} style={{ fontSize:'0.75rem', padding:'5px 12px', borderRadius:6, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.15)', color:'rgba(245,240,232,0.5)', cursor:'pointer' }}>
+                    ↺ Regenerate
+                  </button>
+                </div>
+              </div>
+            )}
+            {!aiAnalysis && !aiLoading && !aiError && (
+              <div style={{ textAlign:'center', padding:'1.5rem' }}>
+                <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>🤖</div>
+                <p style={{ color:'rgba(245,240,232,0.6)', fontSize:'0.88rem', marginBottom:'1rem' }}>
+                  Get personalized coaching from Claude — specific feedback on your bidding and card play decisions.
+                </p>
+                <button onClick={fetchAiAnalysis} className="btn-gold" style={{ fontSize:'0.88rem', padding:'0.65rem 1.5rem' }}>
+                  Analyze My Session
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ display:'flex', gap:'0.75rem', justifyContent:'center' }}>
           <button className="btn-gold" onClick={onNewSession} style={{ fontSize:'0.95rem', padding:'0.7rem 1.75rem' }}>New Session</button>
           <button className="btn-outline" onClick={onMenu}>Menu</button>
