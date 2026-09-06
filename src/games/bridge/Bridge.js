@@ -798,7 +798,6 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
         </div>
       </div>
     </div>
-    </div>
   )
 }
 
