@@ -992,6 +992,7 @@ export default function Bridge() {
     const tricksMade = game.tricks[(game.contract.declarer==='N'||game.contract.declarer==='S')?'NS':'EW']
     const undertricks = game.contract.tricksNeeded - tricksMade
 
+    const capturedHands = game.initialHands || initialHandsRef.current || null
     const handResult = {
       contract: `${game.contract.level}${DENOM_SYMBOLS[game.contract.denomination]}`,
       declarer: game.contract.declarer === 'S' ? 'South' : game.contract.declarer === 'N' ? 'North' : game.contract.declarer === 'E' ? 'East' : 'West',
@@ -1002,7 +1003,7 @@ export default function Bridge() {
       imps: handIMPs,
       vulnerability: game.vulnerability,
       passed: false,
-      initialHands: initialHandsRef.current || game.initialHands || null,
+      initialHands: capturedHands,
       auction: game.auction || [],
       tricksNeeded: game.contract.tricksNeeded,
     }
