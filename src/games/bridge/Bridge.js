@@ -493,11 +493,14 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
           </p>
         </div>
 
-        {/* Tab switcher */}
-        <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:4 }}>
-          {[['results','📊 Results'], ['stats','🧠 Analysis'], ['review','🃏 Review Hands'], ['coach','🤖 AI Coach']].map(([id, label]) => (
+        {/* Tab switcher — scrollable so all 4 tabs fit on mobile */}
+        <div style={{ display:'flex', gap:4, marginBottom:'1.25rem', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:4, overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+          {[['results','📊 Results'], ['stats','🧠 Analysis'], ['review','🃏 Hands'], ['coach','🤖 AI Coach']].map(([id, label]) => (
             <button key={id} onClick={() => { setTab(id); if (id === 'coach') fetchAiAnalysis() }} style={{
-              flex:1, padding:'8px', borderRadius:8, fontWeight:600, fontSize:'0.94rem', cursor:'pointer', border:'none',
+              flexShrink:0, padding: isMobile ? '7px 10px' : '8px 14px',
+              borderRadius:8, fontWeight:600,
+              fontSize: isMobile ? '0.78rem' : '0.88rem',
+              cursor:'pointer', border:'none', whiteSpace:'nowrap',
               background: tab===id ? 'rgba(201,168,76,0.2)' : 'transparent',
               color: tab===id ? 'var(--gold)' : 'rgba(245,240,232,0.5)',
               transition:'all 0.15s',
@@ -828,6 +831,7 @@ export default function Bridge() {
   const [session, setSession] = useState(null)
 
   const botTimer = useRef(null)
+  const initialHandsRef = useRef(null) // stores the deal snapshot for current hand
   const lastTrickTimer = useRef(null)
   const isPlusUser = profile?.plan==='plus'||profile?.plan==='club'
 
@@ -976,6 +980,7 @@ export default function Bridge() {
     const newGame = createBridgeGame(mode, 'S', diff, {N:'North',E:'East',W:'West'})
     newGame.vulnerability = vuln
     newGame.initialHands = JSON.parse(JSON.stringify(newGame.hands))
+    initialHandsRef.current = JSON.parse(JSON.stringify(newGame.hands)) // ref copy for handleNextHand
     newGame.initialHCP = {
       NS: countHCP(newGame.hands['N']) + countHCP(newGame.hands['S']),
       EW: countHCP(newGame.hands['E']) + countHCP(newGame.hands['W']),
@@ -1006,7 +1011,7 @@ export default function Bridge() {
       imps: handIMPs,
       vulnerability: game.vulnerability,
       passed: false,
-      initialHands: game.initialHands || null,
+      initialHands: initialHandsRef.current || game.initialHands || null,
       auction: game.auction || [],
       tricksNeeded: game.contract.tricksNeeded,
     }
