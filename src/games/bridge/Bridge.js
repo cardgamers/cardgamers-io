@@ -660,7 +660,7 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
             </div>
           </div>
         )}
-{/* Review Hands tab */}
+        {/* Review Hands tab */}
         {tab === 'review' && (
           <div style={{ marginBottom:'1.25rem' }}>
             {hands.length === 0 && (
