@@ -362,13 +362,14 @@ function MobileSidePanel({ game, myHand, showPanel, onClose, session }) {
 // ─── Session Summary Overlay ──────────────────────────────────────
 function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
   const { hands, totals } = session
-  const [tab, setTab] = useState('results') // 'results' | 'stats' | 'review' | 'coach'
+  const [tab, setTab] = useState('results')
   const [aiAnalysis, setAiAnalysis] = useState(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState(null)
   const nsWins = totals.NS > totals.EW
   const ewWins = totals.EW > totals.NS
   const tie = totals.NS === totals.EW
+  const showIMPs = gameMode === 'imps' || hands.some(h => h.imps !== 0)
 
   async function fetchAiAnalysis() {
     if (aiAnalysis || aiLoading) return
@@ -389,6 +390,7 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
       setAiLoading(false)
     }
   }
+
   const showIMPs = gameMode === 'imps' || hands.some(h => h.imps !== 0)
 
   // ── Compute session statistics ──
@@ -660,7 +662,7 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
           </div>
         )}
         {/* Review Hands tab */}
-        {tab === 'review' && (
+                {tab === 'review' && (
           <div style={{ marginBottom:'1.25rem' }}>
             {hands.length === 0 && (
               <p style={{ textAlign:'center', color:'var(--text-muted)', fontSize:'0.88rem' }}>No hand data available.</p>
@@ -748,6 +750,7 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
             ))}
           </div>
         )}
+
         {/* AI Coach tab */}
         {tab === 'coach' && (
           <div style={{ marginBottom:'1.25rem' }}>
@@ -789,7 +792,6 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
               </div>
             )}
           </div>
-          </div>
         )}
 
         <div style={{ display:'flex', gap:'0.75rem', justifyContent:'center' }}>
@@ -797,6 +799,7 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
           <button className="btn-outline" onClick={onMenu}>Menu</button>
         </div>
       </div>
+    </div>
     </div>
   )
 }
