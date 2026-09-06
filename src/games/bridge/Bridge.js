@@ -391,8 +391,6 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
     }
   }
 
-  const showIMPs = gameMode === 'imps' || hands.some(h => h.imps !== 0)
-
   // ── Compute session statistics ──
   function computeStats() {
     const completedHands = hands.filter(h => !h.passed)
