@@ -287,7 +287,7 @@ function MobileSidePanel({ game, myHand, showPanel, onClose, session }) {
   if (!showPanel) return null
   return (
     <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:'#0d1f14', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'16px 16px 0 0', padding:'16px 14px', maxHeight:'70vh', overflowY:'auto' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:'#0d4a2a', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'16px 16px 0 0', padding:'16px 14px', maxHeight:'70vh', overflowY:'auto' }}>
         <div style={{ width:36, height:4, background:'rgba(255,255,255,0.15)', borderRadius:2, margin:'0 auto 14px' }} />
         {/* Session score */}
         <div style={{ background:'rgba(201,168,76,0.08)', borderRadius:8, padding:'8px 10px', marginBottom:10 }}>
@@ -1192,7 +1192,7 @@ export default function Bridge() {
   const projectedNsIMPs = session.totals.nsIMPs + handIMPs
 
   return (
-    <div style={{ paddingTop:56, height:'100vh', display:'flex', flexDirection:'column', background:'#0d1f14', overflow:'hidden' }}>
+    <div style={{ paddingTop:56, height:'100vh', display:'flex', flexDirection:'column', background:'#0d4a2a', overflow:'hidden' }}>
 
       {/* Session Summary */}
       {showSessionSummary && session && (
@@ -1343,7 +1343,23 @@ export default function Bridge() {
             </div>
             {isNorthDummy
               ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} horizontal isMobile={isMobile} />
-              : <FannedHand cards={game.hands['N']||[]} faceDown={game.contract?.declarer !== 'N'} cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
+              : game.contract?.declarer === 'N'
+                ? (
+                  <div style={{ display:'flex', gap: isMobile ? 4 : 8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
+                    {['S','H','D','C'].map(suit => {
+                      const suitCards = (game.hands['N']||[]).filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+                      if (!suitCards.length) return null
+                      const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
+                      return (
+                        <div key={suit} style={{ display:'flex', alignItems:'center', gap: isMobile ? 2 : 4 }}>
+                          <span style={{ fontSize: isMobile ? '1rem' : '1.4rem', color:col, fontWeight:700, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                          <FannedHand cards={suitCards} cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+                : <FannedHand cards={game.hands['N']||[]} faceDown cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
             }
           </div>
 
