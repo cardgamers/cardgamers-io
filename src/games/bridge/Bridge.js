@@ -1174,11 +1174,11 @@ export default function Bridge() {
     return 'rgba(245,240,232,0.55)'
   }
 
-  const mCardW = isMobile ? 56 : 90; const mCardH = isMobile ? 78 : 126; const mOverlap = isMobile ? 18 : 28
-  const mSideCardW = isMobile ? 44 : 70; const mSideCardH = isMobile ? 62 : 98; const mSideOverlap = isMobile ? 12 : 18
-  const mSouthCardW = isMobile ? 62 : 104; const mSouthCardH = isMobile ? 87 : 146; const mSouthOverlap = isMobile ? 20 : 32
-  const mTrickW = isMobile ? 180 : 300; const mTrickH = isMobile ? 160 : 240
-  const mTrickCardW = isMobile ? 56 : 90; const mTrickCardH = isMobile ? 78 : 126
+  const mCardW = isMobile ? 52 : 72; const mCardH = isMobile ? 73 : 101; const mOverlap = isMobile ? 16 : 24
+  const mSideCardW = isMobile ? 40 : 60; const mSideCardH = isMobile ? 56 : 84; const mSideOverlap = isMobile ? 11 : 15
+  const mSouthCardW = isMobile ? 56 : 88; const mSouthCardH = isMobile ? 78 : 123; const mSouthOverlap = isMobile ? 18 : 26
+  const mTrickW = isMobile ? 160 : 240; const mTrickH = isMobile ? 140 : 200
+  const mTrickCardW = isMobile ? 50 : 76; const mTrickCardH = isMobile ? 70 : 106
 
   // Hand result display helpers
   const handDeclSide = game.contract ? ((game.contract.declarer==='N'||game.contract.declarer==='S') ? 'NS' : 'EW') : 'NS'
@@ -1336,7 +1336,7 @@ export default function Bridge() {
         <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
 
           {/* NORTH */}
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2, padding: isMobile ? '4px 6px 2px' : '4px 12px 2px', flexShrink:0 }}>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding: isMobile ? '4px 6px 2px' : '8px 12px 4px', flexShrink:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize: isMobile ? '0.92rem' : '1rem', fontWeight:600, color:labelColor('N') }}>{playerLabel('N')}</span>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
@@ -1348,7 +1348,7 @@ export default function Bridge() {
           </div>
 
           {/* MIDDLE ROW */}
-          <div style={{ flex:1, display:'flex', alignItems:'stretch', overflow:'hidden', minHeight:0, padding: isMobile ? '0 4px' : '0 4px', gap: isMobile ? 4 : 6 }}>
+          <div style={{ flex:1, display:'flex', alignItems:'stretch', overflow:'hidden', minHeight:0, padding: isMobile ? '0 4px' : '0 8px', gap: isMobile ? 4 : 8 }}>
             {/* WEST */}
             <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap: isMobile ? 4 : 8, flexShrink:0 }}>
               <span style={{ fontSize:'1rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)' }}>{isMobile ? 'W' : playerLabel('W')}</span>
@@ -1419,7 +1419,7 @@ export default function Bridge() {
               </span>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('S',game.auction)} />}
             </div>
-            <div style={{ display:'flex', gap: isMobile ? 4 : 8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end', maxWidth:'100%', overflow:'hidden' }}>
+            <div style={{ display:'flex', gap: isMobile ? 6 : 12, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end', maxWidth:'100%', overflow:'hidden' }}>
               {['S','H','D','C'].map(suit => {
                 const cards = myHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
                 if (!cards.length) return null
@@ -1443,7 +1443,7 @@ export default function Bridge() {
 
         {/* RIGHT PANEL */}
         {!isMobile && (
-          <div style={{ width:160, background:'rgba(0,0,0,0.4)', borderLeft:'1px solid rgba(201,168,76,0.1)', padding:'8px 6px', display:'flex', flexDirection:'column', gap:8, flexShrink:0, overflowY:'auto' }}>
+          <div style={{ width:180, background:'rgba(0,0,0,0.4)', borderLeft:'1px solid rgba(201,168,76,0.1)', padding:'10px 8px', display:'flex', flexDirection:'column', gap:10, flexShrink:0, overflowY:'auto' }}>
             {/* Session scores */}
             <div style={{ background:'rgba(201,168,76,0.08)', borderRadius:8, padding:'8px 10px' }}>
               <p style={{ fontSize:'0.84rem', color:'var(--gold)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6, fontWeight:700 }}>Session</p>
