@@ -840,6 +840,7 @@ export default function Bridge() {
 
   const botTimer = useRef(null)
   const initialHandsRef = useRef(null)
+  const handSnapshotRef = useRef(null)
   const lastTrickTimer = useRef(null)
   const isPlusUser = profile?.plan==='plus'||profile?.plan==='club'
 
@@ -989,6 +990,7 @@ export default function Bridge() {
     newGame.vulnerability = vuln
     newGame.initialHands = JSON.parse(JSON.stringify(newGame.hands))
     initialHandsRef.current = JSON.parse(JSON.stringify(newGame.hands))
+    handSnapshotRef.current = JSON.parse(JSON.stringify(newGame.hands))
     newGame.initialHCP = {
       NS: countHCP(newGame.hands['N']) + countHCP(newGame.hands['S']),
       EW: countHCP(newGame.hands['E']) + countHCP(newGame.hands['W']),
@@ -1010,7 +1012,7 @@ export default function Bridge() {
     const undertricks = game.contract.tricksNeeded - tricksMade
 
     // Snapshot hands NOW before dealNextHand can overwrite the ref
-    const capturedHands = game.initialHands ? JSON.parse(JSON.stringify(game.initialHands)) : (initialHandsRef.current ? JSON.parse(JSON.stringify(initialHandsRef.current)) : null)
+    const capturedHands = handSnapshotRef.current ? JSON.parse(JSON.stringify(handSnapshotRef.current)) : null
     const handResult = {
       contract: `${game.contract.level}${DENOM_SYMBOLS[game.contract.denomination]}`,
       declarer: game.contract.declarer === 'S' ? 'South' : game.contract.declarer === 'N' ? 'North' : game.contract.declarer === 'E' ? 'East' : 'West',
