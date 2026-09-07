@@ -954,7 +954,7 @@ export default function Bridge() {
         if (ng.phase==='bidding') {
           processBid(ng, getBotBid(ng.hands[ng.currentBidder], ng.auction, ng.currentBidder, ng.vulnerability, ng.difficulty))
         } else if (ng.phase==='playing') {
-          const card = getBotCardPlay(ng.hands[ng.currentLeader], ng.currentTrick, ng.contract?.denomination==='NT'?null:ng.contract?.denomination, ng.contract, ng.currentLeader, ng.trickHistory, ng.difficulty)
+          const card = getBotCardPlay(ng.hands[ng.currentLeader], ng.currentTrick, ng.contract?.denomination==='NT'?null:ng.contract?.denomination, ng.contract, ng.currentLeader, ng.trickHistory, ng.difficulty, ng.hands)
           processPlay(ng, ng.currentLeader, card)
         }
         return ng

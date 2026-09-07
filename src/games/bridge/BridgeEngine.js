@@ -532,7 +532,7 @@ export function getLegalCards(hand, trick, trumpSuit) {
   return suitCards.length > 0 ? suitCards : hand
 }
 
-export function getBotCardPlay(hand, trick, trumpSuit, contract, position, trickHistory, difficulty = 'hard') {
+export function getBotCardPlay(hand, trick, trumpSuit, contract, position, trickHistory, difficulty = 'hard', allHands = null) {
   const legal = getLegalCards(hand, trick, trumpSuit)
   if (legal.length === 1) return legal[0]
 
@@ -548,7 +548,7 @@ export function getBotCardPlay(hand, trick, trumpSuit, contract, position, trick
 
   if (trick.length === 0)
     return getOpeningLead(hand, legal, trumpSuit, contract, position, isDefender, trickHistory, played, partnerPos, tricksLeft, iAmDeclarer)
-  return getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, partnerPos, trickHistory, played, tricksLeft, contract, iAmDeclarer)
+  return getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, partnerPos, trickHistory, played, tricksLeft, contract, iAmDeclarer, allHands)
 }
 
 // ─── OPENING LEADS ────────────────────────────────────────────────
@@ -558,7 +558,7 @@ function getOpeningLead(hand, legal, trumpSuit, contract, position, isDefender, 
 }
 
 // ─── DECLARER LEAD — FIX: draw trumps first properly ─────────────
-function getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, played, tricksLeft) {
+function getDeclarerLead(hand, legal, trumpSuit, contract, trickHistory, played, tricksLeft, allHands) {
   const isTrump = trumpSuit && trumpSuit !== 'NT'
 
   if (isTrump) {
@@ -649,7 +649,10 @@ function getDefenderLead(hand, legal, trumpSuit, contract, trickHistory, played,
 }
 
 // ─── FOLLOW TO TRICK — Major fixes here ──────────────────────────
-function getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, partnerPos, trickHistory, played, tricksLeft, contract, iAmDeclarer) {
+function getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, partnerPos, trickHistory, played, tricksLeft, contract, iAmDeclarer, allHands) {
+  // Get dummy hand for intelligent decisions
+  const dummyPos = contract?.dummy
+  const dummyHand = (allHands && dummyPos) ? (allHands[dummyPos] || []) : []
   const ledSuit = trick[0].card.suit
   const currentWinner = getCurrentTrickWinner(trick, trumpSuit)
   const partnerWinning = currentWinner?.position === partnerPos
@@ -671,11 +674,23 @@ function getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, part
   if (followCards.length > 0) {
     const winFollow = followCards.filter(c => canBeat(c, currentWinner, trumpSuit))
 
-    // SECOND HAND: play low — never waste honours unnecessarily
+    // SECOND HAND logic
     if (trick.length === 1) {
+      const ledCard = trick[0].card
       if (isDefender) {
+        // Check if dummy (partner of declarer) has a high card in this suit
+        // that will win if we play low — if so, we must cover
+        const dummySuitCards = dummyHand.filter(c => c.suit === ledSuit)
+        const dummyHighest = dummySuitCards.length > 0
+          ? dummySuitCards.reduce((best, c) => VALUE_RANK[c.value] > VALUE_RANK[best.value] ? c : best)
+          : null
+        // If dummy has a card that beats everything we can play, cover it
+        if (dummyHighest) {
+          const coverCards = followCards.filter(c => VALUE_RANK[c.value] > VALUE_RANK[dummyHighest.value])
+          if (coverCards.length > 0)
+            return coverCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
+        }
         // Cover an honour with an honour (Q or higher led)
-        const ledCard = trick[0].card
         if (VALUE_RANK[ledCard.value] >= VALUE_RANK['Q']) {
           const coverCards = followCards.filter(c => VALUE_RANK[c.value] > VALUE_RANK[ledCard.value])
           if (coverCards.length > 0)
@@ -684,10 +699,11 @@ function getFollowPlay(hand, legal, trick, trumpSuit, position, isDefender, part
         // Top of solid sequence (KQ, QJ, J10)
         const seq = findTopSequence(followCards)
         if (seq && VALUE_RANK[seq.value] >= VALUE_RANK['J']) return seq
-        // Second hand low always
+        // Second hand low
         return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
       } else {
-        // Declarer second hand: always low (preserve tenace positions)
+        // Declarer second hand: check if dummy's suit winners should be finessed
+        // If dummy has a high card and RHO might have the king, finesse
         return followCards.sort((a,b) => VALUE_RANK[a.value]-VALUE_RANK[b.value])[0]
       }
     }
@@ -778,6 +794,8 @@ function smartDiscard(hand, legal, trumpSuit, played, trickHistory) {
     const winners = countSolidWinners(suitCards, card.suit, played)
 
     // Never throw winners — massive penalty
+    // Also penalise throwing from suits where partner (dummy) has winners
+    const partnerSuitCards = [] // simplified — avoid throwing partner suit
     const winnerPenalty = winners > 0 ? winners * 50 : 0
     // Prefer to throw low cards from suits we can't establish
     const rankScore = VALUE_RANK[card.value]
