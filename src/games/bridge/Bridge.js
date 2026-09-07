@@ -168,7 +168,7 @@ function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=t
             return (
               <div key={suit} style={{ display:'flex', alignItems:'center', gap:3 }}>
                 <span style={{ fontSize:'0.96rem', color:col, fontWeight:700, width:14, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
-                <FannedHand cards={cards} legalCards={legal} onCardClick={c => canPlay && onPlay(c)} cardW={58} cardH={81} overlap={20} />
+                <FannedHand cards={cards} legalCards={legal} onCardClick={c => canPlay && onPlay(c)} cardW={75} cardH={105} overlap={24} />
               </div>
             )
           })}
@@ -287,7 +287,7 @@ function MobileSidePanel({ game, myHand, showPanel, onClose, session }) {
   if (!showPanel) return null
   return (
     <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:'#0d1f14', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'16px 16px 0 0', padding:'16px 14px', maxHeight:'70vh', overflowY:'auto' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:'#0d4a2a', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'16px 16px 0 0', padding:'16px 14px', maxHeight:'70vh', overflowY:'auto' }}>
         <div style={{ width:36, height:4, background:'rgba(255,255,255,0.15)', borderRadius:2, margin:'0 auto 14px' }} />
         {/* Session score */}
         <div style={{ background:'rgba(201,168,76,0.08)', borderRadius:8, padding:'8px 10px', marginBottom:10 }}>
@@ -1192,7 +1192,7 @@ export default function Bridge() {
   const projectedNsIMPs = session.totals.nsIMPs + handIMPs
 
   return (
-    <div style={{ paddingTop:56, height:'100vh', display:'flex', flexDirection:'column', background:'#0d1f14', overflow:'hidden' }}>
+    <div style={{ paddingTop:56, height:'100vh', display:'flex', flexDirection:'column', background:'#0d4a2a', overflow:'hidden' }}>
 
       {/* Session Summary */}
       {showSessionSummary && session && (
