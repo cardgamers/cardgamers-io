@@ -1334,28 +1334,53 @@ export default function Bridge() {
           {/* NORTH */}
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2, padding: isMobile ? '4px 6px 2px' : '4px 12px 2px', flexShrink:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize: isMobile ? '0.92rem' : '1rem', fontWeight:600, color:labelColor('N') }}>{playerLabel('N')}</span>
+              <span style={{ fontSize: isMobile ? '0.92rem' : '1rem', fontWeight:600, color:(isEastDummy||isWestDummy) ? 'var(--gold)' : labelColor('N') }}>
+                {(isEastDummy||isWestDummy) ? playerLabel(dummyPos) : playerLabel('N')}
+              </span>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('N',game.auction)} thinking={botThinking==='N'} />}
             </div>
+            {/* North position — also shows EW dummy at top for better visibility */}
             {isNorthDummy
               ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} horizontal isMobile={isMobile} />
-              : game.contract?.declarer === 'N'
+              : (isEastDummy || isWestDummy)
                 ? (
-                  <div style={{ display:'flex', gap: isMobile ? 4 : 8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
+                  // EW dummy shown at top in large suit-grouped format
+                  <div style={{ display:'flex', gap: isMobile ? 4 : 10, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
                     {['S','H','D','C'].map(suit => {
-                      const suitCards = (game.hands['N']||[]).filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+                      const suitCards = dummyHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
                       if (!suitCards.length) return null
                       const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
                       return (
                         <div key={suit} style={{ display:'flex', alignItems:'center', gap: isMobile ? 2 : 4 }}>
                           <span style={{ fontSize: isMobile ? '1rem' : '1.4rem', color:col, fontWeight:700, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
-                          <FannedHand cards={suitCards} cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
+                          <FannedHand
+                            cards={suitCards}
+                            legalCards={isDummyTurn ? suitCards : []}
+                            onCardClick={c=>handleCardClick(c,true)}
+                            cardW={mCardW} cardH={mCardH} overlap={mOverlap}
+                          />
                         </div>
                       )
                     })}
                   </div>
                 )
-                : <FannedHand cards={game.hands['N']||[]} faceDown cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
+                : game.contract?.declarer === 'N'
+                  ? (
+                    <div style={{ display:'flex', gap: isMobile ? 4 : 8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
+                      {['S','H','D','C'].map(suit => {
+                        const suitCards = (game.hands['N']||[]).filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+                        if (!suitCards.length) return null
+                        const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
+                        return (
+                          <div key={suit} style={{ display:'flex', alignItems:'center', gap: isMobile ? 2 : 4 }}>
+                            <span style={{ fontSize: isMobile ? '1rem' : '1.4rem', color:col, fontWeight:700, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                            <FannedHand cards={suitCards} cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                  : <FannedHand cards={game.hands['N']||[]} faceDown cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
             }
           </div>
 
@@ -1365,21 +1390,7 @@ export default function Bridge() {
             <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap: isMobile ? 4 : 8, flexShrink:0 }}>
               <span style={{ fontSize:'1rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)' }}>{isMobile ? 'W' : playerLabel('W')}</span>
               {isWestDummy
-                ? (
-                  <div style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'flex-start' }}>
-                    {['S','H','D','C'].map(suit => {
-                      const suitCards = dummyHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
-                      if (!suitCards.length) return null
-                      const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
-                      return (
-                        <div key={suit} style={{ display:'flex', alignItems:'center', gap:2 }}>
-                          <span style={{ fontSize:'1rem', color:col, fontWeight:700, width:16, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
-                          <FannedHand cards={suitCards} legalCards={isDummyTurn && game.currentLeader==='W' ? suitCards : []} onCardClick={c=>handleCardClick(c,true)} cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
+                ? <FannedHand cards={game.hands['N']||[]} faceDown vertical cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
                 : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
               }
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
@@ -1430,21 +1441,7 @@ export default function Bridge() {
             <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap: isMobile ? 4 : 8, flexShrink:0 }}>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
               {isEastDummy
-                ? (
-                  <div style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'flex-start' }}>
-                    {['S','H','D','C'].map(suit => {
-                      const suitCards = dummyHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
-                      if (!suitCards.length) return null
-                      const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
-                      return (
-                        <div key={suit} style={{ display:'flex', alignItems:'center', gap:2 }}>
-                          <span style={{ fontSize:'1rem', color:col, fontWeight:700, width:16, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
-                          <FannedHand cards={suitCards} legalCards={isDummyTurn && game.currentLeader==='E' ? suitCards : []} onCardClick={c=>handleCardClick(c,true)} cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
+                ? <FannedHand cards={game.hands['N']||[]} faceDown vertical cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
                 : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
               }
               <span style={{ fontSize:'1rem', fontWeight:700, color:labelColor('E'), writingMode:'vertical-rl' }}>{isMobile ? 'E' : playerLabel('E')}</span>
