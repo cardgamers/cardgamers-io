@@ -1177,7 +1177,7 @@ export default function Bridge() {
   const mCardW = isMobile ? 52 : 72; const mCardH = isMobile ? 73 : 101; const mOverlap = isMobile ? 16 : 24
   const mSideCardW = isMobile ? 40 : 60; const mSideCardH = isMobile ? 56 : 84; const mSideOverlap = isMobile ? 11 : 15
   const mSouthCardW = isMobile ? 62 : 108; const mSouthCardH = isMobile ? 87 : 151; const mSouthOverlap = isMobile ? 20 : 32
-  const mTrickW = isMobile ? 160 : 240; const mTrickH = isMobile ? 140 : 200
+  const mTrickW = isMobile ? 180 : 340; const mTrickH = isMobile ? 160 : 300
   const mTrickCardW = isMobile ? 58 : 96; const mTrickCardH = isMobile ? 81 : 134
 
   // Hand result display helpers
