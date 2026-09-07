@@ -158,22 +158,18 @@ function DummyHand({ hand, currentTrick, contract, onPlay, canPlay, horizontal=t
     )
   }
   return (
-    <div style={{ display:'flex', flexDirection:'row', gap:6, alignItems:'flex-start' }}>
-      {[['S','H'], ['D','C']].map((suitGroup, gi) => (
-        <div key={gi} style={{ display:'flex', flexDirection:'column', gap:5 }}>
-          {suitGroup.map(suit => {
+    <div style={{ display:'flex', flexDirection:'column', gap:6, alignItems:'flex-start' }}>
+      {['S','H','D','C'].map(suit => {
             const cards = hand.filter(c => c.suit === suit).sort((a,b) => VALUE_RANK[b.value]-VALUE_RANK[a.value])
             if (!cards.length) return null
             const col = SUIT_COLORS[suit] === '#1a1a2e' ? 'rgba(255,255,255,0.8)' : SUIT_COLORS[suit]
             return (
-              <div key={suit} style={{ display:'flex', alignItems:'center', gap:3 }}>
-                <span style={{ fontSize:'0.96rem', color:col, fontWeight:700, width:14, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
-                <FannedHand cards={cards} legalCards={legal} onCardClick={c => canPlay && onPlay(c)} cardW={58} cardH={81} overlap={20} />
+              <div key={suit} style={{ display:'flex', alignItems:'center', gap:4 }}>
+                <span style={{ fontSize:'1rem', color:col, fontWeight:700, width:16, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                <FannedHand cards={cards} legalCards={legal} onCardClick={c => canPlay && onPlay(c)} cardW={78} cardH={109} overlap={24} />
               </div>
             )
           })}
-        </div>
-      ))}
     </div>
   )
 }
@@ -1175,7 +1171,7 @@ export default function Bridge() {
   }
 
   const mCardW = isMobile ? 56 : 90; const mCardH = isMobile ? 78 : 126; const mOverlap = isMobile ? 18 : 28
-  const mSideCardW = isMobile ? 44 : 70; const mSideCardH = isMobile ? 62 : 98; const mSideOverlap = isMobile ? 12 : 18
+  const mSideCardW = isMobile ? 44 : 80; const mSideCardH = isMobile ? 62 : 112; const mSideOverlap = isMobile ? 12 : 22
   const mSouthCardW = isMobile ? 62 : 104; const mSouthCardH = isMobile ? 87 : 146; const mSouthOverlap = isMobile ? 20 : 32
   const mTrickW = isMobile ? 180 : 300; const mTrickH = isMobile ? 160 : 240
   const mTrickCardW = isMobile ? 56 : 90; const mTrickCardH = isMobile ? 78 : 126
@@ -1369,7 +1365,21 @@ export default function Bridge() {
             <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap: isMobile ? 4 : 8, flexShrink:0 }}>
               <span style={{ fontSize:'1rem', fontWeight:700, color:labelColor('W'), writingMode:'vertical-rl', transform:'rotate(180deg)' }}>{isMobile ? 'W' : playerLabel('W')}</span>
               {isWestDummy
-                ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='W'} horizontal={false} />
+                ? (
+                  <div style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'flex-start' }}>
+                    {['S','H','D','C'].map(suit => {
+                      const suitCards = dummyHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+                      if (!suitCards.length) return null
+                      const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
+                      return (
+                        <div key={suit} style={{ display:'flex', alignItems:'center', gap:2 }}>
+                          <span style={{ fontSize:'1rem', color:col, fontWeight:700, width:16, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                          <FannedHand cards={suitCards} legalCards={isDummyTurn && game.currentLeader==='W' ? suitCards : []} onCardClick={c=>handleCardClick(c,true)} cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
                 : <FannedHand cards={game.hands['W']||[]} faceDown vertical cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
               }
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('W',game.auction)} thinking={botThinking==='W'} />}
@@ -1420,7 +1430,21 @@ export default function Bridge() {
             <div style={{ display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center', gap: isMobile ? 4 : 8, flexShrink:0 }}>
               {game.phase==='bidding' && <BidBubble bid={getPlayerLastBid('E',game.auction)} thinking={botThinking==='E'} />}
               {isEastDummy
-                ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='E'} horizontal={false} />
+                ? (
+                  <div style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'flex-start' }}>
+                    {['S','H','D','C'].map(suit => {
+                      const suitCards = dummyHand.filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+                      if (!suitCards.length) return null
+                      const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.6)' : SUIT_COLORS[suit]
+                      return (
+                        <div key={suit} style={{ display:'flex', alignItems:'center', gap:2 }}>
+                          <span style={{ fontSize:'1rem', color:col, fontWeight:700, width:16, flexShrink:0 }}>{SUIT_SYMBOLS[suit]}</span>
+                          <FannedHand cards={suitCards} legalCards={isDummyTurn && game.currentLeader==='E' ? suitCards : []} onCardClick={c=>handleCardClick(c,true)} cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
                 : <FannedHand cards={game.hands['E']||[]} faceDown vertical cardW={mSideCardW} cardH={mSideCardH} overlap={mSideOverlap} />
               }
               <span style={{ fontSize:'1rem', fontWeight:700, color:labelColor('E'), writingMode:'vertical-rl' }}>{isMobile ? 'E' : playerLabel('E')}</span>
