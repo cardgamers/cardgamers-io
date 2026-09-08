@@ -79,7 +79,15 @@ export function Signup() {
     if (password.length < 6) { setError('Password must be at least 6 characters'); return }
     setLoading(true)
     const { error } = await signUp(email, password, username)
-    if (error) { setError(error.message); setLoading(false) }
+    if (error) {
+      const msg = error.message || ''
+      if (msg.includes('Database error')) setError('Username already taken — please choose another.')
+      else if (msg.includes('already registered') || msg.includes('already exists')) setError('An account with this email already exists. Try signing in instead.')
+      else if (msg.includes('invalid email')) setError('Please enter a valid email address.')
+      else if (msg.includes('weak password')) setError('Password is too weak — use at least 6 characters.')
+      else setError('Something went wrong. Please try again.')
+      setLoading(false)
+    }
     else setDone(true)
   }
 
