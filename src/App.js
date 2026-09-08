@@ -29,6 +29,9 @@ import LearnBridgeStayman from './pages/LearnBridgeStayman'
 import LearnBridgeBlackwood from './pages/LearnBridgeBlackwood'
 import LearnBridgeVulnerable from './pages/LearnBridgeVulnerable'
 import LearnBridgeOpeningLeads from './pages/LearnBridgeOpeningLeads'
+import LearnSpadesNil from './pages/LearnSpadesNil'
+import LearnSpadesStrategy from './pages/LearnSpadesStrategy'
+import LearnSpadesScoring from './pages/LearnSpadesScoring'
 import LearnSolitaire from './pages/LearnSolitaire'
 import LearnRummy from './pages/LearnRummy'
 import LearnSpades from './pages/LearnSpades'
@@ -81,6 +84,9 @@ function AppRoutes() {
         <Route path="/learn/bridge/blackwood" element={<LearnBridgeBlackwood />} />
         <Route path="/learn/bridge/vulnerable" element={<LearnBridgeVulnerable />} />
         <Route path="/learn/bridge/opening-leads" element={<LearnBridgeOpeningLeads />} />
+        <Route path="/learn/spades/nil-bid" element={<LearnSpadesNil />} />
+        <Route path="/learn/spades/strategy" element={<LearnSpadesStrategy />} />
+        <Route path="/learn/spades/scoring" element={<LearnSpadesScoring />} />
         <Route path="/learn/bridge" element={<BridgeGuide />} />
         <Route path="/learn/solitaire" element={<LearnSolitaire />} />
         <Route path="/learn/rummy" element={<LearnRummy />} />

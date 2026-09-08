@@ -42,6 +42,18 @@ const PAGE_META = {
     title: 'Bridge Opening Leads Guide — What Card to Lead | CardGamers.io',
     description: 'Learn the standard rules for opening leads in bridge — against NT and suit contracts. Fourth best, top of sequence, short suit leads, and more.',
   },
+  '/learn/spades/nil-bid': {
+    title: 'How to Bid Nil in Spades — Rules and Strategy | CardGamers.io',
+    description: 'Learn how to bid nil in Spades — the rules, when to try it, how to defend against it, and the difference between nil and blind nil.',
+  },
+  '/learn/spades/strategy': {
+    title: 'Spades Card Game Strategy — Tips to Win More | CardGamers.io',
+    description: 'Improve your Spades game with proven strategy tips — bidding accurately, when to cut, managing bags, and partnership communication.',
+  },
+  '/learn/spades/scoring': {
+    title: 'How Spades Scoring Works — Points, Bags and Nil | CardGamers.io',
+    description: 'A complete guide to Spades scoring — how points work, what bags are, nil bid bonuses, and how to win the game.',
+  },
   '/learn/bridge/scoring': {
     title: 'Bridge Scoring Systems Explained — Rubber, Duplicate, IMP & Matchpoints | CardGamers.io',
     description: 'A clear guide to how bridge is scored — Rubber Bridge, Duplicate, IMP, and Matchpoint scoring — explained simply for players at any level.',
