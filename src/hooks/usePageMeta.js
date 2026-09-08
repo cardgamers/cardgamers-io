@@ -19,8 +19,8 @@ const PAGE_META = {
     description: 'Play Gin Rummy online free against real opponents. Form sets and runs, track your rating, climb the leaderboard. No download needed.',
   },
   '/game/spades': {
-    title: 'Play Spades Online Free — Classic Trick-Taking Card Game | CardGamers.io',
-    description: 'Play Spades online free. Bid your tricks, play your hand, beat the bots. Classic partnership Spades with full scoring. No download needed.',
+    title: 'Play Free Spades Online – Classic Card Game (No Download) | CardGamers.io',
+    description: 'Play free online Spades with live players or smart bots. No login, registration, or download required. Fast browser multiplayer, custom rules, and bidding.',
   },
   '/game/solitaire': {
     title: 'Play Solitaire Online Free — Klondike Draw 1 & Draw 3 | CardGamers.io',
