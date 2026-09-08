@@ -1137,36 +1137,11 @@ export default function Bridge() {
         </div>
         <button className="btn-gold" onClick={startSession} style={{ width:'100%', justifyContent:'center', fontSize:'1rem', padding:'0.85rem' }}>♠ Start Session (4 Hands)</button>
         <Link to="/lobby" style={{ display:'block', textAlign:'center', marginTop:'0.9rem', color:'var(--text-muted)', fontSize:'0.96rem' }}>← Back to Lobby</Link>
-      </div>
-    </div>
-
-    {/* SEO Content — crawlable by Google */}
-    <div style={{ background:'rgba(0,0,0,0.3)', borderTop:'1px solid rgba(201,168,76,0.1)', padding:'2.5rem 1.5rem' }}>
-      <div style={{ maxWidth:700, margin:'0 auto', color:'rgba(245,240,232,0.7)' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10, marginBottom:'1.25rem' }}>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.4rem', color:'var(--gold)', margin:0 }}>About This Bridge Game</h2>
-          <a href="/learn/bridge-intro" style={{ fontSize:'0.82rem', padding:'0.45rem 0.9rem', background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:8, color:'var(--gold)', textDecoration:'none' }}>📖 Beginner's Guide →</a>
-        </div>
-        <p style={{ fontSize:'0.88rem', lineHeight:1.8, marginBottom:'1rem' }}>
-          Free online Bridge with Standard American bidding (SAYC), IMP and Rubber scoring, 4-hand sessions with vulnerability rotation, and AI coaching after each session. No download or sign-up required. Learn <a href="/learn/bridge/stayman" style={{ color:'var(--gold)' }}>Stayman</a>, <a href="/learn/bridge/blackwood" style={{ color:'var(--gold)' }}>Blackwood</a>, <a href="/learn/bridge/opening-leads" style={{ color:'var(--gold)' }}>opening leads</a>, and <a href="/learn/bridge/scoring" style={{ color:'var(--gold)' }}>IMP scoring</a>.
+        <p style={{ textAlign:'center', marginTop:'1.5rem', fontSize:'0.82rem', color:'rgba(245,240,232,0.35)' }}>
+          New to Bridge? <a href="/learn/bridge-intro" style={{ color:'var(--gold)', textDecoration:'underline' }}>Read our beginner's guide →</a>
         </p>
-        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-          {[
-            { q:"What bidding system is used?", a:"Standard American Yellow Card (SAYC) with Stayman, Jacoby Transfers, Blackwood, Gerber, takeout doubles, and 2/1 game-forcing." },
-            { q:"How does IMP scoring work?", a:"Raw point differences are converted to IMPs using the WBF scale. A game swing = 6-10 IMPs, a slam swing = 11-17 IMPs, maximum 24 IMPs." },
-            { q:"What is vulnerability in Bridge?", a:"Vulnerability increases bonuses (+500 vs +300 for game) and penalties (100 vs 50 per undertrick). It rotates across the 4-hand session: None, NS, EW, Both." },
-            { q:"Can I play Bridge free without downloading?", a:"Yes — CardGamers.io runs in any browser. No download, no sign-up required. Play directly against smart bots." },
-          ].map(({ q, a }, i) => (
-            <details key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(201,168,76,0.12)', borderRadius:8, padding:'10px 14px', cursor:'pointer' }}>
-              <summary style={{ fontWeight:600, fontSize:'0.88rem', color:'var(--cream)', listStyle:'none' }}>{q}</summary>
-              <p style={{ fontSize:'0.84rem', lineHeight:1.7, color:'rgba(245,240,232,0.55)', marginTop:8, marginBottom:0 }}>{a}</p>
-            </details>
-          ))}
-        </div>
       </div>
     </div>
-  )
-
   if (!game || !session) return null
 
   const myHand = game.hands['S'] || []
@@ -1536,52 +1511,6 @@ export default function Bridge() {
         )}
       </div>
     </div>
-
-    {false && <div style={{ background:'#0a1f12', borderTop:'1px solid rgba(201,168,76,0.1)', padding:'3rem 1.5rem', color:'rgba(245,240,232,0.75)' }}>
-      <div style={{ maxWidth:800, margin:'0 auto' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12, marginBottom:'1.5rem' }}>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.6rem', color:'var(--gold)', margin:0 }}>How to Play Bridge Online</h2>
-          <a href="/learn/bridge-intro" style={{ fontSize:'0.85rem', padding:'0.5rem 1rem', background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:8, color:'var(--gold)', textDecoration:'none', whiteSpace:'nowrap' }}>📖 Full Bridge Beginner Guide →</a>
-        </div>
-        <p style={{ fontSize:'0.88rem', color:'rgba(245,240,232,0.45)', marginBottom:'1.5rem' }}>
-          New to Bridge? Read our <a href="/learn/bridge-intro" style={{ color:'var(--gold)', textDecoration:'underline' }}>complete beginner guide</a> covering bidding, scoring, and strategy. Learn <a href="/learn/bridge/stayman" style={{ color:'var(--gold)', textDecoration:'underline' }}>Stayman</a>, <a href="/learn/bridge/blackwood" style={{ color:'var(--gold)', textDecoration:'underline' }}>Blackwood</a>, and <a href="/learn/bridge/scoring" style={{ color:'var(--gold)', textDecoration:'underline' }}>IMP scoring</a>.
-        </p>
-
-        <h3 style={{ fontSize:'1rem', color:'var(--cream)', marginBottom:'0.6rem' }}>About This Bridge Game</h3>
-        <p style={{ fontSize:'0.92rem', lineHeight:1.8, marginBottom:'1.25rem' }}>
-          CardGamers.io offers free online Bridge with Standard American bidding (SAYC), proper IMP and Rubber scoring,
-          4-hand sessions with vulnerability rotation, and a session analysis after each match.
-          Play against smart bots 24/7 — no download, no sign-up, works on any device.
-        </p>
-
-        <h3 style={{ fontSize:'1rem', color:'var(--cream)', marginBottom:'0.6rem' }}>Bridge Scoring — IMP, Rubber and Duplicate</h3>
-        <p style={{ fontSize:'0.92rem', lineHeight:1.8, marginBottom:'1.25rem' }}>
-          Bridge uses three main scoring formats. Rubber Bridge scores trick points below the line — first to 100 points wins a game,
-          two games wins the rubber. Duplicate Bridge scores each board separately and compares results across the field.
-          IMP scoring converts raw point differences into International Match Points using the WBF scale —
-          small differences earn 1-3 IMPs, game swings earn 6-10, slam swings earn 11-17.
-          Our platform supports all three formats. <a href="/learn/bridge/scoring" style={{ color:'var(--gold)', textDecoration:'underline' }}>Full scoring guide →</a>
-        </p>
-
-        <h3 style={{ fontSize:'1rem', color:'var(--cream)', marginBottom:'0.6rem' }}>Frequently Asked Questions</h3>
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {[
-            { q:"What bidding system does this Bridge game use?", a:"CardGamers.io uses Standard American Yellow Card (SAYC) — the most widely played system in North America. Conventions supported include Stayman, Jacoby Transfers, Blackwood, Gerber, takeout doubles, and 2/1 game-forcing responses." },
-            { q:"Can I play Bridge online for free without downloading anything?", a:"Yes — CardGamers.io runs entirely in your browser. No download, no installation, and no sign-up required to play. Just open the page and start a session." },
-            { q:"How does IMP scoring work in Bridge?", a:"IMP scoring converts the raw point difference between two results into International Match Points using the WBF scale. A 20-point difference = 1 IMP; a game swing of 400-490 points = 10 IMPs; a slam swing of 750-890 points = 13 IMPs. Maximum is 24 IMPs." },
-            { q:"What is vulnerability in Bridge?", a:"Vulnerability increases both bonuses and penalties. A vulnerable game bonus is +500 (vs +300 not vulnerable). Vulnerable undertricks cost 100 points each undoubled (vs 50). The vulnerability rotates across the 4-hand session: None, NS, EW, Both." },
-            { q:"How many hands are in a Bridge session on CardGamers.io?", a:"Each session consists of 4 hands with proper vulnerability rotation. After all 4 hands, you see a session summary showing your total score, IMP result, contract accuracy, and an AI coaching review of your bidding and card play." },
-          ].map(({ q, a }, i) => (
-            <details key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(201,168,76,0.15)', borderRadius:10, padding:'12px 16px', cursor:'pointer' }}>
-              <summary style={{ fontWeight:600, fontSize:'0.92rem', color:'var(--cream)', listStyle:'none', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                {q} <span style={{ color:'var(--gold)', fontSize:'1.2rem', marginLeft:8 }}>+</span>
-              </summary>
-              <p style={{ fontSize:'0.88rem', lineHeight:1.7, color:'rgba(245,240,232,0.6)', marginTop:10, marginBottom:0 }}>{a}</p>
-            </details>
-          ))}
-        </div>
-      </div>
-    </div>}
     </>
   )
 }
