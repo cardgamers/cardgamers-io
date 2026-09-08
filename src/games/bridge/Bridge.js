@@ -1137,6 +1137,7 @@ export default function Bridge() {
         </div>
         <button className="btn-gold" onClick={startSession} style={{ width:'100%', justifyContent:'center', fontSize:'1rem', padding:'0.85rem' }}>♠ Start Session (4 Hands)</button>
         <Link to="/lobby" style={{ display:'block', textAlign:'center', marginTop:'0.9rem', color:'var(--text-muted)', fontSize:'0.96rem' }}>← Back to Lobby</Link>
+        <p style={{ textAlign:'center', marginTop:'1.5rem', fontSize:'0.82rem', color:'rgba(245,240,232,0.35)' }}>New to Bridge? <a href="/learn/bridge-intro" style={{ color:'var(--gold)', textDecoration:'underline' }}>Read our beginner's guide →</a></p>
       </div>
     </div>
   )
