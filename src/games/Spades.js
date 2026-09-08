@@ -583,5 +583,91 @@ export default function Spades() {
         </div>
       )}
     </div>
+
+    {/* SEO Content — visible to Google, helpful for new players */}
+    <div style={{ background:'#0a1f12', borderTop:'1px solid rgba(201,168,76,0.1)', padding:'3rem 1.5rem', color:'rgba(245,240,232,0.75)' }}>
+      <div style={{ maxWidth:800, margin:'0 auto' }}>
+
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.6rem', color:'var(--gold)', marginBottom:'1.5rem' }}>How to Play Spades Online</h2>
+        <p style={{ fontSize:'0.95rem', lineHeight:1.8, marginBottom:'1.5rem' }}>
+          Spades is a classic partnership trick-taking card game played by four players in two teams — North/South vs East/West.
+          Each player is dealt 13 cards. Before play begins, each player bids the number of tricks they expect to win.
+          Your team's combined bid is your contract. Spades are always trump — they beat every other suit.
+          The first team to reach 500 points wins the game.
+        </p>
+
+        <h3 style={{ fontSize:'1.1rem', color:'var(--cream)', marginBottom:'0.75rem', marginTop:'1.5rem' }}>Spades Bidding, Nil, and Bag Rules Explained</h3>
+        <p style={{ fontSize:'0.92rem', lineHeight:1.8, marginBottom:'1rem' }}>
+          Before each hand, every player bids 0–13. Your side's combined bid is your target — make it and you score
+          10 points per trick bid. Miss it and you lose 10 points per trick bid. Tricks won above your bid are called
+          bags and score 1 point each, but every 10 bags costs you 100 points.
+        </p>
+        <p style={{ fontSize:'0.92rem', lineHeight:1.8, marginBottom:'1rem' }}>
+          A nil bid means you promise to win zero tricks. Succeed and your team earns a 100-point bonus.
+          Fail and you lose 100 points. Blind nil — bidding nil before seeing your cards — earns 200 points
+          if successful and is only available when your team is far behind.
+        </p>
+
+        <h3 style={{ fontSize:'1.1rem', color:'var(--cream)', marginBottom:'0.75rem', marginTop:'1.5rem' }}>Classic Partnership vs. Cutthroat (Solo) Spades</h3>
+        <p style={{ fontSize:'0.92rem', lineHeight:1.8, marginBottom:'1rem' }}>
+          Classic partnership Spades (the version on CardGamers.io) pairs you with the player across the table.
+          You share a score and work together to make your combined bid. Communication is through your bids and card play only.
+          Cutthroat Spades is a three-player variant where every player competes individually with no partner.
+          Each player bids and scores independently, making it a more aggressive, every-player-for-themselves game.
+        </p>
+
+        <h3 style={{ fontSize:'1.1rem', color:'var(--cream)', marginBottom:'0.75rem', marginTop:'1.5rem' }}>Frequently Asked Questions</h3>
+
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Can you lead a spade on the first trick?",
+              "acceptedAnswer": { "@type": "Answer", "text": "No. In standard Spades rules, you cannot lead a Spade on the first trick unless Spades have already been broken (a Spade has been played on a previous trick when a player was void in the led suit). You must lead a non-Spade suit on the opening trick." }
+            },
+            {
+              "@type": "Question",
+              "name": "What happens when you reach 10 sandbags in Spades?",
+              "acceptedAnswer": { "@type": "Answer", "text": "When your team accumulates 10 bags (overtricks), you are penalized 100 points and your bag count resets to zero. For example, if your team has 9 bags and wins 2 more tricks above your bid, you earn 2 points for the bags but immediately lose 100 points, leaving you with a net -98 bag result for that hand." }
+            },
+            {
+              "@type": "Question",
+              "name": "What is a nil bid in Spades?",
+              "acceptedAnswer": { "@type": "Answer", "text": "A nil bid means you are declaring that you will win zero tricks during the hand. If successful, your team earns a 100-point bonus. If you take even one trick, your team loses 100 points. Your partner bids and plays normally alongside your nil." }
+            },
+            {
+              "@type": "Question",
+              "name": "How many points do you need to win Spades?",
+              "acceptedAnswer": { "@type": "Answer", "text": "The standard game of Spades is played to 500 points. The first team to reach 500 or more points at the end of a complete hand wins. If both teams reach 500 in the same hand, the team with the higher score wins." }
+            },
+            {
+              "@type": "Question",
+              "name": "Can you play Spades online for free?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes — CardGamers.io offers free online Spades with no download, no registration, and no login required. You can play immediately against smart bots directly in your browser on any device." }
+            }
+          ]
+        }) }} />
+
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {[
+            { q:"Can you lead a spade on the first trick?", a:"No. In standard Spades rules, you cannot lead a Spade on the first trick unless Spades have already been broken — meaning a Spade has been played on a previous trick when a player was void in the led suit." },
+            { q:"What happens when you reach 10 sandbags?", a:"Your team is penalized 100 points and your bag count resets to zero. The bags still score their 1 point each, but the 100-point penalty is applied immediately." },
+            { q:"What is a nil bid in Spades?", a:"You declare you will win zero tricks. Succeed and your team earns +100 points. Fail (take even one trick) and your team loses 100 points. Your partner bids and plays normally." },
+            { q:"How many points do you need to win?", a:"The standard game goes to 500 points. First team to reach 500 at the end of a complete hand wins. If both teams reach 500 in the same hand, the higher score wins." },
+            { q:"Can you play Spades online for free?", a:"Yes — CardGamers.io lets you play Spades free in your browser with no download, no registration, and no login required. Play against smart bots any time." },
+          ].map(({ q, a }, i) => (
+            <details key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(201,168,76,0.15)', borderRadius:10, padding:'12px 16px', cursor:'pointer' }}>
+              <summary style={{ fontWeight:600, fontSize:'0.92rem', color:'var(--cream)', listStyle:'none', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                {q} <span style={{ color:'var(--gold)', fontSize:'1.2rem', marginLeft:8 }}>+</span>
+              </summary>
+              <p style={{ fontSize:'0.88rem', lineHeight:1.7, color:'rgba(245,240,232,0.6)', marginTop:10, marginBottom:0 }}>{a}</p>
+            </details>
+          ))}
+        </div>
+
+      </div>
+    </div>
   )
 }
