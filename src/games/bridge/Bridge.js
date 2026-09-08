@@ -1139,6 +1139,44 @@ export default function Bridge() {
         <Link to="/lobby" style={{ display:'block', textAlign:'center', marginTop:'0.9rem', color:'var(--text-muted)', fontSize:'0.96rem' }}>← Back to Lobby</Link>
         <p style={{ textAlign:'center', marginTop:'1.5rem', fontSize:'0.82rem', color:'rgba(245,240,232,0.35)' }}>New to Bridge? <a href="/learn/bridge-intro" style={{ color:'var(--gold)', textDecoration:'underline' }}>Read our beginner's guide →</a></p>
       </div>
+      {/* SEO content — crawlable by Google */}
+      <div style={{ marginTop:'2rem', borderTop:'1px solid rgba(201,168,76,0.1)', padding:'2rem 1.5rem 1rem', color:'rgba(245,240,232,0.65)' }}>
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.3rem', color:'var(--gold)', marginBottom:'1rem' }}>How to Play Bridge Online</h2>
+        <p style={{ fontSize:'0.88rem', lineHeight:1.8, marginBottom:'1rem' }}>
+          Contract Bridge is a four-player partnership card game. North and South play against East and West.
+          Each player receives 13 cards. The auction determines the contract — how many tricks your side promises to win and in which suit (or No Trump).
+          The declarer plays both their hand and dummy's hand face-up. Defenders try to defeat the contract.
+          CardGamers.io uses Standard American bidding (SAYC) with IMP, Rubber, and Duplicate scoring.
+        </p>
+        <h3 style={{ fontSize:'0.95rem', color:'var(--cream)', marginBottom:'0.6rem', marginTop:'1.25rem' }}>Bridge Bidding — Standard American (SAYC)</h3>
+        <p style={{ fontSize:'0.88rem', lineHeight:1.8, marginBottom:'1rem' }}>
+          Open 1NT with 15-17 HCP balanced. Open 1♥ or 1♠ with 5+ cards and 12-21 HCP. Use <a href="/learn/bridge/stayman" style={{ color:'var(--gold)' }}>Stayman (2♣)</a> to find 4-card major fits after 1NT.
+          Use <a href="/learn/bridge/blackwood" style={{ color:'var(--gold)' }}>Blackwood (4NT)</a> to ask for aces before bidding a slam.
+          Game requires 25+ combined HCP — bid 3NT, 4♥, or 4♠. Slam requires 33+ HCP.
+          Learn <a href="/learn/bridge/vulnerable" style={{ color:'var(--gold)' }}>vulnerability</a> and <a href="/learn/bridge/opening-leads" style={{ color:'var(--gold)' }}>opening leads</a> to sharpen your game.
+        </p>
+        <h3 style={{ fontSize:'0.95rem', color:'var(--cream)', marginBottom:'0.6rem', marginTop:'1.25rem' }}>Bridge Scoring — IMP, Rubber and Duplicate</h3>
+        <p style={{ fontSize:'0.88rem', lineHeight:1.8, marginBottom:'1.25rem' }}>
+          Rubber Bridge: score trick points below the line, bonuses above. First to 100 trick points wins a game; two games wins the rubber.
+          IMP scoring converts raw point differences to International Match Points — game swings earn 6-10 IMPs, slam swings earn 11-17.
+          <a href="/learn/bridge/scoring" style={{ color:'var(--gold)', marginLeft:4 }}>Full scoring guide →</a>
+        </p>
+        <h3 style={{ fontSize:'0.95rem', color:'var(--cream)', marginBottom:'0.75rem', marginTop:'1.25rem' }}>Frequently Asked Questions</h3>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {[
+            { q:"What bidding system does this Bridge game use?", a:"Standard American Yellow Card (SAYC) — the most widely played system in North America. Includes Stayman, Jacoby Transfers, Blackwood, Gerber, takeout doubles, and 2/1 game-forcing responses." },
+            { q:"How does IMP scoring work in Bridge?", a:"Raw point differences are converted to IMPs using the WBF scale. A 20-point difference = 1 IMP. A game swing of 400-490 points = 10 IMPs. A slam swing of 750-890 points = 13 IMPs. Maximum is 24 IMPs per board." },
+            { q:"What is vulnerability in Bridge?", a:"Vulnerability increases bonuses and penalties. A vulnerable game bonus is +500 (vs +300 not vulnerable). Vulnerable undertricks cost 100 points each undoubled vs 50. Rotates across the 4-hand session: None, NS, EW, Both." },
+            { q:"What is the dummy hand in Bridge?", a:"After the opening lead, the declarer's partner (dummy) places their cards face-up on the table. The declarer plays both hands. Defenders can see dummy but not each other's cards." },
+            { q:"Can I play Bridge free without downloading?", a:"Yes — CardGamers.io runs in any browser with no download, no installation, and no sign-up required. Play against smart bots any time on desktop or mobile." },
+          ].map(({ q, a }, i) => (
+            <details key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(201,168,76,0.12)', borderRadius:8, padding:'10px 14px', cursor:'pointer' }}>
+              <summary style={{ fontWeight:600, fontSize:'0.88rem', color:'var(--cream)', listStyle:'none' }}>{q}</summary>
+              <p style={{ fontSize:'0.84rem', lineHeight:1.7, color:'rgba(245,240,232,0.55)', marginTop:8, marginBottom:0 }}>{a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
     </div>
   )
 
