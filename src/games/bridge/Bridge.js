@@ -1511,8 +1511,8 @@ export default function Bridge() {
       </div>
     </div>
 
-    {/* SEO Content — crawlable by Google */}
-    <div style={{ background:'#0a1f12', borderTop:'1px solid rgba(201,168,76,0.1)', padding:'3rem 1.5rem', color:'rgba(245,240,232,0.75)' }}>
+    {/* SEO Content — only show on menu screen, not during active game */}
+    {screen !== 'game' && <div style={{ background:'#0a1f12', borderTop:'1px solid rgba(201,168,76,0.1)', padding:'3rem 1.5rem', color:'rgba(245,240,232,0.75)' }}>
       <div style={{ maxWidth:800, margin:'0 auto' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12, marginBottom:'1.5rem' }}>
           <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.6rem', color:'var(--gold)', margin:0 }}>How to Play Bridge Online</h2>
@@ -1556,7 +1556,7 @@ export default function Bridge() {
           ))}
         </div>
       </div>
-    </div>
+    </div>}
     </>
   )
 }
