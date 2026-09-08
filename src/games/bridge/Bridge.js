@@ -1192,6 +1192,7 @@ export default function Bridge() {
   const projectedNsIMPs = session.totals.nsIMPs + handIMPs
 
   return (
+    <>
     <div style={{ paddingTop:56, height:'100vh', display:'flex', flexDirection:'column', background:'#0d4a2a', overflow:'hidden' }}>
 
       {/* Session Summary */}
@@ -1556,5 +1557,6 @@ export default function Bridge() {
         </div>
       </div>
     </div>
+    </>
   )
 }
