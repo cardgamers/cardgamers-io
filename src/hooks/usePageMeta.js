@@ -26,6 +26,22 @@ const PAGE_META = {
     title: 'Play Solitaire Online Free — Klondike Draw 1 & Draw 3 | CardGamers.io',
     description: 'Play Klondike Solitaire free online. Choose Draw 1 or Draw 3 mode. No ads, no download. Hint system, undo, win streak tracking. Works on mobile and desktop.',
   },
+  '/learn/bridge/stayman': {
+    title: 'Stayman Convention in Bridge Explained | CardGamers.io',
+    description: 'Learn when and how to use the Stayman convention in bridge. A clear guide to asking for 4-card majors after a 1NT opening, with examples.',
+  },
+  '/learn/bridge/blackwood': {
+    title: 'Blackwood Convention in Bridge — How to Ask for Aces | CardGamers.io',
+    description: 'Learn how to use Blackwood 4NT to ask for aces before bidding a slam in bridge. Includes responses, when to use it, and common mistakes.',
+  },
+  '/learn/bridge/vulnerable': {
+    title: 'What Does Vulnerable Mean in Bridge? | CardGamers.io',
+    description: 'A clear explanation of vulnerability in bridge — how it affects scoring, bidding decisions, penalties, and slam bonuses. With examples.',
+  },
+  '/learn/bridge/opening-leads': {
+    title: 'Bridge Opening Leads Guide — What Card to Lead | CardGamers.io',
+    description: 'Learn the standard rules for opening leads in bridge — against NT and suit contracts. Fourth best, top of sequence, short suit leads, and more.',
+  },
   '/learn/bridge/scoring': {
     title: 'Bridge Scoring Systems Explained — Rubber, Duplicate, IMP & Matchpoints | CardGamers.io',
     description: 'A clear guide to how bridge is scored — Rubber Bridge, Duplicate, IMP, and Matchpoint scoring — explained simply for players at any level.',

@@ -25,6 +25,10 @@ import ContainerTycoon from './pages/ContainerTycoon'
 import BridgeGuide from './pages/BridgeGuide'
 import LearnBridge from './pages/LearnBridge'
 import LearnBridgeScoring from './pages/LearnBridgeScoring'
+import LearnBridgeStayman from './pages/LearnBridgeStayman'
+import LearnBridgeBlackwood from './pages/LearnBridgeBlackwood'
+import LearnBridgeVulnerable from './pages/LearnBridgeVulnerable'
+import LearnBridgeOpeningLeads from './pages/LearnBridgeOpeningLeads'
 import LearnSolitaire from './pages/LearnSolitaire'
 import LearnRummy from './pages/LearnRummy'
 import LearnSpades from './pages/LearnSpades'
@@ -73,6 +77,10 @@ function AppRoutes() {
         {/* Learn — visual step-by-step guides */}
         <Route path="/learn/bridge-intro" element={<LearnBridge />} />
         <Route path="/learn/bridge/scoring" element={<LearnBridgeScoring />} />
+        <Route path="/learn/bridge/stayman" element={<LearnBridgeStayman />} />
+        <Route path="/learn/bridge/blackwood" element={<LearnBridgeBlackwood />} />
+        <Route path="/learn/bridge/vulnerable" element={<LearnBridgeVulnerable />} />
+        <Route path="/learn/bridge/opening-leads" element={<LearnBridgeOpeningLeads />} />
         <Route path="/learn/bridge" element={<BridgeGuide />} />
         <Route path="/learn/solitaire" element={<LearnSolitaire />} />
         <Route path="/learn/rummy" element={<LearnRummy />} />
