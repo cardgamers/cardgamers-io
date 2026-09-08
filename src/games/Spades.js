@@ -618,37 +618,6 @@ export default function Spades() {
 
         <h3 style={{ fontSize:'1.1rem', color:'var(--cream)', marginBottom:'0.75rem', marginTop:'1.5rem' }}>Frequently Asked Questions</h3>
 
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "Can you lead a spade on the first trick?",
-              "acceptedAnswer": { "@type": "Answer", "text": "No. In standard Spades rules, you cannot lead a Spade on the first trick unless Spades have already been broken (a Spade has been played on a previous trick when a player was void in the led suit). You must lead a non-Spade suit on the opening trick." }
-            },
-            {
-              "@type": "Question",
-              "name": "What happens when you reach 10 sandbags in Spades?",
-              "acceptedAnswer": { "@type": "Answer", "text": "When your team accumulates 10 bags (overtricks), you are penalized 100 points and your bag count resets to zero. For example, if your team has 9 bags and wins 2 more tricks above your bid, you earn 2 points for the bags but immediately lose 100 points, leaving you with a net -98 bag result for that hand." }
-            },
-            {
-              "@type": "Question",
-              "name": "What is a nil bid in Spades?",
-              "acceptedAnswer": { "@type": "Answer", "text": "A nil bid means you are declaring that you will win zero tricks during the hand. If successful, your team earns a 100-point bonus. If you take even one trick, your team loses 100 points. Your partner bids and plays normally alongside your nil." }
-            },
-            {
-              "@type": "Question",
-              "name": "How many points do you need to win Spades?",
-              "acceptedAnswer": { "@type": "Answer", "text": "The standard game of Spades is played to 500 points. The first team to reach 500 or more points at the end of a complete hand wins. If both teams reach 500 in the same hand, the team with the higher score wins." }
-            },
-            {
-              "@type": "Question",
-              "name": "Can you play Spades online for free?",
-              "acceptedAnswer": { "@type": "Answer", "text": "Yes — CardGamers.io offers free online Spades with no download, no registration, and no login required. You can play immediately against smart bots directly in your browser on any device." }
-            }
-          ]
-        }) }} />
 
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           {[
