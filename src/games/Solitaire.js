@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { saveGameResult } from '../lib/saveGameResult'
+import { useAuth } from '../hooks/useAuth'
 import { getSolitairePercentile } from '../lib/getSolitairePercentile'
 import { usePageMeta } from '../hooks/usePageMeta'
 
@@ -268,6 +269,7 @@ function NewGameDialog({ onStart, onCancel, showCancel }) {
 
 export default function Solitaire() {
   usePageMeta('/game/solitaire')
+  const { fetchProfile, user } = useAuth()
   const [showNewGameDialog, setShowNewGameDialog] = useState(true)
   const [game, setGame] = useState(null)
   const [selected, setSelected] = useState(null)
@@ -287,6 +289,7 @@ export default function Solitaire() {
     if (!won || resultSaved) return
     saveGameResult('solitaire', true, score, 15, { moves, duration_seconds: time, drawMode: game?.drawMode || 1 })
     setResultSaved(true)
+    if (user) fetchProfile(user.id)
   }, [won, resultSaved, score, moves, time])
 
   // Fetch how this win compares to all other players, once the win is recorded
@@ -533,9 +536,9 @@ export default function Solitaire() {
                   How you compare — Draw {game.drawMode||1}
                 </p>
                 {[
-                  { label:'Faster than', val:`${percentileStats.timePercentile}%`, sub:'of players' },
-                  { label:'Fewer moves than', val:`${percentileStats.movesPercentile}%`, sub:'of players' },
-                  { label:'Platform win rate', val:`${percentileStats.winRatePct}%`, sub:`of ${percentileStats.totalGames} games` },
+                  { label:'Faster than', val:`${percentileStats.timePercentile}%`, sub:'of all games played' },
+                  { label:'Fewer moves than', val:`${percentileStats.movesPercentile}%`, sub:'of all games played' },
+                  { label:'Players win rate', val:`${percentileStats.winRatePct}%`, sub:'platform average' },
                 ].map(({label,val,sub}) => (
                   <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
                     <span style={{fontSize:'0.78rem',color:'rgba(245,240,232,0.6)'}}>{label}</span>
