@@ -317,7 +317,7 @@ export default function Spades() {
   }
 
   if (!g) return (
-    <div style={{ paddingTop: 80, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0d1f14' }}>
+    <div style={{ paddingTop: 80, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0d4a2a' }}>
       <p style={{ color: 'var(--gold)' }}>Dealing...</p>
     </div>
   )
@@ -338,7 +338,7 @@ export default function Spades() {
 
   return (
     <>
-    <div style={{ paddingTop: 56, height: '100vh', display: 'flex', flexDirection: 'column', background: '#0d1f14', overflow: 'hidden' }}>
+    <div style={{ paddingTop: 56, height: '100vh', display: 'flex', flexDirection: 'column', background: '#0d4a2a', overflow: 'hidden' }}>
 
       {/* Game Over overlay */}
       {gameOver && (
