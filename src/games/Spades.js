@@ -589,7 +589,13 @@ export default function Spades() {
     <div style={{ background:'#0a1f12', borderTop:'1px solid rgba(201,168,76,0.1)', padding:'3rem 1.5rem', color:'rgba(245,240,232,0.75)' }}>
       <div style={{ maxWidth:800, margin:'0 auto' }}>
 
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.6rem', color:'var(--gold)', marginBottom:'1.5rem' }}>How to Play Spades Online</h2>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12, marginBottom:'1.5rem' }}>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.6rem', color:'var(--gold)', margin:0 }}>How to Play Spades Online</h2>
+          <a href="/learn/spades" style={{ fontSize:'0.85rem', padding:'0.5rem 1rem', background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:8, color:'var(--gold)', textDecoration:'none', whiteSpace:'nowrap' }}>📖 Full Bidding & Strategy Guide →</a>
+        </div>
+        <p style={{ fontSize:'0.88rem', color:'rgba(245,240,232,0.45)', marginBottom:'1.25rem' }}>
+          Need a rules refresher? Read our <a href="/learn/spades" style={{ color:'var(--gold)', textDecoration:'underline' }}>full Spades Bidding, Nil &amp; Bag Rules Guide</a> — covering everything from bidding strategy to managing sandbags.
+        </p>
         <p style={{ fontSize:'0.95rem', lineHeight:1.8, marginBottom:'1.5rem' }}>
           Spades is a classic partnership trick-taking card game played by four players in two teams — North/South vs East/West.
           Each player is dealt 13 cards. Before play begins, each player bids the number of tricks they expect to win.
