@@ -556,6 +556,23 @@ export default function Solitaire() {
               </p>
             )}
 
+            {/* Share win */}
+            <div style={{marginBottom:'1rem'}}>
+              <button
+                onClick={() => {
+                  const mode = game.drawMode === 3 ? 'Draw 3' : 'Draw 1'
+                  const mins = Math.floor(time/60)
+                  const secs = String(time%60).padStart(2,'0')
+                  const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
+                  const text = `I just won Solitaire (${mode}) on CardGamers.io! ♣\n\n⏱ ${timeStr} · ${moves} moves · Score: ${score}${percentileStats ? `\nFaster than ${percentileStats.timePercentile}% of players!` : ''}\n\nPlay free at cardgamers.io/game/solitaire`
+                  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank')
+                }}
+                style={{width:'100%',padding:'0.6rem',borderRadius:8,background:'rgba(0,0,0,0.3)',border:'1px solid rgba(255,255,255,0.15)',color:'rgba(245,240,232,0.7)',cursor:'pointer',fontSize:'0.85rem',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+              >
+                <span>𝕏</span> Share your win
+              </button>
+            </div>
+
             <div style={{display:'flex',gap:'1rem',justifyContent:'center'}}>
               <button className="btn-gold" onClick={()=>setShowNewGameDialog(true)}>Play Again</button>
               <Link to="/lobby" className="btn-outline">Lobby</Link>
