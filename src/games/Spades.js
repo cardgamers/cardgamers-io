@@ -131,6 +131,7 @@ function SCard({ card, selected, valid, onClick, w = 72, h = 100, faceDown }) {
         <div style={{ fontSize: fs, color: col, lineHeight: 1 }}>{card.suit}</div>
       </div>
     </div>
+    </>
   )
 }
 
@@ -337,6 +338,7 @@ export default function Spades() {
   const tCW = isMobile ? 56 : 78; const tCH = isMobile ? 79 : 109
 
   return (
+    <>
     <div style={{ paddingTop: 56, height: '100vh', display: 'flex', flexDirection: 'column', background: '#0d1f14', overflow: 'hidden' }}>
 
       {/* Game Over overlay */}
@@ -638,5 +640,6 @@ export default function Spades() {
 
       </div>
     </div>
+    </>
   )
 }
