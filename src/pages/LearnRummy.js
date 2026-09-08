@@ -259,7 +259,49 @@ export default function LearnRummy() {
           }
         </div>
 
-        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+        {/* SEO content block — crawlable by Google */}
+        <div style={{ marginTop:'3rem', paddingTop:'2rem', borderTop:'1px solid rgba(201,168,76,0.15)' }}>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.4rem', color:'var(--gold)', marginBottom:'1.25rem' }}>How to Play Rummy — Complete Guide</h2>
+
+          <h3 style={{ fontSize:'1rem', color:'var(--cream)', marginBottom:'0.6rem' }}>Dealing and Setup</h3>
+          <ul style={{ fontSize:'0.9rem', color:'rgba(245,240,232,0.7)', lineHeight:1.8, paddingLeft:'1.25rem', marginBottom:'1.25rem' }}>
+            <li>Each player is dealt <strong>13 cards</strong> from a standard 52-card deck</li>
+            <li>The remaining cards form the <strong>closed deck</strong> (face down)</li>
+            <li>One card is turned face up to start the <strong>open deck</strong> (discard pile)</li>
+            <li>Players take turns drawing from either deck and discarding one card</li>
+            <li>The goal is to arrange all 13 cards into valid melds and declare</li>
+          </ul>
+
+          <h3 style={{ fontSize:'1rem', color:'var(--cream)', marginBottom:'0.6rem' }}>Valid Melds — Pure vs. Impure Sequences</h3>
+          <ul style={{ fontSize:'0.9rem', color:'rgba(245,240,232,0.7)', lineHeight:1.8, paddingLeft:'1.25rem', marginBottom:'0.75rem' }}>
+            <li><strong>Pure Sequence</strong> — 3 or more consecutive cards of the same suit with no Joker. Example: 4♥ 5♥ 6♥. Every valid declaration requires at least one pure sequence.</li>
+            <li><strong>Impure Sequence</strong> — 3 or more consecutive cards of the same suit where a Joker substitutes for a missing card. Example: 7♠ Joker 9♠.</li>
+            <li><strong>Set (Triplet)</strong> — 3 or 4 cards of the same rank but different suits. Example: K♠ K♥ K♦. Sets can use Jokers but cannot count as your pure sequence.</li>
+            <li><strong>Joker</strong> — Can substitute for any card in an impure sequence or set. The printed Joker and a randomly chosen wild card both act as Jokers.</li>
+          </ul>
+          <div style={{ background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.2)', borderRadius:8, padding:'0.6rem 1rem', display:'flex', gap:8, marginBottom:'1.25rem' }}>
+            <span style={{ color:'var(--gold)', flexShrink:0 }}>💡</span>
+            <p style={{ fontSize:'0.85rem', color:'var(--gold)', lineHeight:1.6, margin:0 }}>You must have at least one pure sequence before you can declare. Without it, your declaration is invalid regardless of your other melds.</p>
+          </div>
+
+          <h3 style={{ fontSize:'1rem', color:'var(--cream)', marginBottom:'0.6rem' }}>How to Declare and Win</h3>
+          <ul style={{ fontSize:'0.9rem', color:'rgba(245,240,232,0.7)', lineHeight:1.8, paddingLeft:'1.25rem', marginBottom:'1.25rem' }}>
+            <li>When all 13 cards are arranged into valid melds, discard your 14th card face down and declare</li>
+            <li>A valid declaration requires: at least one <strong>pure sequence</strong>, at least one more sequence (pure or impure), and the remaining cards in valid sets or sequences</li>
+            <li>If your declaration is valid, you win with 0 points — opponents count their unmatched card values</li>
+            <li>A <strong>wrong declaration</strong> (invalid melds) costs you 80 points — the maximum penalty</li>
+            <li>Face cards (J, Q, K, A) carry <strong>10 points</strong> each; numbered cards carry their face value</li>
+          </ul>
+
+          {/* Prominent CTA */}
+          <div style={{ background:'rgba(201,168,76,0.1)', border:'2px solid rgba(201,168,76,0.3)', borderRadius:14, padding:'1.5rem', textAlign:'center', marginBottom:'2rem' }}>
+            <p style={{ fontSize:'1rem', color:'var(--cream)', fontWeight:600, marginBottom:'0.5rem' }}>Ready to practice what you've learned?</p>
+            <p style={{ fontSize:'0.85rem', color:'rgba(245,240,232,0.55)', marginBottom:'1rem' }}>Play against smart bots — free, no sign-up, no download needed.</p>
+            <Link to="/game/rummy" className="btn-gold" style={{ fontSize:'0.95rem', padding:'0.75rem 2rem', display:'inline-flex' }}>♥ Practice Rummy Free with Bots →</Link>
+          </div>
+        </div>
+
+        <div style={{ paddingTop: '1rem', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
           <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>Learn other games</p>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             {[{ to: '/learn/bridge', label: '♠ Bridge' }, { to: '/learn/spades', label: '♠ Spades' }, { to: '/learn/solitaire', label: '♣ Solitaire' }].map(l => (
