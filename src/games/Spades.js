@@ -131,7 +131,6 @@ function SCard({ card, selected, valid, onClick, w = 72, h = 100, faceDown }) {
         <div style={{ fontSize: fs, color: col, lineHeight: 1 }}>{card.suit}</div>
       </div>
     </div>
-    </>
   )
 }
 
