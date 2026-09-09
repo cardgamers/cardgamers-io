@@ -360,7 +360,7 @@ function MobileSidePanel({ game, myHand, showPanel, onClose, session }) {
 }
 
 // ─── Session Summary Overlay ──────────────────────────────────────
-function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
+function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile, isPlusUser }) {
   const { hands, totals } = session
   const [tab, setTab] = useState('results')
   const [aiAnalysis, setAiAnalysis] = useState(null)
@@ -802,8 +802,18 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile }) {
             {!aiAnalysis && !aiLoading && !aiError && (
               <div style={{ textAlign:'center', padding:'1.5rem' }}>
                 <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>🤖</div>
-                <p style={{ color:'rgba(245,240,232,0.6)', fontSize:'0.88rem', marginBottom:'1rem' }}>Get personalized coaching from Claude — specific feedback on your bidding and card play decisions.</p>
-                <button onClick={fetchAiAnalysis} className="btn-gold" style={{ fontSize:'0.88rem', padding:'0.65rem 1.5rem' }}>Analyze My Session</button>
+                {isPlusUser ? (
+                  <>
+                    <p style={{ color:'rgba(245,240,232,0.6)', fontSize:'0.88rem', marginBottom:'1rem' }}>Get personalized coaching — specific feedback on your bidding and card play decisions.</p>
+                    <button onClick={fetchAiAnalysis} className="btn-gold" style={{ fontSize:'0.88rem', padding:'0.65rem 1.5rem' }}>Analyze My Session</button>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ color:'rgba(245,240,232,0.6)', fontSize:'0.88rem', marginBottom:'0.5rem' }}>AI coaching analyzes your bidding decisions, card play and missed opportunities.</p>
+                    <p style={{ color:'var(--gold)', fontSize:'0.82rem', marginBottom:'1rem', fontWeight:600 }}>Available with Plus — $3.99/month</p>
+                    <a href="/upgrade" className="btn-gold" style={{ fontSize:'0.88rem', padding:'0.65rem 1.5rem', display:'inline-flex', textDecoration:'none' }}>Upgrade to Plus →</a>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -1241,6 +1251,7 @@ export default function Bridge() {
           onNewSession={startSession}
           onMenu={() => { setScreen('menu'); setShowSessionSummary(false) }}
           isMobile={isMobile}
+          isPlusUser={isPlusUser}
         />
       )}
 
