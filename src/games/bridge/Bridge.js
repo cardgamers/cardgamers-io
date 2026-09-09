@@ -1049,7 +1049,14 @@ export default function Bridge() {
       const newSession = { handNumber: nextHandNumber, hands: newHands, totals: newTotals }
 
       if (nextHandNumber > 4) {
-        // Session complete
+        // Session complete — save full session to history
+        const nsWon = newTotals.NS > newTotals.EW
+        saveGameResult('bridge_session', nsWon, newTotals.NS, nsWon ? 10 : -5, {
+          session_hands: newHands,
+          totals: newTotals,
+          gameMode,
+          imps: newTotals.nsIMPs,
+        })
         setTimeout(() => setShowSessionSummary(true), 100)
         return { ...newSession, handNumber: 4 }
       } else {
