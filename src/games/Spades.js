@@ -365,7 +365,13 @@ export default function Spades() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.75rem', height: 44, background: 'rgba(0,0,0,0.6)', borderBottom: '1px solid rgba(201,168,76,0.12)', flexShrink: 0, gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: 0 }}>
           <Link to="/lobby" style={{ color: 'var(--text-muted)', fontSize: '0.97rem', textDecoration: 'none', flexShrink: 0 }}>← Menu</Link>
-          <div style={{ display:'flex', gap:2, background:'rgba(0,0,0,0.2)', borderRadius:6, padding:2, flexShrink:0 }}>
+          <span style={{ fontFamily: "'Playfair Display',serif", color: 'var(--gold)', fontWeight: 700, flexShrink: 0 }}>♠</span>
+          <span style={{ fontSize: '1.04rem', background: 'rgba(255,255,255,0.08)', color: 'white', padding: '2px 8px', borderRadius: 20, flexShrink: 0 }}>
+            ♠ Spades trump{g.spadesBroken ? ' · broken' : ''}
+          </span>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+          <div style={{ display:'flex', gap:2, background:'rgba(0,0,0,0.2)', borderRadius:6, padding:2 }}>
             {['easy','medium','hard'].map(d => (
               <button key={d} onClick={() => (!isPlusUser && d==='hard') ? null : setDifficulty(d)} style={{
                 padding:'2px 6px', borderRadius:4, fontSize:'0.62rem', fontWeight:700, border:'none',
@@ -378,12 +384,7 @@ export default function Spades() {
               </button>
             ))}
           </div>
-          <span style={{ fontFamily: "'Playfair Display',serif", color: 'var(--gold)', fontWeight: 700, flexShrink: 0 }}>♠</span>
-          <span style={{ fontSize: '1.04rem', background: 'rgba(255,255,255,0.08)', color: 'white', padding: '2px 8px', borderRadius: 20, flexShrink: 0 }}>
-            ♠ Spades trump{g.spadesBroken ? ' · broken' : ''}
-          </span>
-        </div>
-        <div style={{ fontSize: '0.94rem', fontWeight: 600, flexShrink: 0 }}>
+          <div style={{ fontSize: '0.94rem', fontWeight: 600 }}>
           {isBidding
             ? <span style={{ color: g.currentPlayer === 0 ? '#5DCAA5' : 'var(--gold)' }}>
                 {g.currentPlayer === 0 ? '🟢 Your bid' : `${LABELS[g.currentPlayer]} bidding...`}
@@ -394,6 +395,7 @@ export default function Spades() {
             ? <span style={{ color: 'var(--gold)' }}>{LABELS[g.currentPlayer]} thinking...</span>
             : null
           }
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.94rem', fontWeight: 600, flexShrink: 0, alignItems: 'center' }}>
 
