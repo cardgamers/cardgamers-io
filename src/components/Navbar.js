@@ -114,7 +114,6 @@ export default function Navbar() {
                 {menuOpen && (
                   <div style={styles.dropdown}>
                     <Link to="/profile" style={styles.dropItem} onClick={() => setMenuOpen(false)}>{t('nav.myProfile')}</Link>
-                    <Link to="/profile" style={styles.dropItem} onClick={() => setMenuOpen(false)}>{t('nav.gameHistory')}</Link>
                     {profile?.plan === 'free' && (
                       <Link to="/upgrade" style={{ ...styles.dropItem, color: 'var(--gold)' }} onClick={() => setMenuOpen(false)}>{t('nav.upgradePlus')}</Link>
                     )}
