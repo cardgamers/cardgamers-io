@@ -384,18 +384,20 @@ export default function Spades() {
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.94rem', fontWeight: 600, flexShrink: 0, alignItems: 'center' }}>
           {/* Difficulty selector */}
+          <div style={{ display:'flex', gap:2, background:'rgba(0,0,0,0.2)', borderRadius:6, padding:2 }}>
           {['easy','medium','hard'].map(d => (
             <button key={d} onClick={() => (!isPlusUser && d==='hard') ? null : setDifficulty(d)} style={{
-              padding:'2px 7px', borderRadius:6, fontSize:'0.68rem', fontWeight:700,
-              border: difficulty===d ? '1.5px solid var(--gold)' : '1px solid rgba(255,255,255,0.12)',
-              background: difficulty===d ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.04)',
-              color: difficulty===d ? 'var(--gold)' : (!isPlusUser && d==='hard') ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)',
+              padding:'2px 6px', borderRadius:4, fontSize:'0.62rem', fontWeight:700,
+              border:'none',
+              background: difficulty===d ? 'rgba(201,168,76,0.3)' : 'transparent',
+              color: difficulty===d ? 'var(--gold)' : (!isPlusUser && d==='hard') ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.45)',
               cursor: (!isPlusUser && d==='hard') ? 'not-allowed' : 'pointer', position:'relative',
             }}>
               {d==='easy'?'E':d==='medium'?'M':'H'}
-              {d==='hard' && !isPlusUser && <span style={{position:'absolute',top:-5,right:-5,background:'var(--gold)',color:'#0d2a1a',fontSize:'0.5rem',fontWeight:800,padding:'1px 3px',borderRadius:4}}>+</span>}
+              {d==='hard' && !isPlusUser && <span style={{position:'absolute',top:-4,right:-4,background:'var(--gold)',color:'#0d2a1a',fontSize:'0.48rem',fontWeight:800,padding:'1px 2px',borderRadius:3}}>+</span>}
             </button>
           ))}
+          </div>
           <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
           <span style={{ color: '#5DCAA5' }}>We:{scores[0]}</span>
           <span style={{ color: '#c0392b' }}>They:{scores[1]}</span>
