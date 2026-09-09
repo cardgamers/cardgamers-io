@@ -193,6 +193,63 @@ function findHint(game) {
   return 'No obvious moves — try undoing'
 }
 
+function hasNoMoves(game) {
+  if (!game) return false
+  const { tableau, waste, foundations, stock } = game
+  // Can draw from stock
+  if (stock.length > 0) return false
+  // Can reset waste
+  if (waste.length > 0 && stock.length === 0) {
+    // In draw-1, resetting is always possible until stock+waste empty
+    if (game.drawMode === 1) return waste.length === 0 && stock.length === 0
+  }
+  // Check waste card
+  if (waste.length > 0) {
+    const card = waste[waste.length-1]
+    for (let fi=0;fi<4;fi++) {
+      const f = foundations[fi]
+      if ((!f.length && card.value==='A') || (f.length && f[f.length-1].suit===card.suit && ['A','2','3','4','5','6','7','8','9','10','J','Q','K'].indexOf(card.value)===(['A','2','3','4','5','6','7','8','9','10','J','Q','K'].indexOf(f[f.length-1].value)+1))) return false
+    }
+    for (let ci=0;ci<7;ci++) {
+      const col = tableau[ci]
+      if (!col.length && card.value==='K') return false
+      if (col.length && col[col.length-1].faceUp) {
+        const top = col[col.length-1]
+        const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
+        const RED = ['♥','♦'], BLACK = ['♠','♣']
+        const diffColor = (RED.includes(card.suit)&&BLACK.includes(top.suit))||(BLACK.includes(card.suit)&&RED.includes(top.suit))
+        if (diffColor && RANKS.indexOf(card.value)===RANKS.indexOf(top.value)-1) return false
+      }
+    }
+  }
+  // Check tableau moves
+  for (let from=0;from<7;from++) {
+    const col = tableau[from]
+    for (let ci=col.length-1;ci>=0;ci--) {
+      if (!col[ci].faceUp) break
+      const card = col[ci]
+      for (let fi=0;fi<4;fi++) {
+        const f = foundations[fi]
+        const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
+        if (ci===col.length-1 && ((!f.length&&card.value==='A')||(f.length&&f[f.length-1].suit===card.suit&&RANKS.indexOf(card.value)===RANKS.indexOf(f[f.length-1].value)+1))) return false
+      }
+      for (let to=0;to<7;to++) {
+        if (to===from) continue
+        const dest = tableau[to]
+        const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
+        const RED = ['♥','♦'], BLACK = ['♠','♣']
+        if (!dest.length && card.value==='K' && ci>0) return false
+        if (dest.length && dest[dest.length-1].faceUp) {
+          const top = dest[dest.length-1]
+          const diffColor = (RED.includes(card.suit)&&BLACK.includes(top.suit))||(BLACK.includes(card.suit)&&RED.includes(top.suit))
+          if (diffColor && RANKS.indexOf(card.value)===RANKS.indexOf(top.value)-1) return false
+        }
+      }
+    }
+  }
+  return true // truly stuck
+}
+
 function HintButton({ game }) {
   const [hint, setHint] = useState(null)
   const [showing, setShowing] = useState(false)
@@ -277,6 +334,7 @@ export default function Solitaire() {
   const [score, setScore] = useState(0)
   const [time, setTime] = useState(0)
   const [won, setWon] = useState(false)
+  const [stuck, setStuck] = useState(false)
   const [history, setHistory] = useState([])
   const [resultSaved, setResultSaved] = useState(false)
   const [lastClickTime, setLastClickTime] = useState({})
@@ -306,6 +364,14 @@ export default function Solitaire() {
     const t = setInterval(() => setTime(s => s+1), 1000)
     return () => clearInterval(t)
   }, [won, game])
+
+  // Detect stuck
+  useEffect(() => {
+    if (won || stuck || !game || showNewGameDialog) return
+    if (hasNoMoves(game)) {
+      setTimeout(() => setStuck(true), 800)
+    }
+  }, [game, won, stuck, showNewGameDialog])
 
   const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
 
@@ -509,6 +575,30 @@ export default function Solitaire() {
 
   return (
     <div style={{paddingTop:56,height:'100vh',display:'flex',flexDirection:'column',background:'#0d4a2a',overflow:'hidden',userSelect:'none'}}>
+      {/* Stuck overlay */}
+      {stuck && !won && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.82)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'linear-gradient(135deg,#1a3d28,#0f2a1a)',border:'2px solid rgba(192,57,43,0.5)',borderRadius:20,padding:'2.5rem 2rem',textAlign:'center',maxWidth:380,width:'90%'}}>
+            <div style={{fontSize:'3rem',marginBottom:'0.75rem'}}>🃏</div>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:'1.8rem',color:'#c0392b',marginBottom:'0.5rem'}}>No More Moves</h2>
+            <p style={{color:'rgba(245,240,232,0.5)',fontSize:'0.85rem',marginBottom:'0.5rem'}}>
+              {game?.drawMode===3?'Draw 3 — tough luck!':'Draw 1'}
+            </p>
+            <p style={{color:'rgba(245,240,232,0.4)',fontSize:'0.78rem',marginBottom:'1.5rem'}}>
+              {moves} moves · {fmt(time)}
+            </p>
+            <div style={{display:'flex',gap:'1rem',justifyContent:'center'}}>
+              <button className="btn-gold" onClick={() => {
+                saveGameResult('solitaire', false, 0, -5, { moves, duration_seconds: time, drawMode: game?.drawMode || 1, result:'stuck' })
+                setStuck(false)
+                setShowNewGameDialog(true)
+              }}>New Game</button>
+              <button onClick={() => { setStuck(false); undo() }} style={{padding:'0.6rem 1.25rem',borderRadius:8,border:'1px solid rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.06)',color:'rgba(245,240,232,0.7)',cursor:'pointer',fontSize:'0.88rem'}}>↩ Undo</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {won && <Confetti />}
 
       {/* Win overlay */}
