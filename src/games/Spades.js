@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useAuth } from '../hooks/useAuth'
 import { saveGameResult } from '../lib/saveGameResult'
 import {
   createDeck, shuffle, dealHands, sortHand,
