@@ -78,6 +78,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* AI Coaching Feature Banner */}
+      <section style={{ background:'rgba(201,168,76,0.06)', borderTop:'1px solid rgba(201,168,76,0.15)', borderBottom:'1px solid rgba(201,168,76,0.15)', padding:'2rem 1.5rem' }}>
+        <div style={{ maxWidth:900, margin:'0 auto', display:'flex', alignItems:'center', gap:'2rem', flexWrap:'wrap', justifyContent:'center' }}>
+          <div style={{ fontSize:'3rem', flexShrink:0 }}>🤖</div>
+          <div style={{ flex:1, minWidth:260 }}>
+            <div style={{ fontSize:'0.72rem', color:'var(--gold)', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:700, marginBottom:'0.4rem' }}>Exclusive to CardGamers.io</div>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(1.3rem,3vw,1.8rem)', color:'var(--cream)', marginBottom:'0.5rem' }}>AI coaching after every Bridge session</h2>
+            <p style={{ fontSize:'0.92rem', color:'rgba(245,240,232,0.6)', lineHeight:1.7, margin:0 }}>After each 4-hand session, get personalized feedback on your bidding decisions, card play mistakes, and missed opportunities — powered by Claude AI. No other free Bridge site offers this.</p>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:'0.6rem', flexShrink:0 }}>
+            <Link to="/game/bridge" className="btn-gold" style={{ fontSize:'0.9rem', padding:'0.65rem 1.5rem', textAlign:'center' }}>♠ Try Bridge with AI Coach</Link>
+            <Link to="/upgrade" style={{ fontSize:'0.82rem', color:'var(--gold)', textAlign:'center', textDecoration:'underline' }}>Upgrade to Plus — $3.99/mo</Link>
+          </div>
+        </div>
+      </section>
+
       {/* Games */}
       <section style={s.section} id="games">
         <div className="page-wrap">
