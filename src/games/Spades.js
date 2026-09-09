@@ -371,20 +371,7 @@ export default function Spades() {
           </span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-          <div style={{ display:'flex', gap:2, background:'rgba(0,0,0,0.2)', borderRadius:6, padding:2 }}>
-            {['easy','medium','hard'].map(d => (
-              <button key={d} onClick={() => (!isPlusUser && d==='hard') ? null : setDifficulty(d)} style={{
-                padding:'2px 6px', borderRadius:4, fontSize:'0.62rem', fontWeight:700, border:'none',
-                background: difficulty===d ? 'rgba(201,168,76,0.3)' : 'transparent',
-                color: difficulty===d ? 'var(--gold)' : (!isPlusUser && d==='hard') ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.45)',
-                cursor: (!isPlusUser && d==='hard') ? 'not-allowed' : 'pointer', position:'relative',
-              }}>
-                {d==='easy'?'E':d==='medium'?'M':'H'}
-                {d==='hard' && !isPlusUser && <span style={{position:'absolute',top:-4,right:-4,background:'var(--gold)',color:'#0d2a1a',fontSize:'0.48rem',fontWeight:800,padding:'1px 2px',borderRadius:3}}>+</span>}
-              </button>
-            ))}
-          </div>
-          <div style={{ fontSize: '0.94rem', fontWeight: 600 }}>
+        <div style={{ fontSize: '0.94rem', fontWeight: 600, flexShrink: 0 }}>
           {isBidding
             ? <span style={{ color: g.currentPlayer === 0 ? '#5DCAA5' : 'var(--gold)' }}>
                 {g.currentPlayer === 0 ? '🟢 Your bid' : `${LABELS[g.currentPlayer]} bidding...`}
@@ -395,7 +382,6 @@ export default function Spades() {
             ? <span style={{ color: 'var(--gold)' }}>{LABELS[g.currentPlayer]} thinking...</span>
             : null
           }
-          </div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.94rem', fontWeight: 600, flexShrink: 0, alignItems: 'center' }}>
 
@@ -407,6 +393,22 @@ export default function Spades() {
             <span style={{ color: '#c0392b' }}>T:{g.tricksWon[1]+g.tricksWon[3]}</span>
           </>}
         </div>
+      </div>
+
+      {/* Difficulty selector */}
+      <div style={{ display:'flex', justifyContent:'center', gap:4, padding:'4px 0', background:'rgba(0,0,0,0.15)' }}>
+        <span style={{ fontSize:'0.65rem', color:'rgba(255,255,255,0.35)', alignSelf:'center', marginRight:4 }}>Bot:</span>
+        {['easy','medium','hard'].map(d => (
+          <button key={d} onClick={() => (!isPlusUser && d==='hard') ? null : setDifficulty(d)} style={{
+            padding:'2px 10px', borderRadius:4, fontSize:'0.65rem', fontWeight:700, border:'none',
+            background: difficulty===d ? 'rgba(201,168,76,0.3)' : 'transparent',
+            color: difficulty===d ? 'var(--gold)' : (!isPlusUser && d==='hard') ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)',
+            cursor: (!isPlusUser && d==='hard') ? 'not-allowed' : 'pointer', position:'relative',
+          }}>
+            {d.charAt(0).toUpperCase()+d.slice(1)}
+            {d==='hard' && !isPlusUser && <span style={{position:'absolute',top:-4,right:-4,background:'var(--gold)',color:'#0d2a1a',fontSize:'0.48rem',fontWeight:800,padding:'1px 2px',borderRadius:3}}>+</span>}
+          </button>
+        ))}
       </div>
 
       {/* TABLE */}
