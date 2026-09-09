@@ -37,11 +37,12 @@ export default function Profile() {
       .eq('user_id', user.id)
       .order('played_at', { ascending: false })
       .limit(profile?.plan === 'free' ? 5 : 20)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('History fetch error:', error)
         setHistory(data || [])
         setLoading(false)
       })
-  }, [user])
+  }, [user, profile?.plan])
 
   async function handleSignOut() {
     await signOut()
