@@ -495,7 +495,7 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile, isP
 
         {/* Tab switcher */}
         <div style={{ display:'flex', gap:4, marginBottom:'1.25rem', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:4, overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
-          {[['results','📊 Results'], ['stats','🧠 Analysis'], ['review','🃏 Hands'], ['coach','🤖 AI Coach']].map(([id, label]) => (
+          {[['results','📊 Results'], ['stats','🧠 Analysis'], ['coach','🤖 AI Coach']].map(([id, label]) => (
             <button key={id} onClick={() => { setTab(id); if (id === 'coach') fetchAiAnalysis() }} style={{
               flexShrink:0, padding: isMobile ? '7px 10px' : '8px 14px',
               borderRadius:8, fontWeight:600,
@@ -659,113 +659,6 @@ function SessionSummary({ session, gameMode, onNewSession, onMenu, isMobile, isP
             </div>
           </div>
         )}
-        {/* Review Hands tab */}
-                {tab === 'review' && (
-          <div style={{ marginBottom:'1.25rem' }}>
-            {hands.length === 0 && (
-              <p style={{ textAlign:'center', color:'var(--text-muted)', fontSize:'0.88rem' }}>No hand data available.</p>
-            )}
-            {hands.map((h, i) => (
-              <div key={i} style={{ background:'rgba(0,0,0,0.3)', borderRadius:12, overflow:'hidden', marginBottom:'1rem' }}>
-                {/* Hand header */}
-                <div style={{ background:'rgba(26,26,46,0.6)', borderBottom:'1px solid rgba(201,168,76,0.12)', padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <div>
-                    <span style={{ fontSize:'0.72rem', color:'var(--gold)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em' }}>Hand {i+1}</span>
-                    {!h.passed && <span style={{ fontSize:'0.9rem', color:'white', fontWeight:700, marginLeft:10 }}>{h.contract}</span>}
-                    {!h.passed && <span style={{ fontSize:'0.78rem', color:'var(--text-muted)', marginLeft:6 }}>by {h.declarer}</span>}
-                    {h.passed && <span style={{ fontSize:'0.82rem', color:'var(--text-muted)', marginLeft:10, fontStyle:'italic' }}>Passed out</span>}
-                  </div>
-                  <div style={{ textAlign:'right' }}>
-                    <div style={{ fontSize:'0.82rem', color: h.made ? '#5DCAA5' : '#c0392b', fontWeight:600 }}>
-                      {!h.passed && (h.made ? `Made ${h.tricksMade}` : `Down ${h.undertricks}`)}
-                    </div>
-                    <div style={{ fontSize:'0.72rem', color:'rgba(245,240,232,0.4)' }}>
-                      {h.vulnerability?.NS && h.vulnerability?.EW ? 'Both vul' : h.vulnerability?.NS ? 'NS vul' : h.vulnerability?.EW ? 'EW vul' : 'None vul'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* The 4 hands */}
-                {h.initialHands && (
-                  <div style={{ padding:'12px 14px' }}>
-                    {/* Compass layout: N top, S bottom, W left, E right */}
-                    {(() => {
-                      function HandBox({ pos, label, hand, isDecl }) {
-                        return (
-                          <div style={{ background:'rgba(0,0,0,0.2)', borderRadius:8, padding:'6px 8px', minWidth:0 }}>
-                            <div style={{ fontSize:'0.62rem', color: isDecl ? 'var(--gold)' : 'rgba(245,240,232,0.45)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>
-                              {label}{isDecl ? ' ★' : ''}
-                            </div>
-                            {['S','H','D','C'].map(suit => {
-                              const suitCards = (hand||[]).filter(c => c.suit === suit).sort((a,b) => (b.value||0)-(a.value||0))
-                              if (!suitCards.length) return null
-                              const isRed = suit === 'H' || suit === 'D'
-                              const sym = suit === 'S' ? '♠' : suit === 'H' ? '♥' : suit === 'D' ? '♦' : '♣'
-                              return (
-                                <div key={suit} style={{ display:'flex', gap:3, marginBottom:1, alignItems:'baseline' }}>
-                                  <span style={{ fontSize:'0.78rem', color: isRed ? '#e74c3c' : 'rgba(255,255,255,0.8)', fontWeight:700, width:13, flexShrink:0 }}>{sym}</span>
-                                  <span style={{ fontSize:'0.78rem', color:'rgba(245,240,232,0.85)', letterSpacing:'0.02em', lineHeight:1.3 }}>{suitCards.map(c => c.value).join(' ')}</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )
-                      }
-                      const decl = h.declarer ? h.declarer[0] : ''
-                      const ih = h.initialHands || {}
-                      return (
-                        <div style={{ display:'grid', gridTemplateColumns:'1fr 2fr 1fr', gridTemplateRows:'auto auto auto', gap:4, marginBottom:10 }}>
-                          {/* Top row: empty, North, empty */}
-                          <div />
-                          <HandBox pos="N" label="North" hand={ih['N']} isDecl={decl==='N'} />
-                          <div />
-                          {/* Middle row: West, center label, East */}
-                          <HandBox pos="W" label="West" hand={ih['W']} isDecl={decl==='W'} />
-                          <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            <div style={{ width:32, height:32, borderRadius:'50%', border:'1px solid rgba(201,168,76,0.3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.65rem', color:'rgba(201,168,76,0.6)' }}>N↑</div>
-                          </div>
-                          <HandBox pos="E" label="East" hand={ih['E']} isDecl={decl==='E'} />
-                          {/* Bottom row: empty, South, empty */}
-                          <div />
-                          <HandBox pos="S" label="South (You)" hand={ih['S']} isDecl={decl==='S'} />
-                          <div />
-                        </div>
-                      )
-                    })()}
-
-                    {/* Auction */}
-                    {h.auction && h.auction.length > 0 && (
-                      <div>
-                        <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:5, fontWeight:700 }}>Auction</div>
-                        <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
-                          {h.auction.map((bid, bi) => {
-                            const isPass = bid.type === 'pass'
-                            const isDbl = bid.type === 'double'
-                            const pos = bid.position
-                            const posLabel = pos === 'S' ? 'S' : pos === 'N' ? 'N' : pos === 'W' ? 'W' : 'E'
-                            const denomColor = bid.denomination === 'H' || bid.denomination === 'D' ? '#e74c3c' : bid.denomination === 'NT' ? '#7eb5f5' : 'white'
-                            return (
-                              <div key={bi} style={{ fontSize:'0.75rem', padding:'2px 6px', borderRadius:4, background:'rgba(255,255,255,0.07)', color: isPass ? 'rgba(255,255,255,0.35)' : 'white', fontWeight:600 }}>
-                                <span style={{ fontSize:'0.6rem', color:'rgba(255,255,255,0.35)', marginRight:2 }}>{posLabel}</span>
-                                {isPass ? 'P' : isDbl ? <span style={{ color:'#e74c3c' }}>X</span> : <span><span style={{ color:'white' }}>{bid.level}</span><span style={{ color:denomColor }}>{bid.denomination === 'NT' ? 'NT' : bid.denomination === 'S' ? '♠' : bid.denomination === 'H' ? '♥' : bid.denomination === 'D' ? '♦' : '♣'}</span></span>}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {!h.initialHands && (
-                  <p style={{ padding:'12px 14px', fontSize:'0.8rem', color:'var(--text-muted)', fontStyle:'italic' }}>
-                    Hand data not available — play a new session to see hand review.
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* AI Coach tab */}
         {tab === 'coach' && (
           <div style={{ marginBottom:'1.25rem' }}>
@@ -1232,9 +1125,9 @@ export default function Bridge() {
 
   const mCardW = isMobile ? 52 : 72; const mCardH = isMobile ? 73 : 101; const mOverlap = isMobile ? 16 : 24
   const mSideCardW = isMobile ? 40 : 60; const mSideCardH = isMobile ? 56 : 84; const mSideOverlap = isMobile ? 11 : 15
-  const mSouthCardW = isMobile ? 62 : 108; const mSouthCardH = isMobile ? 87 : 151; const mSouthOverlap = isMobile ? 20 : 32
-  const mTrickW = isMobile ? 180 : 340; const mTrickH = isMobile ? 160 : 300
-  const mTrickCardW = isMobile ? 58 : 96; const mTrickCardH = isMobile ? 81 : 134
+  const mSouthCardW = isMobile ? 58 : 96; const mSouthCardH = isMobile ? 81 : 134; const mSouthOverlap = isMobile ? 18 : 28
+  const mTrickW = isMobile ? 180 : 320; const mTrickH = isMobile ? 160 : 280
+  const mTrickCardW = isMobile ? 52 : 82; const mTrickCardH = isMobile ? 73 : 115
 
   // Hand result display helpers
   const handDeclSide = game.contract ? ((game.contract.declarer==='N'||game.contract.declarer==='S') ? 'NS' : 'EW') : 'NS'
@@ -1274,7 +1167,7 @@ export default function Bridge() {
           <div style={{ background:'#1a3d28', border:'2px solid var(--gold)', borderRadius:18, padding: isMobile ? '1.5rem 1.25rem' : '2rem', textAlign:'center', maxWidth:420, width:'100%' }}>
             {/* Hand number badge */}
             <div style={{ fontSize:'0.9rem', color:'var(--gold)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8 }}>
-              Hand {session.handNumber} of 4
+              Hand {Math.min(session.handNumber, 4)} of 4
             </div>
             <div style={{ fontSize:'2.5rem', marginBottom:'0.5rem' }}>{game.scoring.made?'🎉':'😔'}</div>
             <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize: isMobile ? '1.4rem' : '1.8rem', color:'var(--gold)', marginBottom:'0.4rem' }}>
@@ -1400,7 +1293,23 @@ export default function Bridge() {
             </div>
             {isNorthDummy
               ? <DummyHand hand={dummyHand} currentTrick={game.currentTrick} contract={game.contract} onPlay={c=>handleCardClick(c,true)} canPlay={isDummyTurn && game.currentLeader==='N'} horizontal isMobile={isMobile} />
-              : <FannedHand cards={game.hands['N']||[]} faceDown={game.contract?.declarer !== 'N'} cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
+              : game.contract?.declarer === 'N'
+                ? (
+                  <div style={{ display:'flex', gap: isMobile ? 4 : 8, flexWrap:'wrap', justifyContent:'center', alignItems:'flex-end' }}>
+                    {['S','H','D','C'].map(suit => {
+                      const suitCards = (game.hands['N']||[]).filter(c=>c.suit===suit).sort((a,b)=>VALUE_RANK[b.value]-VALUE_RANK[a.value])
+                      if (!suitCards.length) return null
+                      const col = SUIT_COLORS[suit]==='#1a1a2e' ? 'rgba(255,255,255,0.8)' : SUIT_COLORS[suit]
+                      return (
+                        <div key={suit} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                          <span style={{ fontSize:'1rem', color:col, fontWeight:700 }}>{SUIT_SYMBOLS[suit]}</span>
+                          <FannedHand cards={suitCards} cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+                : <FannedHand cards={game.hands['N']||[]} faceDown cardW={mCardW} cardH={mCardH} overlap={mOverlap} />
             }
           </div>
 
