@@ -13,7 +13,7 @@ const GAME_KEYS = [
 export default function Home() {
   usePageMeta('/')
   const { t } = useTranslation()
-  const [onlineCount, setOnlineCount] = useState(247)
+  // onlineCount removed — was hardcoded fake number
 
   useEffect(() => {
     const interval = setInterval(() => {
