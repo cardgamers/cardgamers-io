@@ -365,6 +365,19 @@ export default function Spades() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.75rem', height: 44, background: 'rgba(0,0,0,0.6)', borderBottom: '1px solid rgba(201,168,76,0.12)', flexShrink: 0, gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: 0 }}>
           <Link to="/lobby" style={{ color: 'var(--text-muted)', fontSize: '0.97rem', textDecoration: 'none', flexShrink: 0 }}>← Menu</Link>
+          <div style={{ display:'flex', gap:2, background:'rgba(0,0,0,0.2)', borderRadius:6, padding:2, flexShrink:0 }}>
+            {['easy','medium','hard'].map(d => (
+              <button key={d} onClick={() => (!isPlusUser && d==='hard') ? null : setDifficulty(d)} style={{
+                padding:'2px 6px', borderRadius:4, fontSize:'0.62rem', fontWeight:700, border:'none',
+                background: difficulty===d ? 'rgba(201,168,76,0.3)' : 'transparent',
+                color: difficulty===d ? 'var(--gold)' : (!isPlusUser && d==='hard') ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.45)',
+                cursor: (!isPlusUser && d==='hard') ? 'not-allowed' : 'pointer', position:'relative',
+              }}>
+                {d==='easy'?'E':d==='medium'?'M':'H'}
+                {d==='hard' && !isPlusUser && <span style={{position:'absolute',top:-4,right:-4,background:'var(--gold)',color:'#0d2a1a',fontSize:'0.48rem',fontWeight:800,padding:'1px 2px',borderRadius:3}}>+</span>}
+              </button>
+            ))}
+          </div>
           <span style={{ fontFamily: "'Playfair Display',serif", color: 'var(--gold)', fontWeight: 700, flexShrink: 0 }}>♠</span>
           <span style={{ fontSize: '1.04rem', background: 'rgba(255,255,255,0.08)', color: 'white', padding: '2px 8px', borderRadius: 20, flexShrink: 0 }}>
             ♠ Spades trump{g.spadesBroken ? ' · broken' : ''}
@@ -383,22 +396,7 @@ export default function Spades() {
           }
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.94rem', fontWeight: 600, flexShrink: 0, alignItems: 'center' }}>
-          {/* Difficulty selector */}
-          <div style={{ display:'flex', gap:2, background:'rgba(0,0,0,0.2)', borderRadius:6, padding:2 }}>
-          {['easy','medium','hard'].map(d => (
-            <button key={d} onClick={() => (!isPlusUser && d==='hard') ? null : setDifficulty(d)} style={{
-              padding:'2px 6px', borderRadius:4, fontSize:'0.62rem', fontWeight:700,
-              border:'none',
-              background: difficulty===d ? 'rgba(201,168,76,0.3)' : 'transparent',
-              color: difficulty===d ? 'var(--gold)' : (!isPlusUser && d==='hard') ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.45)',
-              cursor: (!isPlusUser && d==='hard') ? 'not-allowed' : 'pointer', position:'relative',
-            }}>
-              {d==='easy'?'E':d==='medium'?'M':'H'}
-              {d==='hard' && !isPlusUser && <span style={{position:'absolute',top:-4,right:-4,background:'var(--gold)',color:'#0d2a1a',fontSize:'0.48rem',fontWeight:800,padding:'1px 2px',borderRadius:3}}>+</span>}
-            </button>
-          ))}
-          </div>
-          <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+
           <span style={{ color: '#5DCAA5' }}>We:{scores[0]}</span>
           <span style={{ color: '#c0392b' }}>They:{scores[1]}</span>
           {g.phase === 'playing' && <>
