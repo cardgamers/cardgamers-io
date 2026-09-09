@@ -370,7 +370,6 @@ export default function Spades() {
             ♠ Spades trump{g.spadesBroken ? ' · broken' : ''}
           </span>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
         <div style={{ fontSize: '0.94rem', fontWeight: 600, flexShrink: 0 }}>
           {isBidding
             ? <span style={{ color: g.currentPlayer === 0 ? '#5DCAA5' : 'var(--gold)' }}>
