@@ -139,8 +139,7 @@ export default function Home() {
           <div style={s.pricingGrid}>
             {[
               { name: 'Free',  price: '$0',  planKey: 'free',  featured: false, link: '/lobby' },
-              { name: 'Plus',  price: '$6',  planKey: 'plus',  featured: true,  link: '/upgrade' },
-              { name: 'Club',  price: '$30', planKey: 'club',  featured: false, link: '/signup' },
+              { name: 'Plus',  price: '$3.99',  planKey: 'plus',  featured: true,  link: '/upgrade' },
             ].map(plan => {
               const p = t(`home.pricing.plans.${plan.planKey}`, { returnObjects: true })
               return (
