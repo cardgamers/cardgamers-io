@@ -13,7 +13,7 @@ const GAME_KEYS = [
 export default function Home() {
   usePageMeta('/')
   const { t } = useTranslation()
-  // onlineCount removed — was hardcoded fake number
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -29,7 +29,7 @@ export default function Home() {
       {/* Online bar */}
       <div style={s.onlineBar}>
         <span style={s.onlineDot} />
-        <span dangerouslySetInnerHTML={{ __html: t('home.onlineBar', { count: onlineCount }) }} />
+        <span>Smart bots available 24/7 · No waiting for opponents</span>
       </div>
 
       {/* Hero */}
