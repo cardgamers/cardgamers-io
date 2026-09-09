@@ -260,7 +260,7 @@ export default function Spades() {
     if (g.phase === 'bidding' && g.currentPlayer !== 0) {
       clearTimeout(botTimer.current)
       botTimer.current = setTimeout(() => {
-        const bid = botBid(g.hands[g.currentPlayer])
+        const bid = botBid(g.hands[g.currentPlayer], difficulty)
         setG(prev => applyBid(prev, prev.currentPlayer, bid))
       }, 600)
       return () => clearTimeout(botTimer.current)
@@ -272,7 +272,7 @@ export default function Spades() {
       botTimer.current = setTimeout(() => {
         setG(prev => {
           if (!prev || prev.phase !== 'playing' || prev.currentPlayer === 0 || prev.trickResolved) return prev
-          const card = botPlay(prev.hands[prev.currentPlayer], prev.trick, prev.spadesBroken, prev.currentPlayer)
+          const card = botPlay(prev.hands[prev.currentPlayer], prev.trick, prev.spadesBroken, prev.currentPlayer, difficulty)
           return applyCard(prev, prev.currentPlayer, card)
         })
       }, difficulty === 'easy' ? 2200 : difficulty === 'hard' ? 400 : 750)

@@ -35,18 +35,48 @@ export function sortHand(hand) {
   });
 }
 
-export function botBid(hand) {
+export function botBid(hand, difficulty = 'medium') {
   let bid = 0;
+  const spades = hand.filter(c => c.suit === '♠');
+  const nonSpades = hand.filter(c => c.suit !== '♠');
+
   for (const card of hand) {
     if (card.suit === '♠') {
-      if (card.value >= 10) bid += 1;
-      else if (card.value >= 7) bid += 0.5;
+      if (card.value === 12) bid += 1;       // Ace of spades — certain trick
+      else if (card.value === 11) bid += 1;  // King — nearly certain
+      else if (card.value === 10) bid += 0.85; // Queen
+      else if (card.value === 9) bid += 0.6;  // Jack
+      else if (card.value >= 7) bid += 0.4;   // 9-10
+      else if (card.value >= 5 && spades.length >= 5) bid += 0.3; // long spades
     } else {
-      if (card.value === 12) bid += 1;
-      else if (card.value === 11) bid += 0.75;
-      else if (card.value === 10) bid += 0.5;
+      if (card.value === 12) bid += 1;         // Ace — certain
+      else if (card.value === 11) bid += 0.85; // King — near certain
+      else if (card.value === 10) bid += 0.55; // Queen
+      else if (card.value === 9) bid += 0.3;   // Jack with length
     }
   }
+
+  // Hard difficulty: adjust for voids (ruffing potential) and long suits
+  if (difficulty === 'hard') {
+    const suitCounts = {};
+    for (const c of hand) suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
+    for (const [suit, count] of Object.entries(suitCounts)) {
+      if (suit !== '♠') {
+        if (count === 0) bid += 1.5;  // void — can ruff freely
+        else if (count === 1) bid += 0.75; // singleton
+        else if (count === 2) bid += 0.3;  // doubleton
+        if (count >= 5) bid += 0.5;        // long suit likely establishes
+      }
+    }
+    // Hard bots don't overbid — subtract a little for accuracy
+    bid -= 0.3;
+  }
+
+  // Easy difficulty: underbid slightly (conservative, less accurate)
+  if (difficulty === 'easy') {
+    bid -= 0.5;
+  }
+
   return Math.max(1, Math.round(bid));
 }
 
@@ -106,13 +136,26 @@ function isPartner(playerA, playerB) {
 }
 
 // ─── Improved bot card play ─────────────────────────────────────────
-export function botPlay(hand, trick, spadesBroken, myPosition) {
+export function botPlay(hand, trick, spadesBroken, myPosition, difficulty = 'medium', playedCards = []) {
   const valid = getValidCards(hand, trick, spadesBroken);
 
   // Leading the trick
   if (trick.length === 0) {
     const nonSpades = valid.filter(c => c.suit !== '♠');
     const pool = nonSpades.length > 0 ? nonSpades : valid;
+
+    if (difficulty === 'hard') {
+      // Hard: lead Aces first to cash winners, then establish long suits
+      const aces = pool.filter(c => c.value === 12);
+      if (aces.length > 0) return aces[0];
+      // Lead from longest non-spade suit to establish winners
+      const suitGroups = {};
+      for (const c of pool) suitGroups[c.suit] = (suitGroups[c.suit] || []).concat(c);
+      const longestSuit = Object.values(suitGroups).sort((a,b) => b.length - a.length)[0];
+      if (longestSuit && longestSuit.length >= 4) {
+        return longestSuit.reduce((a,b) => a.value > b.value ? a : b); // lead high from long suit
+      }
+    }
     return pool.reduce((a, b) => a.value < b.value ? a : b);
   }
 
