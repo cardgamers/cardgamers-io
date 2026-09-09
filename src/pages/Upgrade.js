@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 
 const PAYPAL_CLIENT_ID = 'BAAkMA4KUZC3DlzIxceYsdlIu1sV7_-tQZ241b0fgiBIyW9wfxZKJ2slqKB_6R7daIaRjT4mPFC7zQtyXo'
 const PLAN_IDS = {
-  plus: 'P-46E37703W5629881TNIV5EGY',
+  plus: 'P-0F239908W13764134NKQPZ4Y',
   club: 'P-1V455033JE604344NNIV5GVY'
 }
 
@@ -13,27 +13,24 @@ const PLANS = [
   {
     id: 'plus',
     name: 'Plus',
-    price: 6,
+    price: 3.99,
     period: 'month',
-    features: ['Zero ads ever', 'Full session history & replays', 'Custom avatar & profile', 'AI coaching after every Bridge session', 'Percentile stats vs other players'],
+    features: [
+      'Hard bot difficulty — the toughest AI opponent',
+      'AI coaching after every Bridge session',
+      'Zero ads — clean experience forever',
+      'Percentile stats vs other players on Solitaire',
+      'Support independent development ♠',
+    ],
     color: 'var(--gold)',
     popular: true,
-  },
-  {
-    id: 'club',
-    name: 'Club',
-    price: 30,
-    period: 'month',
-    features: ['Private game room with invite link', 'Up to 20 members', 'Club leaderboard', 'All Plus features included', 'Priority support'],
-    color: 'var(--green-accent)',
-    popular: false,
   },
 ]
 
 export default function Upgrade() {
   const { profile, fetchProfile, user } = useAuth()
   const [paypalLoaded, setPaypalLoaded] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState('plus')
+  const [selectedPlan, setSelectedPlan] = useState('plus') // only plan available
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
@@ -69,7 +66,7 @@ export default function Upgrade() {
       },
       createSubscription: function(data, actions) {
         return actions.subscription.create({
-          plan_id: selectedPlan === 'plus' ? PLAN_IDS.plus : PLAN_IDS.club,
+          plan_id: PLAN_IDS.plus,
         })
       },
       onApprove: async function(data) {
@@ -126,7 +123,7 @@ export default function Upgrade() {
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <span className="section-eye">Upgrade</span>
           <h1 className="display-title" style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>Go Premium</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Remove ads and unlock the full CardGamers experience</p>
+          <p style={{ color: 'var(--text-muted)' }}>Unlock hard bots, AI coaching and a cleaner experience</p>
         </div>
 
         {/* Plan selector */}
