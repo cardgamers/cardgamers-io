@@ -36,7 +36,7 @@ export default function Profile() {
       .select('*')
       .eq('user_id', user.id)
       .order('played_at', { ascending: false })
-      .limit(10)
+      .limit(profile?.plan === 'free' ? 5 : 20)
       .then(({ data }) => {
         setHistory(data || [])
         setLoading(false)
@@ -141,12 +141,19 @@ export default function Profile() {
                 <div key={game.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.65rem 0.9rem', background:'rgba(0,0,0,0.2)', borderRadius:8 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
                     <span style={{ fontSize:'1.1rem' }}>
-                      {game.game_type === 'bridge' ? '♠' : game.game_type === 'rummy' ? '♥' : '♣'}
+                      {game.game_type === 'bridge' || game.game_type === 'bridge_session' ? '♠' : game.game_type === 'rummy' ? '♥' : game.game_type === 'solitaire' ? '🃏' : '♣'}
                     </span>
                     <div>
-                      <div style={{ fontSize:'0.85rem', fontWeight:500, color:'var(--cream)', textTransform:'capitalize' }}>{game.game_type}</div>
+                      <div style={{ fontSize:'0.85rem', fontWeight:500, color:'var(--cream)' }}>
+                        {game.game_type === 'bridge_session' ? '♠ Bridge Session (4 hands)' : game.game_type === 'bridge' ? '♠ Bridge' : game.game_type === 'rummy' ? '♥ Rummy' : game.game_type === 'solitaire' ? '♣ Solitaire' : game.game_type}
+                      </div>
                       <div style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>
                         {new Date(game.played_at).toLocaleDateString()}
+                        {game.game_type === 'bridge_session' && game.metadata?.imps !== undefined && (
+                          <span style={{ marginLeft:6, color: game.metadata.imps >= 0 ? '#5DCAA5' : '#c0392b' }}>
+                            {game.metadata.imps >= 0 ? `NS +${game.metadata.imps}` : `NS ${game.metadata.imps}`} IMPs
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
