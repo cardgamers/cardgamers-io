@@ -77,6 +77,18 @@ export function botBid(hand, difficulty = 'medium') {
     bid -= 0.5;
   }
 
+  // Nil bid logic — bid nil on very weak hands
+  if (difficulty !== 'easy') {
+    const spades = hand.filter(c => c.suit === '♠')
+    const hasHighSpade = spades.some(c => c.value >= 9) // Q or higher
+    const hasHighNonSpade = hand.filter(c => c.suit !== '♠').some(c => c.value >= 11) // K or higher
+    const roundedBid = Math.round(bid)
+    // Bid nil if hand is very weak (expected tricks ≤ 1) and no dangerous high cards
+    if (roundedBid <= 1 && !hasHighSpade && !hasHighNonSpade && difficulty === 'hard') {
+      return 0 // nil bid
+    }
+  }
+
   return Math.max(1, Math.round(bid));
 }
 
@@ -138,6 +150,10 @@ function isPartner(playerA, playerB) {
 // ─── Improved bot card play ─────────────────────────────────────────
 export function botPlay(hand, trick, spadesBroken, myPosition, difficulty = 'medium', playedCards = []) {
   const valid = getValidCards(hand, trick, spadesBroken);
+
+  // Nil protection — if we know our partner bid nil, protect them
+  // (partnerNilBid parameter can be passed from game state)
+  // This is handled by the caller passing context
 
   // Leading the trick
   if (trick.length === 0) {

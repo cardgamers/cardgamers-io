@@ -202,7 +202,8 @@ export default function Spades() {
 
   const [g, setG] = useState(null)               // game state
   const [scores, setScores] = useState([0, 0])   // [NS, EW] cumulative
-  const [selected, setSelected] = useState(null)  // selected card object
+  const [selected, setSelected] = useState(null)
+  const [nilConfirm, setNilConfirm] = useState(false)  // selected card object
   const [gameOver, setGameOver] = useState(false)
   const [resultSaved, setResultSaved] = useState(false)
   const [showLastTrick, setShowLastTrick] = useState(false)
@@ -232,8 +233,18 @@ export default function Spades() {
   useEffect(() => {
     if (!g || g.phase !== 'handEnd') return
     const { bids, tricksWon } = g
-    const t0 = calcTeamScore([bids[0], bids[2]], [tricksWon[0], tricksWon[2]])
-    const t1 = calcTeamScore([bids[1], bids[3]], [tricksWon[1], tricksWon[3]])
+    let t0 = calcTeamScore([bids[0], bids[2]], [tricksWon[0], tricksWon[2]])
+    let t1 = calcTeamScore([bids[1], bids[3]], [tricksWon[1], tricksWon[3]])
+    // Nil bonuses/penalties — applied per player
+    for (const [pi, ti] of [[0,0],[2,0],[1,1],[3,1]]) {
+      if (bids[pi] === 0) {
+        if (tricksWon[pi] === 0) {
+          if (ti === 0) t0 += 100; else t1 += 100  // nil made +100
+        } else {
+          if (ti === 0) t0 -= 100; else t1 -= 100  // nil failed -100
+        }
+      }
+    }
     const newScores = [scores[0] + t0, scores[1] + t1]
     setScores(newScores)
     if (newScores[0] >= 500 || newScores[1] >= 500) {
@@ -317,7 +328,12 @@ export default function Spades() {
   // ── Human bids ────────────────────────────────────────────────────
   function handleBid(bid) {
     if (!g || g.phase !== 'bidding' || g.currentPlayer !== 0) return
+    if (bid === 0) { setNilConfirm(true); return }
     setG(prev => applyBid(prev, 0, bid))
+  }
+  function confirmNil() {
+    setNilConfirm(false)
+    setG(prev => applyBid(prev, 0, 0))
   }
 
   if (!g) return (
