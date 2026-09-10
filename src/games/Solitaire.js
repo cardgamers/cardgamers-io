@@ -760,6 +760,9 @@ export default function Solitaire() {
             <div>
               <p style={{fontSize:'0.58rem',color:'rgba(245,240,232,0.4)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8,fontWeight:700}}>Hint</p>
               <HintButton game={game} />
+      <button onClick={() => setStuck(true)} style={{width:'100%',padding:'8px',borderRadius:8,background:'rgba(192,57,43,0.1)',border:'1.5px solid rgba(192,57,43,0.3)',color:'#c0392b',fontWeight:600,fontSize:'0.82rem',cursor:'pointer',marginTop:4}}>
+        🏳️ Give Up
+      </button>
             </div>
             <div style={{background:'rgba(0,0,0,0.25)',borderRadius:8,padding:'10px'}}>
               <p style={{fontSize:'0.58rem',color:'rgba(245,240,232,0.4)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8,fontWeight:700}}>This game</p>
