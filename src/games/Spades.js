@@ -622,6 +622,24 @@ export default function Spades() {
       )}
     </div>
 
+      {nilConfirm && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
+          <div style={{ background:'linear-gradient(135deg,#1a3d28,#0f2a1a)', border:'2px solid rgba(192,57,43,0.5)', borderRadius:20, padding:'2rem', maxWidth:360, width:'100%', textAlign:'center' }}>
+            <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>⚠️</div>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:'1.5rem', color:'#c0392b', marginBottom:'0.5rem' }}>Bid Nil?</h2>
+            <p style={{ fontSize:'0.88rem', color:'rgba(245,240,232,0.7)', lineHeight:1.7, marginBottom:'0.5rem' }}>You are promising to win <strong>zero tricks</strong> this hand.</p>
+            <p style={{ fontSize:'0.88rem', color:'rgba(245,240,232,0.55)', lineHeight:1.7, marginBottom:'1.5rem' }}>
+              ✅ Succeed → <span style={{ color:'#5DCAA5' }}>+100 points</span> for your team<br/>
+              ❌ Fail → <span style={{ color:'#c0392b' }}>-100 points</span> from your team
+            </p>
+            <div style={{ display:'flex', gap:'0.75rem', justifyContent:'center' }}>
+              <button onClick={confirmNil} style={{ padding:'0.65rem 1.5rem', borderRadius:8, background:'#c0392b', border:'none', color:'white', fontWeight:700, cursor:'pointer', fontSize:'0.9rem' }}>Yes, Bid Nil</button>
+              <button onClick={() => setNilConfirm(false)} style={{ padding:'0.65rem 1.5rem', borderRadius:8, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.2)', color:'rgba(245,240,232,0.7)', cursor:'pointer', fontSize:'0.9rem' }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     {/* SEO Content — visible to Google, helpful for new players */}
     <div style={{ background:'#0a1f12', borderTop:'1px solid rgba(201,168,76,0.1)', padding:'3rem 1.5rem', color:'rgba(245,240,232,0.75)' }}>
       <div style={{ maxWidth:800, margin:'0 auto' }}>
