@@ -5,7 +5,7 @@ import { saveGameResult } from '../lib/saveGameResult'
 import {
   dealGame, bestMeldArrangement, deadwoodCards, deadwoodValue,
   botDecideAction, botChooseDiscard, botShouldKnock, botShouldGin,
-  calcScore, SUIT_SYMBOLS as ENGINE_SUIT_SYMBOLS
+  calcScore
 } from './GinRummyEngine'
 
 const SUIT_SYM = { S: '♠', H: '♥', D: '♦', C: '♣' }
