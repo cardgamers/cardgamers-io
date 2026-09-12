@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { saveGameResult } from '../lib/saveGameResult'
-import { useIsMobile } from '../hooks/useIsMobile'
 import {
   dealGame, bestMeldArrangement, deadwoodCards, deadwoodValue,
   botDecideAction, botChooseDiscard, botShouldKnock, botShouldGin,
@@ -63,7 +62,6 @@ function MeldDisplay({ cards, label }) {
 
 export default function Rummy() {
   usePageMeta('/game/rummy')
-  const isMobile = useIsMobile()
   const [g, setG] = useState(null)
   const [selected, setSelected] = useState(null) // index in playerHand
   const [scores, setScores] = useState({ player: 0, bot: 0 })
