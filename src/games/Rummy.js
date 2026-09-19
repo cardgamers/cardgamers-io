@@ -13,7 +13,7 @@ const SUIT_COLOR = { S: '#1a1a2e', H: '#c0392b', D: '#c0392b', C: '#1a1a2e' }
 const CW = 90  // card width
 const CH = 126 // card height
 
-function Card({ card, selected, onClick, faceDown, highlight, dim, ghost }) {
+function Card({ card, selected, onClick, faceDown, highlight, dim, isDrawn }) {
   if (!card) return null
   if (faceDown) return (
     <div style={{
@@ -33,14 +33,15 @@ function Card({ card, selected, onClick, faceDown, highlight, dim, ghost }) {
     <div onClick={onClick} style={{
       width: CW, height: CH, borderRadius: 10, flexShrink: 0,
       background: selected ? '#fffde7' : 'white',
-      border: `3px solid ${selected ? '#c9a84c' : highlight ? '#2ecc71' : 'rgba(0,0,0,0.1)'}`,
+      border: `3px solid ${selected ? '#c9a84c' : isDrawn ? '#c9a84c' : highlight ? '#2ecc71' : 'rgba(0,0,0,0.1)'}`,
       boxShadow: selected
         ? '0 0 0 3px rgba(201,168,76,0.5), 0 8px 24px rgba(0,0,0,0.5)'
+        : isDrawn ? '0 0 0 4px rgba(201,168,76,0.6), 0 6px 20px rgba(0,0,0,0.4)'
         : highlight ? '0 0 0 3px rgba(46,204,113,0.4), 0 4px 16px rgba(0,0,0,0.3)'
         : '0 4px 14px rgba(0,0,0,0.35)',
       cursor: onClick ? 'pointer' : 'default',
       position: 'relative', flexShrink: 0,
-      transform: selected ? 'translateY(-18px) scale(1.05)' : 'translateY(0) scale(1)',
+      transform: selected ? 'translateY(-18px) scale(1.05)' : isDrawn ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
       transition: 'transform 0.15s, box-shadow 0.15s',
       opacity: dim ? 0.4 : 1,
       userSelect: 'none',
@@ -73,6 +74,8 @@ export default function Rummy() {
   usePageMeta('/game/rummy')
   const [g, setG] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [dragIdx, setDragIdx] = useState(null)
+  const [dragOverIdx, setDragOverIdx] = useState(null)
   const [sortMode, setSortMode] = useState('suit') // 'suit' | 'rank'
   const [scores, setScores] = useState({ player: 0, bot: 0 })
   const [roundResult, setRoundResult] = useState(null)
@@ -242,6 +245,26 @@ export default function Rummy() {
     })
     setSelected(null)
   }
+
+  function handleDragStart(idx) { setDragIdx(idx) }
+  function handleDragOver(e, idx) { e.preventDefault(); setDragOverIdx(idx) }
+  function handleDrop(idx) {
+    if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setDragOverIdx(null); return }
+    setG(prev => {
+      const ng = JSON.parse(JSON.stringify(prev))
+      const card = ng.playerHand.splice(dragIdx, 1)[0]
+      ng.playerHand.splice(idx, 0, card)
+      return ng
+    })
+    if (selected === dragIdx) setSelected(idx)
+    else if (selected !== null) {
+      if (selected > dragIdx && selected <= idx) setSelected(selected - 1)
+      else if (selected < dragIdx && selected >= idx) setSelected(selected + 1)
+    }
+    setDragIdx(null)
+    setDragOverIdx(null)
+  }
+  function handleDragEnd() { setDragIdx(null); setDragOverIdx(null) }
 
   function handleCardClick(idx) {
     if (!g || g.phase !== 'player-discard') return
@@ -456,19 +479,32 @@ export default function Rummy() {
           </div>
           <div style={{ display:'flex', gap:5, flexWrap:'wrap', justifyContent:'center' }}>
             {g.playerHand.map((card, i) => (
-              <Card
+              <div
                 key={card.id}
-                card={card}
-                selected={selected === i}
-                highlight={meldIds.has(card.id)}
-                onClick={() => handleCardClick(i)}
-                dim={g.phase === 'player-draw'}
-              />
+                draggable
+                onDragStart={() => handleDragStart(i)}
+                onDragOver={e => handleDragOver(e, i)}
+                onDrop={() => handleDrop(i)}
+                onDragEnd={handleDragEnd}
+                style={{ opacity: dragIdx === i ? 0.4 : 1, transition:'opacity 0.15s',
+                  outline: dragOverIdx === i && dragIdx !== i ? '2px dashed rgba(201,168,76,0.7)' : 'none',
+                  borderRadius: 10 }}
+              >
+                <Card
+                  card={card}
+                  selected={selected === i}
+                  highlight={meldIds.has(card.id)}
+                  isDrawn={g.drawn === card.id}
+                  onClick={() => handleCardClick(i)}
+                  dim={g.phase === 'player-draw'}
+                />
+              </div>
             ))}
           </div>
-          <div style={{ marginTop:6, display:'flex', gap:'1rem' }}>
-            <span style={{ fontSize:'0.68rem', color:'rgba(93,202,165,0.6)' }}>🟢 Cards in melds</span>
-            <span style={{ fontSize:'0.68rem', color:'rgba(245,240,232,0.3)' }}>White = deadwood</span>
+          <div style={{ marginTop:6, display:'flex', gap:'1rem', flexWrap:'wrap' }}>
+            <span style={{ fontSize:'0.68rem', color:'rgba(93,202,165,0.6)' }}>🟢 Green border = meld</span>
+            <span style={{ fontSize:'0.68rem', color:'rgba(201,168,76,0.6)' }}>🟡 Gold border = drawn card</span>
+            <span style={{ fontSize:'0.68rem', color:'rgba(245,240,232,0.3)' }}>Drag cards to rearrange</span>
           </div>
         </div>
       </div>
