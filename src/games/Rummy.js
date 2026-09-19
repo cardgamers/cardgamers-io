@@ -18,37 +18,42 @@ function Card({ card, selected, onClick, faceDown, highlight, dim, ghost }) {
   if (faceDown) return (
     <div style={{
       width: CW, height: CH, borderRadius: 10, flexShrink: 0,
-      background: 'linear-gradient(135deg,#1e3a5f,#0d2040)',
-      border: '2px solid rgba(255,255,255,0.15)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+      background: 'linear-gradient(135deg,#1a3a6a 0%,#0d2040 50%,#1a3a6a 100%)',
+      border: '2px solid rgba(201,168,76,0.3)',
+      boxShadow: '0 4px 14px rgba(0,0,0,0.55)',
       opacity: dim ? 0.5 : 1,
-    }} />
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{ position:'absolute', inset:4, borderRadius:7, border:'1px solid rgba(201,168,76,0.2)', backgroundImage:'repeating-linear-gradient(45deg, rgba(201,168,76,0.05) 0px, rgba(201,168,76,0.05) 2px, transparent 2px, transparent 8px)' }} />
+      <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', fontSize:24, color:'rgba(201,168,76,0.4)' }}>♠</div>
+    </div>
   )
   const col = SUIT_COLOR[card.suit]
   return (
     <div onClick={onClick} style={{
       width: CW, height: CH, borderRadius: 10, flexShrink: 0,
-      background: selected ? '#fffde7' : highlight ? 'rgba(93,202,165,0.18)' : 'white',
-      border: `2.5px solid ${selected ? '#c9a84c' : highlight ? '#5DCAA5' : 'rgba(0,0,0,0.15)'}`,
+      background: selected ? '#fffde7' : 'white',
+      border: `3px solid ${selected ? '#c9a84c' : highlight ? '#2ecc71' : 'rgba(0,0,0,0.1)'}`,
       boxShadow: selected
-        ? '0 0 0 3px rgba(201,168,76,0.4), 0 8px 20px rgba(0,0,0,0.4)'
-        : highlight ? '0 0 0 2px rgba(93,202,165,0.3), 0 4px 12px rgba(0,0,0,0.3)'
-        : '0 4px 12px rgba(0,0,0,0.25)',
+        ? '0 0 0 3px rgba(201,168,76,0.5), 0 8px 24px rgba(0,0,0,0.5)'
+        : highlight ? '0 0 0 3px rgba(46,204,113,0.4), 0 4px 16px rgba(0,0,0,0.3)'
+        : '0 4px 14px rgba(0,0,0,0.35)',
       cursor: onClick ? 'pointer' : 'default',
       position: 'relative', flexShrink: 0,
-      transform: selected ? 'translateY(-16px) scale(1.04)' : 'translateY(0) scale(1)',
-      transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s',
-      opacity: dim ? 0.35 : 1,
+      transform: selected ? 'translateY(-18px) scale(1.05)' : 'translateY(0) scale(1)',
+      transition: 'transform 0.15s, box-shadow 0.15s',
+      opacity: dim ? 0.4 : 1,
       userSelect: 'none',
     }}>
-      <div style={{ position:'absolute', top:5, left:6 }}>
-        <div style={{ fontSize:14, fontWeight:800, color:col, lineHeight:1 }}>{card.value}</div>
-        <div style={{ fontSize:12, color:col, lineHeight:1 }}>{SUIT_SYM[card.suit]}</div>
+      {highlight && <div style={{ position:'absolute', inset:0, borderRadius:8, background:'rgba(46,204,113,0.08)', pointerEvents:'none' }} />}
+      <div style={{ position:'absolute', top:6, left:7 }}>
+        <div style={{ fontSize:16, fontWeight:900, color:col, lineHeight:1 }}>{card.value}</div>
+        <div style={{ fontSize:14, color:col, lineHeight:1 }}>{SUIT_SYM[card.suit]}</div>
       </div>
-      <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', fontSize:32, color:col, opacity:0.6 }}>{SUIT_SYM[card.suit]}</div>
-      <div style={{ position:'absolute', bottom:5, right:6, transform:'rotate(180deg)' }}>
-        <div style={{ fontSize:14, fontWeight:800, color:col, lineHeight:1 }}>{card.value}</div>
-        <div style={{ fontSize:12, color:col, lineHeight:1 }}>{SUIT_SYM[card.suit]}</div>
+      <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', fontSize:36, color:col, opacity:0.55 }}>{SUIT_SYM[card.suit]}</div>
+      <div style={{ position:'absolute', bottom:6, right:7, transform:'rotate(180deg)' }}>
+        <div style={{ fontSize:16, fontWeight:900, color:col, lineHeight:1 }}>{card.value}</div>
+        <div style={{ fontSize:14, color:col, lineHeight:1 }}>{SUIT_SYM[card.suit]}</div>
       </div>
     </div>
   )
@@ -321,16 +326,16 @@ export default function Rummy() {
 
       {/* Status bar */}
       <div style={{ background:'rgba(0,0,0,0.25)', padding:'5px 1rem', display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid rgba(255,255,255,0.05)', flexShrink:0 }}>
-        <span style={{ fontSize:'0.8rem', color:'var(--gold)', fontWeight:500 }}>{g.message}</span>
-        <div style={{ display:'flex', gap:6 }}>
+        <span style={{ fontSize:'0.88rem', color:'var(--gold)', fontWeight:600 }}>{g.message}</span>
+        <div style={{ display:'flex', gap:8 }}>
           {['suit','rank'].map(m => (
             <button key={m} onClick={() => setSortMode(m)} style={{
-              padding:'2px 8px', borderRadius:5, fontSize:'0.65rem', fontWeight:600,
-              background: sortMode === m ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.06)',
-              border: sortMode === m ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(255,255,255,0.1)',
-              color: sortMode === m ? 'var(--gold)' : 'rgba(245,240,232,0.4)',
-              cursor:'pointer',
-            }}>Sort by {m}</button>
+              padding:'6px 14px', borderRadius:8, fontSize:'0.8rem', fontWeight:700,
+              background: sortMode === m ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.08)',
+              border: sortMode === m ? '2px solid rgba(201,168,76,0.7)' : '1px solid rgba(255,255,255,0.2)',
+              color: sortMode === m ? 'var(--gold)' : 'rgba(245,240,232,0.6)',
+              cursor:'pointer', letterSpacing:'0.02em',
+            }}>↕ {m === 'suit' ? 'By Suit' : 'By Rank'}</button>
           ))}
         </div>
       </div>
