@@ -15,10 +15,10 @@
   },
   "home": {
     "onlineBar": "<strong>{{count}}</strong> players online right now",
-    "eyebrow": "Free to play · No download needed",
-    "heroTitle1": "The card table",
-    "heroTitle2": "the world plays at",
-    "heroSub": "Bridge, Spades, Hearts and Solitaire — with AI coaching after every session. Smart bots available 24/7. No download, no sign-up.",
+    "eyebrow": "The only card platform with AI coaching",
+    "heroTitle1": "Play smarter.",
+    "heroTitle2": "AI reviews every hand.",
+    "heroSub": "Bridge, Spades, Hearts and Gin Rummy — with AI coaching after every session. No other free card site does this. No download, no sign-up.",
     "startPlaying": "♠ Start Playing Free",
     "browseGames": "Browse Games →",
     "stats": {
