@@ -64,10 +64,10 @@ export default function Home() {
           </div>
           <div style={s.heroStats}>
             {[
-              ['4', t('home.stats.games')],
-              [t('home.stats.liveLabel'), t('home.stats.opponents')],
-              [t('home.stats.freeLabel'), t('home.stats.free')],
-              [t('home.stats.noLabel'), t('home.stats.download')],
+              ['4', 'Free card games'],
+              ['🤖', 'AI coaching included'],
+              ['Free', 'No sign-up needed'],
+              ['24/7', 'Smart bots available'],
             ].map(([num, label]) => (
               <div key={label} style={{ textAlign: 'center' }}>
                 <span style={s.statNum}>{num}</span>

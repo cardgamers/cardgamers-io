@@ -25,10 +25,10 @@
       "games": "Card Games",
       "opponents": "Live Opponents",
       "free": "Always",
-      "freeLabel": "Free",
+      "freeLabel": "AI",
       "noLabel": "No",
       "download": "Download",
-      "liveLabel": "24/7"
+      "liveLabel": "🤖"
     },
     "gamesSection": {
       "eye": "The games",
