@@ -10,8 +10,8 @@ import {
 
 const SUIT_SYM = { S: '♠', H: '♥', D: '♦', C: '♣' }
 const SUIT_COLOR = { S: '#1a1a2e', H: '#c0392b', D: '#c0392b', C: '#1a1a2e' }
-const CW = 80  // card width
-const CH = 112 // card height
+const CW = 90  // card width
+const CH = 126 // card height
 
 function Card({ card, selected, onClick, faceDown, highlight, dim, ghost }) {
   if (!card) return null
@@ -28,8 +28,8 @@ function Card({ card, selected, onClick, faceDown, highlight, dim, ghost }) {
   return (
     <div onClick={onClick} style={{
       width: CW, height: CH, borderRadius: 10, flexShrink: 0,
-      background: selected ? '#fffbe6' : highlight ? 'rgba(93,202,165,0.12)' : 'white',
-      border: `2px solid ${selected ? '#c9a84c' : highlight ? '#5DCAA5' : 'rgba(0,0,0,0.12)'}`,
+      background: selected ? '#fffde7' : highlight ? 'rgba(93,202,165,0.18)' : 'white',
+      border: `2.5px solid ${selected ? '#c9a84c' : highlight ? '#5DCAA5' : 'rgba(0,0,0,0.15)'}`,
       boxShadow: selected
         ? '0 0 0 3px rgba(201,168,76,0.4), 0 8px 20px rgba(0,0,0,0.4)'
         : highlight ? '0 0 0 2px rgba(93,202,165,0.3), 0 4px 12px rgba(0,0,0,0.3)'
@@ -336,20 +336,20 @@ export default function Rummy() {
       </div>
 
       {/* Main table */}
-      <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'1rem 1.5rem', overflow:'hidden' }}>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'0.75rem 2rem', overflow:'hidden' }}>
 
-        {/* Bot hand — top */}
-        <div>
+        {/* Bot hand — top, centered */}
+        <div style={{ textAlign:'center' }}>
           <div style={{ fontSize:'0.68rem', color:'rgba(245,240,232,0.35)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>
             Opponent · {g.botHand.length} cards
           </div>
-          <div style={{ display:'flex', gap:3 }}>
+          <div style={{ display:'flex', gap:4, justifyContent:'center', flexWrap:'wrap' }}>
             {g.botHand.map((c, i) => <Card key={i} card={c} faceDown />)}
           </div>
         </div>
 
         {/* Center — stock, discard, action buttons */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'3rem' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'2rem', flexWrap:'wrap' }}>
 
           {/* Left action area */}
           <div style={{ display:'flex', flexDirection:'column', gap:8, minWidth:120 }}>
@@ -383,7 +383,7 @@ export default function Rummy() {
           {/* Stock pile */}
           <div style={{ textAlign:'center' }}>
             <div style={{ fontSize:'0.65rem', color:'rgba(245,240,232,0.4)', marginBottom:6 }}>
-              Stock · {g.stock.length}
+              📦 Stock · {g.stock.length}
             </div>
             <div
               onClick={g.phase === 'player-draw' ? handleDrawStock : undefined}
@@ -449,7 +449,7 @@ export default function Rummy() {
             <span>Your hand · {g.playerHand.length} cards</span>
             {g.phase === 'player-discard' && <span style={{ color:'rgba(201,168,76,0.6)' }}>Select card to discard{canKnock ? ' or knock' : ''}</span>}
           </div>
-          <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:5, flexWrap:'wrap', justifyContent:'center' }}>
             {g.playerHand.map((card, i) => (
               <Card
                 key={card.id}
